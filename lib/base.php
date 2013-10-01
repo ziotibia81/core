@@ -742,7 +742,7 @@ class OC {
 				}
 				$file_ext = substr($param['file'], -3);
 				if ($logger) {
-					$logger->startEvent('runAppScript', 'Run app script file ' . $param);
+					$logger->startEvent('runAppScript', 'Run app script file ' . $param['file']);
 				}
 				if ($file_ext != 'php'
 					|| !self::loadAppScriptFile($param)
