@@ -28,6 +28,8 @@ class Updater extends \PHPUnit_Framework_TestCase {
 
 	private static $user;
 
+	private $originalUser;
+
 	public function setUp() {
 		$this->storage = new \OC\Files\Storage\Temporary(array());
 		$textData = "dummy file data\n";
@@ -46,23 +48,19 @@ class Updater extends \PHPUnit_Framework_TestCase {
 		if (!self::$user) {
 			self::$user = uniqid();
 		}
+		$this->originalUser = \OC_User::getUser();
+		\OC_User::setUserId(self::$user);
 
 		Filesystem::clearMounts();
 		Filesystem::mount($this->storage, array(), '/' . self::$user . '/files');
 		\OC\Files\Filesystem::init(self::$user, '/' . self::$user . '/files');
-
-		\OC_Hook::clear('OC_Filesystem');
-
-		\OC_Hook::connect('OC_Filesystem', 'post_write', '\OC\Files\Cache\Updater', 'writeHook');
-		\OC_Hook::connect('OC_Filesystem', 'post_delete', '\OC\Files\Cache\Updater', 'deleteHook');
-		\OC_Hook::connect('OC_Filesystem', 'post_rename', '\OC\Files\Cache\Updater', 'renameHook');
-		\OC_Hook::connect('OC_Filesystem', 'post_touch', '\OC\Files\Cache\Updater', 'touchHook');
 	}
 
 	public function tearDown() {
 		if ($this->cache) {
 			$this->cache->clear();
 		}
+		\OC_User::setUserId($this->originalUser);
 		Filesystem::tearDown();
 	}
 
@@ -213,6 +211,7 @@ class Updater extends \PHPUnit_Framework_TestCase {
 	public function testTouch() {
 		$rootCachedData = $this->cache->get('');
 		$fooCachedData = $this->cache->get('foo.txt');
+		$this->cache->put('foo.txt', array('mtime' => 500));
 		Filesystem::touch('foo.txt');
 		$cachedData = $this->cache->get('foo.txt');
 		$this->assertNotEquals($fooCachedData['etag'], $cachedData['etag']);

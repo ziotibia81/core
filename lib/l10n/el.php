@@ -6,6 +6,8 @@ $TRANSLATIONS = array(
 "Users" => "Χρήστες",
 "Admin" => "Διαχειριστής",
 "Failed to upgrade \"%s\"." => "Αποτυχία αναβάθμισης του \"%s\".",
+"Unknown filetype" => "Άγνωστος τύπος αρχείου",
+"Invalid image" => "Μη έγκυρη εικόνα",
 "web services under your control" => "υπηρεσίες δικτύου υπό τον έλεγχό σας",
 "cannot open \"%s\"" => "αδυναμία ανοίγματος \"%s\"",
 "ZIP download is turned off." => "Η λήψη ZIP απενεργοποιήθηκε.",
@@ -13,7 +15,6 @@ $TRANSLATIONS = array(
 "Back to Files" => "Πίσω στα Αρχεία",
 "Selected files too large to generate zip file." => "Τα επιλεγμένα αρχεία είναι μεγάλα ώστε να δημιουργηθεί αρχείο zip.",
 "Download the files in smaller chunks, seperately or kindly ask your administrator." => "Λήψη των αρχείων σε μικρότερα κομμάτια, χωριστά ή ρωτήστε τον διαχειριστή σας.",
-"couldn't be determined" => "δεν μπορούσε να προσδιορισθεί",
 "Application is not enabled" => "Δεν ενεργοποιήθηκε η εφαρμογή",
 "Authentication error" => "Σφάλμα πιστοποίησης",
 "Token expired. Please reload page." => "Το αναγνωριστικό έληξε. Παρακαλώ φορτώστε ξανά την σελίδα.",
@@ -40,6 +41,7 @@ $TRANSLATIONS = array(
 "Set an admin password." => "Εισάγετε συνθηματικό διαχειριστή.",
 "Your web server is not yet properly setup to allow files synchronization because the WebDAV interface seems to be broken." => "Ο διακομιστής σας δεν έχει ρυθμιστεί κατάλληλα ώστε να επιτρέπει τον συγχρονισμό αρχείων γιατί η διεπαφή WebDAV πιθανόν να είναι κατεστραμμένη.",
 "Please double check the <a href='%s'>installation guides</a>." => "Ελέγξτε ξανά τις <a href='%s'>οδηγίες εγκατάστασης</a>.",
+"Could not find category \"%s\"" => "Αδυναμία εύρεσης κατηγορίας \"%s\"",
 "seconds ago" => "δευτερόλεπτα πριν",
 "_%n minute ago_::_%n minutes ago_" => array("",""),
 "_%n hour ago_::_%n hours ago_" => array("",""),
@@ -50,7 +52,6 @@ $TRANSLATIONS = array(
 "_%n month ago_::_%n months ago_" => array("",""),
 "last year" => "τελευταίο χρόνο",
 "years ago" => "χρόνια πριν",
-"Caused by:" => "Προκλήθηκε από:",
-"Could not find category \"%s\"" => "Αδυναμία εύρεσης κατηγορίας \"%s\""
+"Caused by:" => "Προκλήθηκε από:"
 );
 $PLURAL_FORMS = "nplurals=2; plural=(n != 1);";

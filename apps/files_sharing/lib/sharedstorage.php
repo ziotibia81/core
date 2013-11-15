@@ -43,7 +43,7 @@ class Shared extends \OC\Files\Storage\Common {
 	* @param string Shared target file path
 	* @return Returns array with the keys path, permissions, and owner or false if not found
 	*/
-	private function getFile($target) {
+	public function getFile($target) {
 		if (!isset($this->files[$target])) {
 			// Check for partial files
 			if (pathinfo($target, PATHINFO_EXTENSION) === 'part') {
@@ -66,7 +66,7 @@ class Shared extends \OC\Files\Storage\Common {
 	* @param string Shared target file path
 	* @return string source file path or false if not found
 	*/
-	private function getSourcePath($target) {
+	public function getSourcePath($target) {
 		$source = $this->getFile($target);
 		if ($source) {
 			if (!isset($source['fullPath'])) {
@@ -221,7 +221,8 @@ class Shared extends \OC\Files\Storage\Common {
 	public function filemtime($path) {
 		if ($path == '' || $path == '/') {
 			$mtime = 0;
-			if ($dh = $this->opendir($path)) {
+			$dh = $this->opendir($path);
+			if(is_resource($dh)) {
 				while (($filename = readdir($dh)) !== false) {
 					$tempmtime = $this->filemtime($filename);
 					if ($tempmtime > $mtime) {
@@ -362,9 +363,13 @@ class Shared extends \OC\Files\Storage\Common {
 				case 'xb':
 				case 'a':
 				case 'ab':
-					if (!$this->isUpdatable($path)) {
-						return false;
-					}
+				$exists = $this->file_exists($path);
+				if ($exists && !$this->isUpdatable($path)) {
+					return false;
+				}
+				if (!$exists && !$this->isCreatable(dirname($path))) {
+					return false;
+				}
 			}
 			$info = array(
 				'target' => $this->sharedFolder.$path,
@@ -391,7 +396,7 @@ class Shared extends \OC\Files\Storage\Common {
 
 	public function free_space($path) {
 		if ($path == '') {
-			return \OC\Files\FREE_SPACE_UNKNOWN;
+			return \OC\Files\SPACE_UNKNOWN;
 		}
 		$source = $this->getSourcePath($path);
 		if ($source) {

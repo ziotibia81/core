@@ -199,9 +199,15 @@ class Node extends \PHPUnit_Framework_TestCase {
 	public function testTouchSetMTime() {
 		$manager = $this->getMock('\OC\Files\Mount\Manager');
 		$root = $this->getMock('\OC\Files\Node\Root', array(), array($manager, $this->user));
+		$userFolder = $this->getMock('\OC\Files\Node\Folder', array(), array(), '', false);
+
 		$root->expects($this->any())
 			->method('getUser')
 			->will($this->returnValue($this->user));
+
+		$root->expects($this->any())
+			->method('getUserFolder')
+			->will($this->returnValue($userFolder));
 
 		/**
 		 * @var \OC\Files\Storage\Storage | \PHPUnit_Framework_MockObject_MockObject $storage
@@ -215,7 +221,7 @@ class Node extends \PHPUnit_Framework_TestCase {
 			->disableOriginalConstructor()
 			->getMock();
 		$scanner->expects($this->once())
-			->method('scanFile')
+			->method('scan')
 			->with('foo');
 
 		$cache = $this->getMockBuilder('\OC\Files\Cache\Cache')
@@ -276,7 +282,11 @@ class Node extends \PHPUnit_Framework_TestCase {
 		 * @var \OC\Files\Mount\Manager $manager
 		 */
 		$manager = $this->getMock('\OC\Files\Mount\Manager');
-		$root = new \OC\Files\Node\Root($manager, $this->user);
+		/**
+		 * @var \OC\User\Manager $userManager
+		 */
+		$userManager = $this->getMock('\OC\User\Manager');
+		$root = new \OC\Files\Node\Root($manager, $this->user, $userManager);
 		$root->listen('\OC\Files', 'preTouch', $preListener);
 		$root->listen('\OC\Files', 'postTouch', $postListener);
 
@@ -298,7 +308,7 @@ class Node extends \PHPUnit_Framework_TestCase {
 			->disableOriginalConstructor()
 			->getMock();
 		$scanner->expects($this->once())
-			->method('scanFile')
+			->method('scan')
 			->with('foo');
 
 		$cache = $this->getMockBuilder('\OC\Files\Cache\Cache')

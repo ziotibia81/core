@@ -1,11 +1,15 @@
 <?php
 $TRANSLATIONS = array(
+"App \"%s\" can't be installed because it is not compatible with this version of ownCloud." => "Applikation \"%s\" kann nicht installiert werden, da sie mit dieser ownCloud Version nicht kompatibel ist.",
+"No app name specified" => "Es wurde kein Applikation-Name angegeben",
 "Help" => "Hilfe",
 "Personal" => "Persönlich",
 "Settings" => "Einstellungen",
 "Users" => "Benutzer",
 "Admin" => "Administrator",
 "Failed to upgrade \"%s\"." => "Konnte \"%s\" nicht aktualisieren.",
+"Unknown filetype" => "Unbekannter Dateityp",
+"Invalid image" => "Ungültiges Bild",
 "web services under your control" => "Web-Services unter Ihrer Kontrolle",
 "cannot open \"%s\"" => "Öffnen von \"%s\" fehlgeschlagen",
 "ZIP download is turned off." => "Der ZIP-Download ist deaktiviert.",
@@ -13,7 +17,18 @@ $TRANSLATIONS = array(
 "Back to Files" => "Zurück zu \"Dateien\"",
 "Selected files too large to generate zip file." => "Die gewählten Dateien sind zu groß, um eine ZIP-Datei zu erstellen.",
 "Download the files in smaller chunks, seperately or kindly ask your administrator." => "Laden Sie die Dateien in kleineren, separaten, Stücken herunter oder bitten Sie Ihren Administrator.",
-"couldn't be determined" => "konnte nicht ermittelt werden",
+"No source specified when installing app" => "Für die Installation der Applikation wurde keine Quelle angegeben",
+"No href specified when installing app from http" => "Der Link (href) wurde nicht angegeben um die Applikation per http zu installieren",
+"No path specified when installing app from local file" => "Bei der Installation der Applikation aus einer lokalen Datei wurde kein Pfad angegeben",
+"Archives of type %s are not supported" => "Archive des Typs %s werden nicht unterstützt.",
+"Failed to open archive when installing app" => "Das Archiv konnte bei der Installation der Applikation nicht geöffnet werden",
+"App does not provide an info.xml file" => "Die Applikation enthält keine info,xml Datei",
+"App can't be installed because of not allowed code in the App" => "Die Applikation kann auf Grund von unerlaubten Code nicht installiert werden",
+"App can't be installed because it is not compatible with this version of ownCloud" => "Die Anwendung konnte nicht installiert werden, weil Sie nicht mit dieser Version von ownCloud kompatibel ist.",
+"App can't be installed because it contains the <shipped>true</shipped> tag which is not allowed for non shipped apps" => "Die Applikation konnte nicht installiert werden, da diese das <shipped>true</shipped> Tag beinhaltet und dieses, bei nicht mitausgelieferten Applikationen, nicht erlaubt ist ist",
+"App can't be installed because the version in info.xml/version is not the same as the version reported from the app store" => "Die Applikation konnte nicht installiert werden, da die Version in der info.xml nicht die gleiche Version wie im App-Store ist",
+"App directory already exists" => "Der Ordner für die Anwendung existiert bereits.",
+"Can't create app folder. Please fix permissions. %s" => "Der Ordner für die Anwendung konnte nicht angelegt werden. Bitte überprüfen Sie die Ordner- und Dateirechte und passen Sie diese entsprechend an. %s",
 "Application is not enabled" => "Die Anwendung ist nicht aktiviert",
 "Authentication error" => "Authentifizierungs-Fehler",
 "Token expired. Please reload page." => "Token abgelaufen. Bitte laden Sie die Seite neu.",
@@ -40,6 +55,7 @@ $TRANSLATIONS = array(
 "Set an admin password." => "Setze Administrator Passwort",
 "Your web server is not yet properly setup to allow files synchronization because the WebDAV interface seems to be broken." => "Ihr Web-Server ist noch nicht für eine Datei-Synchronisation konfiguriert, weil die WebDAV-Schnittstelle vermutlich defekt ist.",
 "Please double check the <a href='%s'>installation guides</a>." => "Bitte prüfen Sie die <a href='%s'>Installationsanleitungen</a>.",
+"Could not find category \"%s\"" => "Die Kategorie \"%s\" konnte nicht gefunden werden.",
 "seconds ago" => "Gerade eben",
 "_%n minute ago_::_%n minutes ago_" => array("Vor %n Minute","Vor %n Minuten"),
 "_%n hour ago_::_%n hours ago_" => array("Vor %n Stunde","Vor %n Stunden"),
@@ -50,7 +66,6 @@ $TRANSLATIONS = array(
 "_%n month ago_::_%n months ago_" => array("Vor %n Monat","Vor %n Monaten"),
 "last year" => "Letztes Jahr",
 "years ago" => "Vor  Jahren",
-"Caused by:" => "Verursacht durch:",
-"Could not find category \"%s\"" => "Die Kategorie \"%s\" konnte nicht gefunden werden."
+"Caused by:" => "Verursacht durch:"
 );
 $PLURAL_FORMS = "nplurals=2; plural=(n != 1);";

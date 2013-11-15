@@ -91,7 +91,11 @@ class Folder extends \PHPUnit_Framework_TestCase {
 		 * @var \OC\Files\Mount\Manager $manager
 		 */
 		$manager = $this->getMock('\OC\Files\Mount\Manager');
-		$root = new \OC\Files\Node\Root($manager, $this->user);
+		/**
+		 * @var \OC\User\Manager $userManager
+		 */
+		$userManager = $this->getMock('\OC\User\Manager');
+		$root = new \OC\Files\Node\Root($manager, $this->user, $userManager);
 		$root->listen('\OC\Files', 'preDelete', $preListener);
 		$root->listen('\OC\Files', 'postDelete', $postListener);
 
@@ -293,8 +297,9 @@ class Folder extends \PHPUnit_Framework_TestCase {
 			->method('getStorage')
 			->will($this->returnValue($storage));
 		$mount->expects($this->once())
-			->method('getMountPoint')
-			->will($this->returnValue('/bar/'));
+			->method('getInternalPath')
+			->with('/bar/foo/asd')
+			->will($this->returnValue('foo/asd'));
 
 		$storage->expects($this->once())
 			->method('mkdir')
@@ -307,12 +312,34 @@ class Folder extends \PHPUnit_Framework_TestCase {
 			->with('/bar/foo/asd')
 			->will($this->returnValue($mount));
 
-		$root->expects($this->once())
-			->method('get')
-			->with('/bar/foo/asd')
-			->will($this->returnValue($child));
+		$scanner = $this->getMockBuilder('\OC\Files\Cache\Scanner')
+			->disableOriginalConstructor()
+			->getMock();
+		$cache = $this->getMockBuilder('\OC\Files\Cache\Cache')
+			->disableOriginalConstructor()
+			->getMock();
+
+		$storage->expects($this->any())
+			->method('getScanner')
+			->will($this->returnValue($scanner));
+		$storage->expects($this->any())
+			->method('getCache')
+			->will($this->returnValue($cache));
 
 		$node = new \OC\Files\Node\Folder($root, $storage, 'foo', '/bar/foo', array('fileid' => 1, 'permissions' => \OCP\PERMISSION_CREATE));
+
+		$parentNode = new \OC\Files\Node\Folder($root, $storage, 'bar', '/bar', array('fileid' => 2, 'permissions' => \OCP\PERMISSION_CREATE));
+		$rootNode = new \OC\Files\Node\Folder($root, $storage, '', '/', array('fileid' => 3, 'permissions' => \OCP\PERMISSION_CREATE));
+
+		$root->expects($this->any())
+			->method('get')
+			->will($this->returnValueMap(array(
+				array('/bar/foo/asd', $child),
+				array('/bar/foo', $node),
+				array('/bar', $parentNode),
+				array('/', $rootNode)
+			)));
+
 		$result = $node->newFolder('asd');
 		$this->assertEquals($child, $result);
 	}
@@ -345,12 +372,27 @@ class Folder extends \PHPUnit_Framework_TestCase {
 			->method('getStorage')
 			->will($this->returnValue($storage));
 		$mount->expects($this->once())
-			->method('getMountPoint')
-			->will($this->returnValue('/bar/'));
+			->method('getInternalPath')
+			->with('/bar/foo/asd')
+			->will($this->returnValue('foo/asd'));
 
 		$storage->expects($this->once())
 			->method('touch')
 			->with('foo/asd');
+
+		$scanner = $this->getMockBuilder('\OC\Files\Cache\Scanner')
+			->disableOriginalConstructor()
+			->getMock();
+		$cache = $this->getMockBuilder('\OC\Files\Cache\Cache')
+			->disableOriginalConstructor()
+			->getMock();
+
+		$storage->expects($this->any())
+			->method('getScanner')
+			->will($this->returnValue($scanner));
+		$storage->expects($this->any())
+			->method('getCache')
+			->will($this->returnValue($cache));
 
 		$child = new \OC\Files\Node\File($root, $storage, 'foo', '/bar/foo/asd', array('fileid' => 1));
 
@@ -359,12 +401,20 @@ class Folder extends \PHPUnit_Framework_TestCase {
 			->with('/bar/foo/asd')
 			->will($this->returnValue($mount));
 
-		$root->expects($this->once())
-			->method('get')
-			->with('/bar/foo/asd')
-			->will($this->returnValue($child));
-
 		$node = new \OC\Files\Node\Folder($root, $storage, 'foo', '/bar/foo', array('fileid' => 1, 'permissions' => \OCP\PERMISSION_CREATE));
+
+		$parentNode = new \OC\Files\Node\Folder($root, $storage, 'bar', '/bar', array('fileid' => 2, 'permissions' => \OCP\PERMISSION_CREATE));
+		$rootNode = new \OC\Files\Node\Folder($root, $storage, '', '/', array('fileid' => 3, 'permissions' => \OCP\PERMISSION_CREATE));
+
+		$root->expects($this->any())
+			->method('get')
+			->will($this->returnValueMap(array(
+				array('/bar/foo/asd', $child),
+				array('/bar/foo', $node),
+				array('/bar', $parentNode),
+				array('/', $rootNode)
+			)));
+
 		$result = $node->newFile('asd');
 		$this->assertEquals($child, $result);
 	}

@@ -89,7 +89,12 @@ class File extends \PHPUnit_Framework_TestCase {
 		 * @var \OC\Files\Mount\Manager $manager
 		 */
 		$manager = $this->getMock('\OC\Files\Mount\Manager');
-		$root = new \OC\Files\Node\Root($manager, $this->user);
+
+		/**
+		 * @var \OC\User\Manager $userManager
+		 */
+		$userManager = $this->getMock('\OC\User\Manager');
+		$root = new \OC\Files\Node\Root($manager, $this->user, $userManager);
 		$root->listen('\OC\Files', 'preDelete', $preListener);
 		$root->listen('\OC\Files', 'postDelete', $postListener);
 
@@ -172,7 +177,11 @@ class File extends \PHPUnit_Framework_TestCase {
 		 * @var \OC\Files\Mount\Manager $manager
 		 */
 		$manager = $this->getMock('\OC\Files\Mount\Manager');
-		$root = new \OC\Files\Node\Root($manager, $this->user);
+		/**
+		 * @var \OC\User\Manager $userManager
+		 */
+		$userManager = $this->getMock('\OC\User\Manager');
+		$root = new \OC\Files\Node\Root($manager, $this->user, $userManager);
 
 		$hook = function ($file) {
 			throw new \Exception('Hooks are not supposed to be called');
@@ -237,10 +246,20 @@ class File extends \PHPUnit_Framework_TestCase {
 	public function testPutContent() {
 		$manager = $this->getMock('\OC\Files\Mount\Manager');
 		$root = $this->getMock('\OC\Files\Node\Root', array(), array($manager, $this->user));
+		$userFolder = $this->getMock('\OC\Files\Node\Folder', array(), array(), '', false);
 
 		$root->expects($this->any())
 			->method('getUser')
 			->will($this->returnValue($this->user));
+
+		$root->expects($this->any())
+			->method('getUserFolder')
+			->will($this->returnValue($userFolder));
+
+		$userFolder->expects($this->any())
+			->method('getRelativePath')
+			->with('/bar/foo')
+			->will($this->returnValue('foo'));
 
 		/**
 		 * @var \OC\Files\Storage\Storage | \PHPUnit_Framework_MockObject_MockObject $storage
@@ -263,7 +282,7 @@ class File extends \PHPUnit_Framework_TestCase {
 			->disableOriginalConstructor()
 			->getMock();
 		$scanner->expects($this->once())
-			->method('scanFile')
+			->method('scan')
 			->with('foo');
 
 		$cache = $this->getMockBuilder('\OC\Files\Cache\Cache')
@@ -342,7 +361,11 @@ class File extends \PHPUnit_Framework_TestCase {
 		 * @var \OC\Files\Mount\Manager $manager
 		 */
 		$manager = $this->getMock('\OC\Files\Mount\Manager');
-		$root = new \OC\Files\Node\Root($manager, $this->user);
+		/**
+		 * @var \OC\User\Manager $userManager
+		 */
+		$userManager = $this->getMock('\OC\User\Manager');
+		$root = new \OC\Files\Node\Root($manager, $this->user, $userManager);
 
 		$hook = function ($file) {
 			throw new \Exception('Hooks are not supposed to be called');
@@ -382,7 +405,11 @@ class File extends \PHPUnit_Framework_TestCase {
 		 * @var \OC\Files\Mount\Manager $manager
 		 */
 		$manager = $this->getMock('\OC\Files\Mount\Manager');
-		$root = new \OC\Files\Node\Root($manager, $this->user);
+		/**
+		 * @var \OC\User\Manager $userManager
+		 */
+		$userManager = $this->getMock('\OC\User\Manager');
+		$root = new \OC\Files\Node\Root($manager, $this->user, $userManager);
 
 		$hooksCalled = 0;
 		$hook = function ($file) use (&$hooksCalled) {
@@ -427,7 +454,11 @@ class File extends \PHPUnit_Framework_TestCase {
 		 * @var \OC\Files\Mount\Manager $manager
 		 */
 		$manager = $this->getMock('\OC\Files\Mount\Manager');
-		$root = new \OC\Files\Node\Root($manager, $this->user);
+		/**
+		 * @var \OC\User\Manager $userManager
+		 */
+		$userManager = $this->getMock('\OC\User\Manager');
+		$root = new \OC\Files\Node\Root($manager, $this->user, $userManager);
 
 		$hook = function ($file) {
 			throw new \Exception('Hooks are not supposed to be called');
@@ -464,7 +495,11 @@ class File extends \PHPUnit_Framework_TestCase {
 		 * @var \OC\Files\Mount\Manager $manager
 		 */
 		$manager = $this->getMock('\OC\Files\Mount\Manager');
-		$root = new \OC\Files\Node\Root($manager, $this->user);
+		/**
+		 * @var \OC\User\Manager $userManager
+		 */
+		$userManager = $this->getMock('\OC\User\Manager');
+		$root = new \OC\Files\Node\Root($manager, $this->user, $userManager);
 
 		$hook = function () {
 			throw new \Exception('Hooks are not supposed to be called');
@@ -501,7 +536,11 @@ class File extends \PHPUnit_Framework_TestCase {
 		 * @var \OC\Files\Mount\Manager $manager
 		 */
 		$manager = $this->getMock('\OC\Files\Mount\Manager');
-		$root = new \OC\Files\Node\Root($manager, $this->user);
+		/**
+		 * @var \OC\User\Manager $userManager
+		 */
+		$userManager = $this->getMock('\OC\User\Manager');
+		$root = new \OC\Files\Node\Root($manager, $this->user, $userManager);
 
 		$hook = function () {
 			throw new \Exception('Hooks are not supposed to be called');
@@ -545,8 +584,9 @@ class File extends \PHPUnit_Framework_TestCase {
 			->method('getStorage')
 			->will($this->returnValue($storage));
 		$mount->expects($this->once())
-			->method('getMountPoint')
-			->will($this->returnValue('/bar/'));
+			->method('getInternalPath')
+			->with('/bar/asd')
+			->will($this->returnValue('asd'));
 
 		$root->expects($this->once())
 			->method('getMount')
@@ -687,8 +727,9 @@ class File extends \PHPUnit_Framework_TestCase {
 			->method('getStorage')
 			->will($this->returnValue($storage2));
 		$mount->expects($this->once())
-			->method('getMountPoint')
-			->will($this->returnValue('/asd/'));
+			->method('getInternalPath')
+			->with('/asd/foo')
+			->will($this->returnValue('foo'));
 
 		$root->expects($this->once())
 			->method('getMount')
@@ -741,8 +782,9 @@ class File extends \PHPUnit_Framework_TestCase {
 			->method('getStorage')
 			->will($this->returnValue($storage));
 		$mount->expects($this->once())
-			->method('getMountPoint')
-			->will($this->returnValue('/bar/'));
+			->method('getInternalPath')
+			->with('/bar/asd')
+			->will($this->returnValue('asd'));
 
 		$root->expects($this->once())
 			->method('getMount')
@@ -769,12 +811,15 @@ class File extends \PHPUnit_Framework_TestCase {
 			->with('');
 
 		$node = new \OC\Files\Node\File($root, $storage, 'foo', '/bar/foo', array('fileid' => 1, 'mimetype' => 'text/plain'));
-		$parentNode = new \OC\Files\Node\Folder($root, $storage, 'foo', '/bar', array('fileid' => 2, 'mimetype' => 'httpd/directory', 'permissions' => \OCP\PERMISSION_CREATE));
+		$parentNode = new \OC\Files\Node\Folder($root, $storage, 'bar', '/bar', array('fileid' => 2, 'mimetype' => 'httpd/directory', 'permissions' => \OCP\PERMISSION_CREATE));
+		$rootNode = new \OC\Files\Node\Folder($root, $storage, '', '/', array('fileid' => 3, 'mimetype' => 'httpd/directory', 'permissions' => \OCP\PERMISSION_CREATE));
 
-		$root->expects($this->once())
+		$root->expects($this->any())
 			->method('get')
-			->with('/bar')
-			->will($this->returnValue($parentNode));
+			->will($this->returnValueMap(array(
+				array('/bar', $parentNode),
+				array('/', $rootNode)
+			)));
 
 		$target = $node->move('/bar/asd');
 		$this->assertInstanceOf('\OC\Files\Node\File', $target);
@@ -887,8 +932,9 @@ class File extends \PHPUnit_Framework_TestCase {
 			->method('getStorage')
 			->will($this->returnValue($storage2));
 		$mount->expects($this->once())
-			->method('getMountPoint')
-			->will($this->returnValue('/asd/'));
+			->method('getInternalPath')
+			->with('/asd/foo')
+			->will($this->returnValue('foo'));
 
 		$root->expects($this->once())
 			->method('getMount')
@@ -925,11 +971,13 @@ class File extends \PHPUnit_Framework_TestCase {
 
 		$node = new \OC\Files\Node\File($root, $storage1, 'foo', '/bar/foo', array('fileid' => 1, 'mimetype' => 'text/plain', 'permissions' => \OCP\PERMISSION_ALL));
 		$parentNode = new \OC\Files\Node\Folder($root, $storage2, '', '/asd', array('fileid' => 2, 'mimetype' => 'httpd/directory', 'permissions' => \OCP\PERMISSION_CREATE));
-		$targetNode = new \OC\Files\Node\File($root, $storage2, 'foo', '/bar/asd', array('fileid' => 3, 'mimetype' => 'text/plain'));
+		$targetNode = new \OC\Files\Node\File($root, $storage2, 'foo', '/asd/foo', array('fileid' => 3, 'mimetype' => 'text/plain'));
+		$rootNode = new \OC\Files\Node\Folder($root, $storage2, '', '/', array('fileid' => 2, 'mimetype' => 'httpd/directory', 'permissions' => \OCP\PERMISSION_CREATE));
 
-		$root->expects($this->exactly(2))
+		$root->expects($this->any())
 			->method('get')
 			->will($this->returnValueMap(array(
+				array('/', $rootNode),
 				array('/asd', $parentNode),
 				array('/asd/foo', $targetNode)
 			)));
@@ -952,6 +1000,21 @@ class File extends \PHPUnit_Framework_TestCase {
 		 * @var \OC\Files\Storage\Storage | \PHPUnit_Framework_MockObject_MockObject $storage
 		 */
 		$storage = $this->getMock('\OC\Files\Storage\Storage');
+
+		$userFolder = $this->getMock('\OC\Files\Node\Folder', array(), array(), '', false);
+
+		$root->expects($this->any())
+			->method('getUser')
+			->will($this->returnValue($this->user));
+
+		$root->expects($this->any())
+			->method('getUserFolder')
+			->will($this->returnValue($userFolder));
+
+		$userFolder->expects($this->any())
+			->method('getRelativePath')
+			->with('/bar/foo')
+			->will($this->returnValue('foo'));
 
 		$scanner = $this->getMockBuilder('\OC\Files\Cache\Scanner')
 			->disableOriginalConstructor()

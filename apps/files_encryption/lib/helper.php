@@ -69,6 +69,7 @@ class Helper {
 	public static function registerAppHooks() {
 
 		\OCP\Util::connectHook('OC_App', 'pre_disable', 'OCA\Encryption\Hooks', 'preDisable');
+		\OCP\Util::connectHook('OC_App', 'post_disable', 'OCA\Encryption\Hooks', 'postEnable');
 	}
 
 	/**
@@ -156,6 +157,49 @@ class Helper {
 		return $return;
 	}
 
+	/**
+	 * @brief Check if a path is a .part file
+	 * @param string $path Path that may identify a .part file
+	 * @return bool
+	 */
+	public static function isPartialFilePath($path) {
+
+		$extension = pathinfo($path, PATHINFO_EXTENSION);
+		if ( $extension === 'part' || $extension === 'etmp') {
+			return true;
+		} else {
+			return false;
+		}
+
+	}
+
+
+	/**
+	 * @brief Remove .path extension from a file path
+	 * @param string $path Path that may identify a .part file
+	 * @return string File path without .part extension
+	 * @note this is needed for reusing keys
+	 */
+	public static function stripPartialFileExtension($path) {
+		$extension = pathinfo($path, PATHINFO_EXTENSION);
+
+		if ( $extension === 'part' || $extension === 'etmp') {
+
+			$newLength = strlen($path) - 5; // 5 = strlen(".part") = strlen(".etmp")
+			$fPath = substr($path, 0, $newLength);
+
+			// if path also contains a transaction id, we remove it too
+			$extension = pathinfo($fPath, PATHINFO_EXTENSION);
+			if(substr($extension, 0, 12) === 'ocTransferId') { // 12 = strlen("ocTransferId")
+				$newLength = strlen($fPath) - strlen($extension) -1;
+				$fPath = substr($fPath, 0, $newLength);
+			}
+			return $fPath;
+
+		} else {
+			return $path;
+		}
+	}
 
 	/**
 	 * @brief disable recovery
@@ -199,6 +243,12 @@ class Helper {
 	public static function stripUserFilesPath($path) {
 		$trimmed = ltrim($path, '/');
 		$split = explode('/', $trimmed);
+
+		// it is not a file relative to data/user/files
+		if (count($split) < 3 || $split[1] !== 'files') {
+			return false;
+		}
+
 		$sliced = array_slice($split, 2);
 		$relPath = implode('/', $sliced);
 
@@ -206,16 +256,52 @@ class Helper {
 	}
 
 	/**
+	 * @brief get path to the correspondig file in data/user/files
+	 * @param string $path path to a version or a file in the trash
+	 * @return string path to correspondig file relative to data/user/files
+	 */
+	public static function getPathToRealFile($path) {
+		$trimmed = ltrim($path, '/');
+		$split = explode('/', $trimmed);
+
+		if (count($split) < 3 || $split[1] !== "files_versions") {
+			return false;
+		}
+
+		$sliced = array_slice($split, 2);
+		$realPath = implode('/', $sliced);
+		//remove the last .v
+		$realPath = substr($realPath, 0, strrpos($realPath, '.v'));
+
+		return $realPath;
+	}
+
+	/**
 	 * @brief redirect to a error page
 	 */
-	public static function redirectToErrorPage() {
+	public static function redirectToErrorPage($session, $errorCode = null) {
+
+		if ($errorCode === null) {
+			$init = $session->getInitialized();
+			switch ($init) {
+				case \OCA\Encryption\Session::INIT_EXECUTED:
+					$errorCode = \OCA\Encryption\Crypt::ENCRYPTION_PRIVATE_KEY_NOT_VALID_ERROR;
+					break;
+				case \OCA\Encryption\Session::NOT_INITIALIZED:
+					$errorCode = \OCA\Encryption\Crypt::ENCRYPTION_NOT_INITIALIZED_ERROR;
+					break;
+				default:
+					$errorCode = \OCA\Encryption\Crypt::ENCRYPTION_UNKNOWN_ERROR;
+			}
+		}
+
 		$location = \OC_Helper::linkToAbsolute('apps/files_encryption/files', 'error.php');
 		$post = 0;
 		if(count($_POST) > 0) {
 			$post = 1;
-		}
-		header('Location: ' . $location . '?p=' . $post);
-		exit();
+			}
+			header('Location: ' . $location . '?p=' . $post . '&errorCode=' . $errorCode);
+			exit();
 	}
 
 	/**
@@ -232,13 +318,13 @@ class Helper {
 
 		return (bool) $result;
 	}
-	
+
 	/**
 	 * check some common errors if the server isn't configured properly for encryption
 	 * @return bool true if configuration seems to be OK
 	 */
 	public static function checkConfiguration() {
-		if(openssl_pkey_new(array('private_key_bits' => 4096))) {
+		if(self::getOpenSSLPkey()) {
 			return true;
 		} else {
 			while ($msg = openssl_error_string()) {
@@ -246,6 +332,26 @@ class Helper {
 			}
 			return false;
 		}
+	}
+
+	/**
+	 * Create an openssl pkey with config-supplied settings
+	 * WARNING: This initializes a new private keypair, which is computationally expensive
+	 * @return resource The pkey resource created
+	 */
+	public static function getOpenSSLPkey() {
+		return openssl_pkey_new(self::getOpenSSLConfig());
+	}
+
+	/**
+	 * Return an array of OpenSSL config options, default + config
+	 * Used for multiple OpenSSL functions
+	 * @return array The combined defaults and config settings
+	 */
+	public static function getOpenSSLConfig() {
+		$config = array('private_key_bits' => 4096);
+		$config = array_merge(\OCP\Config::getSystemValue('openssl', array()), $config);
+		return $config;
 	}
 
 	/**

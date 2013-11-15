@@ -14,6 +14,8 @@ class TemporaryNoTouch extends \OC\Files\Storage\Temporary {
 }
 
 class View extends \PHPUnit_Framework_TestCase {
+	private $user;
+
 	/**
 	 * @var \OC\Files\Storage\Storage[] $storages;
 	 */
@@ -25,8 +27,15 @@ class View extends \PHPUnit_Framework_TestCase {
 
 		//login
 		\OC_User::createUser('test', 'test');
-		$this->user=\OC_User::getUser();
+		$this->user = \OC_User::getUser();
 		\OC_User::setUserId('test');
+
+		\OC_Util::tearDownFS();
+		$storage = new \OC\Files\Storage\Temporary(array());
+		$storage->mkdir($this->user);
+		$storage->mkdir($this->user . '/files');
+		\OC\Files\Filesystem::mount($storage, null, '/');
+		\OC\Files\Filesystem::init($this->user, '/' . $this->user . '/files');
 
 		\OC\Files\Filesystem::clearMounts();
 	}
@@ -40,6 +49,7 @@ class View extends \PHPUnit_Framework_TestCase {
 			$permissionsCache->removeMultiple($ids, \OC_User::getUser());
 			$cache->clear();
 		}
+		\OC_Util::tearDownFS();
 	}
 
 	/**
@@ -326,7 +336,50 @@ class View extends \PHPUnit_Framework_TestCase {
 	}
 
 	/**
+	 * @medium
+	 */
+	function testViewHooks() {
+		$storage1 = $this->getTestStorage();
+		$storage2 = $this->getTestStorage();
+		$defaultRoot = \OC\Files\Filesystem::getRoot();
+		\OC\Files\Filesystem::mount($storage1, array(), '/');
+		\OC\Files\Filesystem::mount($storage2, array(), $defaultRoot . '/substorage');
+		\OC_Hook::connect('OC_Filesystem', 'post_write', $this, 'dummyHook');
+
+		$rootView = new \OC\Files\View('');
+		$subView = new \OC\Files\View($defaultRoot . '/substorage');
+		$this->hookPath = null;
+
+		$rootView->file_put_contents('/foo.txt', 'asd');
+		$this->assertNull($this->hookPath);
+
+		$subView->file_put_contents('/foo.txt', 'asd');
+		$this->assertNotNull($this->hookPath);
+		$this->assertEquals('/substorage/foo.txt', $this->hookPath);
+	}
+
+	private $hookPath;
+
+	function dummyHook($params) {
+		$this->hookPath = $params['path'];
+	}
+
+	public function testSearchNotOutsideView() {
+		$storage1 = $this->getTestStorage();
+		\OC\Files\Filesystem::mount($storage1, array(), '/');
+		$storage1->rename('folder', 'foo');
+		$scanner = $storage1->getScanner();
+		$scanner->scan('');
+
+		$view = new \OC\Files\View('/foo');
+
+		$result = $view->search('.txt');
+		$this->assertCount(1, $result);
+	}
+
+	/**
 	 * @param bool $scan
+	 * @param string $class
 	 * @return \OC\Files\Storage\Storage
 	 */
 	private function getTestStorage($scan = true, $class = '\OC\Files\Storage\Temporary') {
@@ -347,5 +400,82 @@ class View extends \PHPUnit_Framework_TestCase {
 		}
 		$this->storages[] = $storage;
 		return $storage;
+	}
+
+	private $createHookPath;
+
+	function dummyCreateHook($params) {
+		$this->createHookPath = $params['path'];
+	}
+
+	/**
+	 * @medium
+	 */
+	function testViewHooksIfRootStartsTheSame() {
+		$storage1 = $this->getTestStorage();
+		$storage2 = $this->getTestStorage();
+		$defaultRoot = \OC\Files\Filesystem::getRoot();
+		\OC\Files\Filesystem::mount($storage1, array(), '/');
+		\OC\Files\Filesystem::mount($storage2, array(), $defaultRoot . '_substorage');
+		\OC_Hook::connect('OC_Filesystem', 'post_write', $this, 'dummyHook');
+
+		$subView = new \OC\Files\View($defaultRoot . '_substorage');
+		$this->hookPath = null;
+
+		$subView->file_put_contents('/foo.txt', 'asd');
+		$this->assertNull($this->hookPath);
+	}
+
+	public function testEditNoCreateHook() {
+		$storage1 = $this->getTestStorage();
+		$storage2 = $this->getTestStorage();
+		$defaultRoot = \OC\Files\Filesystem::getRoot();
+		\OC\Files\Filesystem::mount($storage1, array(), '/');
+		\OC\Files\Filesystem::mount($storage2, array(), $defaultRoot);
+		\OC_Hook::connect('OC_Filesystem', 'post_create', $this, 'dummyCreateHook');
+
+		$view = new \OC\Files\View($defaultRoot);
+		$this->hookPath = null;
+
+		$view->file_put_contents('/asd.txt', 'foo');
+		$this->assertEquals('/asd.txt', $this->createHookPath);
+		$this->createHookPath = null;
+
+		$view->file_put_contents('/asd.txt', 'foo');
+		$this->assertNull($this->createHookPath);
+	}
+
+	/**
+	 * @dataProvider resolvePathTestProvider
+	 */
+	public function testResolvePath($expected, $pathToTest) {
+		$storage1 = $this->getTestStorage();
+		\OC\Files\Filesystem::mount($storage1, array(), '/');
+
+		$view = new \OC\Files\View('');
+
+		$result = $view->resolvePath($pathToTest);
+		$this->assertEquals($expected, $result[1]);
+
+		$exists = $view->file_exists($pathToTest);
+		$this->assertTrue($exists);
+
+		$exists = $view->file_exists($result[1]);
+		$this->assertTrue($exists);
+	}
+
+	function resolvePathTestProvider() {
+		return array(
+			array('foo.txt', 'foo.txt'),
+			array('foo.txt', '/foo.txt'),
+			array('folder', 'folder'),
+			array('folder', '/folder'),
+			array('folder', 'folder/'),
+			array('folder', '/folder/'),
+			array('folder/bar.txt', 'folder/bar.txt'),
+			array('folder/bar.txt', '/folder/bar.txt'),
+			array('', ''),
+			array('', '/'),
+		);
 	}
 }

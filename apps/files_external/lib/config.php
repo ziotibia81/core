@@ -84,14 +84,22 @@ class OC_Mount_Config {
 				'token' => '#token'),
 				'custom' => 'google');
 
-		$backends['\OC\Files\Storage\SWIFT']=array(
-			'backend' => 'OpenStack Swift',
-			'configuration' => array(
-				'host' => 'URL',
-				'user' => 'Username',
-				'token' => '*Token',
-				'root' => '&Root',
-				'secure' => '!Secure ftps://'));
+		if(OC_Mount_Config::checkcurl()) {
+			$backends['\OC\Files\Storage\Swift'] = array(
+				'backend' => 'OpenStack Object Storage',
+				'configuration' => array(
+					'user' => 'Username (required)',
+					'bucket' => 'Bucket (required)',
+					'region' => '&Region (optional for OpenStack Object Storage)',
+					'key' => '*API Key (required for Rackspace Cloud Files)',
+					'tenant' => '&Tenantname (required for OpenStack Object Storage)',
+					'password' => '*Password (required for OpenStack Object Storage)',
+					'service_name' => '&Service Name (required for OpenStack Object Storage)',
+					'url' => '&URL of identity endpoint (required for OpenStack Object Storage)',
+					'timeout' => '&Timeout of HTTP requests in seconds (optional)',
+				)
+			);
+                }
 
 		if (!OC_Util::runningOnWindows()) {
 			if (OC_Mount_Config::checksmbclient()) {
@@ -378,7 +386,7 @@ class OC_Mount_Config {
 		}
 		$result = array();
 		$handle = opendir($path);
-		if ( ! $handle) {
+		if(!is_resource($handle)) {
 			return array();
 		}
 		while (false !== ($file = readdir($handle))) {
@@ -418,9 +426,9 @@ class OC_Mount_Config {
 	public static function checksmbclient() {
 		if(function_exists('shell_exec')) {
 			$output=shell_exec('which smbclient');
-			return (empty($output)?false:true);
+			return !empty($output);
 		}else{
-			return(false);
+			return false;
 		}
 	}
 
@@ -429,9 +437,9 @@ class OC_Mount_Config {
 	 */
 	public static function checkphpftp() {
 		if(function_exists('ftp_login')) {
-			return(true);
+			return true;
 		}else{
-			return(false);
+			return false;
 		}
 	}
 
@@ -439,7 +447,7 @@ class OC_Mount_Config {
 	 * check if curl is installed
 	 */
 	public static function checkcurl() {
-		return (function_exists('curl_init'));
+		return function_exists('curl_init');
 	}
 
 	/**
@@ -460,6 +468,6 @@ class OC_Mount_Config {
 			$txt.=$l->t('<b>Warning:</b> The Curl support in PHP is not enabled or installed. Mounting of ownCloud / WebDAV or GoogleDrive is not possible. Please ask your system administrator to install it.').'<br />';
 		}
 
-		return($txt);
+		return $txt;
 	}
 }

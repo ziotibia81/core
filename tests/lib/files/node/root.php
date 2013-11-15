@@ -25,7 +25,11 @@ class Root extends \PHPUnit_Framework_TestCase {
 		 * @var \OC\Files\Storage\Storage $storage
 		 */
 		$storage = $this->getMock('\OC\Files\Storage\Storage');
-		$root = new \OC\Files\Node\Root($manager, $this->user);
+		/**
+		 * @var \OC\User\Manager $userManager
+		 */
+		$userManager = $this->getMock('\OC\User\Manager');
+		$root = new \OC\Files\Node\Root($manager, $this->user, $userManager);
 
 		$root->mount($storage, '');
 		$mount = $manager->get('/');
@@ -39,7 +43,11 @@ class Root extends \PHPUnit_Framework_TestCase {
 		 * @var \OC\Files\Storage\Storage $storage
 		 */
 		$storage = $this->getMock('\OC\Files\Storage\Storage');
-		$root = new \OC\Files\Node\Root($manager, $this->user);
+		/**
+		 * @var \OC\User\Manager $userManager
+		 */
+		$userManager = $this->getMock('\OC\User\Manager');
+		$root = new \OC\Files\Node\Root($manager, $this->user, $userManager);
 
 		$cache = $this->getMockBuilder('\OC\Files\Cache\Cache')
 			->disableOriginalConstructor()
@@ -78,7 +86,11 @@ class Root extends \PHPUnit_Framework_TestCase {
 		 * @var \OC\Files\Storage\Storage $storage
 		 */
 		$storage = $this->getMock('\OC\Files\Storage\Storage');
-		$root = new \OC\Files\Node\Root($manager, $this->user);
+		/**
+		 * @var \OC\User\Manager $userManager
+		 */
+		$userManager = $this->getMock('\OC\User\Manager');
+		$root = new \OC\Files\Node\Root($manager, $this->user, $userManager);
 
 		$cache = $this->getMockBuilder('\OC\Files\Cache\Cache')
 			->disableOriginalConstructor()
@@ -110,7 +122,11 @@ class Root extends \PHPUnit_Framework_TestCase {
 		/**
 		 * @var \OC\Files\Storage\Storage $storage
 		 */
-		$root = new \OC\Files\Node\Root($manager, $this->user);
+		/**
+		 * @var \OC\User\Manager $userManager
+		 */
+		$userManager = $this->getMock('\OC\User\Manager');
+		$root = new \OC\Files\Node\Root($manager, $this->user, $userManager);
 
 		$root->get('/../foo');
 	}
@@ -123,7 +139,11 @@ class Root extends \PHPUnit_Framework_TestCase {
 		/**
 		 * @var \OC\Files\Storage\Storage $storage
 		 */
-		$root = new \OC\Files\Node\Root($manager, $this->user);
+		/**
+		 * @var \OC\User\Manager $userManager
+		 */
+		$userManager = $this->getMock('\OC\User\Manager');
+		$root = new \OC\Files\Node\Root($manager, $this->user, $userManager);
 
 		$root->get('/bar/foo');
 	}

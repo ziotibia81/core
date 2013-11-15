@@ -30,7 +30,11 @@ class IntegrationTests extends \PHPUnit_Framework_TestCase {
 	public function setUp() {
 		$manager = new Manager();
 		$user = new User('', new \OC_User_Dummy);
-		$this->root = new Root($manager, $user);
+		/**
+		 * @var \OC\User\Manager $userManager
+		 */
+		$userManager = $this->getMock('\OC\User\Manager');
+		$this->root = new Root($manager, $user, $userManager);
 		$storage = new Temporary(array());
 		$subStorage = new Temporary(array());
 		$this->storages[] = $storage;
@@ -51,6 +55,7 @@ class IntegrationTests extends \PHPUnit_Framework_TestCase {
 		$this->assertTrue($this->root->nodeExists('/foo.txt'));
 		$id = $file->getId();
 		$this->assertInstanceOf('\OC\Files\Node\File', $file);
+		$file->touch(time() - 100);
 		$etag = $file->getEtag();
 		$file->putContent('qwerty');
 		$this->assertNotEquals($etag, $file->getEtag());

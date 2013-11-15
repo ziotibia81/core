@@ -1,11 +1,15 @@
 <?php
 $TRANSLATIONS = array(
+"App \"%s\" can't be installed because it is not compatible with this version of ownCloud." => "Owncloud yazılımının bu sürümü ile uyumlu  olmadığı için \"%s\" uygulaması kurulamaz.",
+"No app name specified" => "Uygulama adı belirtimedli",
 "Help" => "Yardım",
 "Personal" => "Kişisel",
 "Settings" => "Ayarlar",
 "Users" => "Kullanıcılar",
 "Admin" => "Yönetici",
 "Failed to upgrade \"%s\"." => "\"%s\" yükseltme başarısız oldu.",
+"Unknown filetype" => "Bilinmeyen dosya türü",
+"Invalid image" => "Geçersiz resim",
 "web services under your control" => "Bilgileriniz güvenli ve şifreli",
 "cannot open \"%s\"" => "\"%s\" açılamıyor",
 "ZIP download is turned off." => "ZIP indirmeleri kapatılmıştır.",
@@ -13,7 +17,18 @@ $TRANSLATIONS = array(
 "Back to Files" => "Dosyalara dön",
 "Selected files too large to generate zip file." => "Seçilen dosyalar bir zip dosyası oluşturmak için fazla büyüktür.",
 "Download the files in smaller chunks, seperately or kindly ask your administrator." => "Dosyaları ayrı ayrı, küçük parçalar halinde indirin ya da yöneticinizden yardım isteyin. ",
-"couldn't be determined" => "tespit edilemedi",
+"No source specified when installing app" => "Uygulama kurulurken bir kaynak belirtilmedi",
+"No href specified when installing app from http" => "Uygulama kuruluyorken http'de href belirtilmedi.",
+"No path specified when installing app from local file" => "Uygulama yerel dosyadan kuruluyorken dosya yolu belirtilmedi",
+"Archives of type %s are not supported" => "%s arşiv tipi desteklenmiyor",
+"Failed to open archive when installing app" => "Uygulama kuruluyorken arşiv dosyası açılamadı",
+"App does not provide an info.xml file" => "Uygulama info.xml dosyası sağlamıyor",
+"App can't be installed because of not allowed code in the App" => "Uygulamada izin verilmeyeden kodlar olduğu için kurulamıyor.",
+"App can't be installed because it is not compatible with this version of ownCloud" => "Owncloud versiyonunuz ile uyumsuz olduğu için uygulama kurulamıyor.",
+"App can't be installed because it contains the <shipped>true</shipped> tag which is not allowed for non shipped apps" => "Uygulama kurulamıyor. Çünkü  \"non shipped\" uygulamalar için <shipped>true</shipped> tag içermektedir.",
+"App can't be installed because the version in info.xml/version is not the same as the version reported from the app store" => "Uygulama kurulamıyor çünkü info.xml/version ile uygulama marketde belirtilen sürüm aynı değil.",
+"App directory already exists" => "App dizini zaten mevcut",
+"Can't create app folder. Please fix permissions. %s" => "app dizini oluşturulamıyor. Lütfen izinleri düzeltin. %s",
 "Application is not enabled" => "Uygulama etkinleştirilmedi",
 "Authentication error" => "Kimlik doğrulama hatası",
 "Token expired. Please reload page." => "Jetonun süresi geçti. Lütfen sayfayı yenileyin.",
@@ -40,6 +55,7 @@ $TRANSLATIONS = array(
 "Set an admin password." => "Parola yonetici birlemek. ",
 "Your web server is not yet properly setup to allow files synchronization because the WebDAV interface seems to be broken." => "Web sunucunuz dosya transferi için düzgün bir şekilde yapılandırılmamış. WevDAV arabirimini sorunlu gözüküyor.",
 "Please double check the <a href='%s'>installation guides</a>." => "Lütfen <a href='%s'>kurulum kılavuzlarını</a> iki kez kontrol edin.",
+"Could not find category \"%s\"" => "\"%s\" kategorisi bulunamadı",
 "seconds ago" => "saniye önce",
 "_%n minute ago_::_%n minutes ago_" => array("","%n dakika önce"),
 "_%n hour ago_::_%n hours ago_" => array("","%n saat önce"),
@@ -50,7 +66,6 @@ $TRANSLATIONS = array(
 "_%n month ago_::_%n months ago_" => array("","%n ay önce"),
 "last year" => "geçen yıl",
 "years ago" => "yıl önce",
-"Caused by:" => "Neden olan:",
-"Could not find category \"%s\"" => "\"%s\" kategorisi bulunamadı"
+"Caused by:" => "Neden olan:"
 );
 $PLURAL_FORMS = "nplurals=2; plural=(n > 1);";
