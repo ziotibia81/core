@@ -47,8 +47,10 @@ class Proxy extends \OC_FileProxy {
 	 */
 	private static function shouldEncrypt($path) {
 
+		$userId = Helper::getUser($path);
+
 		if (\OCP\App::isEnabled('files_encryption') === false || Crypt::mode() !== 'server' ||
-				strpos($path, '/' . \OCP\User::getUser() . '/files') !== 0) {
+				strpos($path, '/' . $userId . '/files') !== 0) {
 			return false;
 		}
 
@@ -90,7 +92,13 @@ class Proxy extends \OC_FileProxy {
 					return true;
 				}
 
-				$handle = fopen('crypt://' . $path . '.etmp', 'w');
+				// create random cache folder
+				$cacheFolder = rand();
+				$path_slices = explode('/', \OC_Filesystem::normalizePath($path));
+				$path_slices[2] = "cache/".$cacheFolder;
+				$tmpPath = implode('/', $path_slices);
+
+				$handle = fopen('crypt://' . $tmpPath, 'w');
 				if (is_resource($handle)) {
 
 					// write data to stream
@@ -104,10 +112,10 @@ class Proxy extends \OC_FileProxy {
 					\OC_FileProxy::$enabled = false;
 
 					// get encrypted content
-					$data = $view->file_get_contents($path . '.etmp');
+					$data = $view->file_get_contents($tmpPath);
 
 					// remove our temp file
-					$view->unlink($path . '.etmp');
+					$view->deleteAll('/' . \OCP\User::getUser() . '/cache/' . $cacheFolder);
 
 					// re-enable proxy - our work is done
 					\OC_FileProxy::$enabled = $proxyStatus;
@@ -195,7 +203,7 @@ class Proxy extends \OC_FileProxy {
 		list($owner, $ownerPath) = $util->getUidAndFilename($relativePath);
 
 		// Delete keyfile & shareKey so it isn't orphaned
-		if (!Keymanager::deleteFileKey($view, $owner, $ownerPath)) {
+		if (!Keymanager::deleteFileKey($view, $ownerPath)) {
 			\OCP\Util::writeLog('Encryption library',
 				'Keyfile or shareKey could not be deleted for file "' . $ownerPath . '"', \OCP\Util::ERROR);
 		}
@@ -238,9 +246,6 @@ class Proxy extends \OC_FileProxy {
 		// split the path parts
 		$pathParts = explode('/', $path);
 
-		// get relative path
-		$relativePath = \OCA\Encryption\Helper::stripUserFilesPath($path);
-
 		// FIXME: handling for /userId/cache used by webdav for chunking. The cache chunks are NOT encrypted
 		if (isset($pathParts[2]) && $pathParts[2] === 'cache') {
 			return $result;
@@ -254,7 +259,8 @@ class Proxy extends \OC_FileProxy {
 
 		$view = new \OC_FilesystemView('');
 
-		$util = new Util($view, \OCP\USER::getUser());
+		$userId = Helper::getUser($path);
+		$util = new Util($view, $userId);
 
 		// If file is already encrypted, decrypt using crypto protocol
 		if (
@@ -317,7 +323,7 @@ class Proxy extends \OC_FileProxy {
 
 		$view = new \OC_FilesystemView('/');
 
-		$userId = \OCP\User::getUser();
+		$userId = Helper::getUser($path);
 		$util = new Util($view, $userId);
 
 		// if encryption is no longer enabled or if the files aren't migrated yet
@@ -343,7 +349,10 @@ class Proxy extends \OC_FileProxy {
 		$fileInfo = false;
 		// get file info from database/cache if not .part file
 		if (!Helper::isPartialFilePath($path)) {
+			$proxyState = \OC_FileProxy::$enabled;
+			\OC_FileProxy::$enabled = false;
 			$fileInfo = $view->getFileInfo($path);
+			\OC_FileProxy::$enabled = $proxyState;
 		}
 
 		// if file is encrypted return real file size
@@ -392,7 +401,7 @@ class Proxy extends \OC_FileProxy {
 
 		$view = new \OC_FilesystemView('/');
 		$session = new \OCA\Encryption\Session($view);
-		$userId = \OCP\User::getUser();
+		$userId = Helper::getUser($path);
 		$util = new Util($view, $userId);
 
 		// split the path parts

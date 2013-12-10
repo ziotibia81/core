@@ -26,7 +26,7 @@ class Filesystem extends \PHPUnit_Framework_TestCase {
 	/**
 	 * @var array tmpDirs
 	 */
-	private $tmpDirs=array();
+	private $tmpDirs = array();
 
 	/**
 	 * @return array
@@ -51,42 +51,106 @@ class Filesystem extends \PHPUnit_Framework_TestCase {
 	}
 
 	public function testMount() {
-		\OC\Files\Filesystem::mount('\OC\Files\Storage\Local',self::getStorageData(),'/');
-		$this->assertEquals('/',\OC\Files\Filesystem::getMountPoint('/'));
-		$this->assertEquals('/',\OC\Files\Filesystem::getMountPoint('/some/folder'));
-		list( , $internalPath)=\OC\Files\Filesystem::resolvePath('/');
-		$this->assertEquals('',$internalPath);
-		list( , $internalPath)=\OC\Files\Filesystem::resolvePath('/some/folder');
-		$this->assertEquals('some/folder',$internalPath);
+		\OC\Files\Filesystem::mount('\OC\Files\Storage\Local', self::getStorageData(), '/');
+		$this->assertEquals('/', \OC\Files\Filesystem::getMountPoint('/'));
+		$this->assertEquals('/', \OC\Files\Filesystem::getMountPoint('/some/folder'));
+		list(, $internalPath) = \OC\Files\Filesystem::resolvePath('/');
+		$this->assertEquals('', $internalPath);
+		list(, $internalPath) = \OC\Files\Filesystem::resolvePath('/some/folder');
+		$this->assertEquals('some/folder', $internalPath);
 
-		\OC\Files\Filesystem::mount('\OC\Files\Storage\Local',self::getStorageData(),'/some');
-		$this->assertEquals('/',\OC\Files\Filesystem::getMountPoint('/'));
-		$this->assertEquals('/some/',\OC\Files\Filesystem::getMountPoint('/some/folder'));
-		$this->assertEquals('/some/',\OC\Files\Filesystem::getMountPoint('/some/'));
-		$this->assertEquals('/some/',\OC\Files\Filesystem::getMountPoint('/some'));
-		list( , $internalPath)=\OC\Files\Filesystem::resolvePath('/some/folder');
-		$this->assertEquals('folder',$internalPath);
+		\OC\Files\Filesystem::mount('\OC\Files\Storage\Local', self::getStorageData(), '/some');
+		$this->assertEquals('/', \OC\Files\Filesystem::getMountPoint('/'));
+		$this->assertEquals('/some/', \OC\Files\Filesystem::getMountPoint('/some/folder'));
+		$this->assertEquals('/some/', \OC\Files\Filesystem::getMountPoint('/some/'));
+		$this->assertEquals('/some/', \OC\Files\Filesystem::getMountPoint('/some'));
+		list(, $internalPath) = \OC\Files\Filesystem::resolvePath('/some/folder');
+		$this->assertEquals('folder', $internalPath);
 	}
 
 	public function testNormalize() {
+		$this->assertEquals('/', \OC\Files\Filesystem::normalizePath(''));
+		$this->assertEquals('/', \OC\Files\Filesystem::normalizePath('/'));
+		$this->assertEquals('/', \OC\Files\Filesystem::normalizePath('/', false));
+		$this->assertEquals('/', \OC\Files\Filesystem::normalizePath('//'));
+		$this->assertEquals('/', \OC\Files\Filesystem::normalizePath('//', false));
 		$this->assertEquals('/path', \OC\Files\Filesystem::normalizePath('/path/'));
 		$this->assertEquals('/path/', \OC\Files\Filesystem::normalizePath('/path/', false));
 		$this->assertEquals('/path', \OC\Files\Filesystem::normalizePath('path'));
-		$this->assertEquals('/path', \OC\Files\Filesystem::normalizePath('\path'));
 		$this->assertEquals('/foo/bar', \OC\Files\Filesystem::normalizePath('/foo//bar/'));
+		$this->assertEquals('/foo/bar/', \OC\Files\Filesystem::normalizePath('/foo//bar/', false));
 		$this->assertEquals('/foo/bar', \OC\Files\Filesystem::normalizePath('/foo////bar'));
+		$this->assertEquals('/foo/bar', \OC\Files\Filesystem::normalizePath('/foo/////bar'));
+		$this->assertEquals('/foo/bar', \OC\Files\Filesystem::normalizePath('/foo/bar/.'));
+		$this->assertEquals('/foo/bar', \OC\Files\Filesystem::normalizePath('/foo/bar/./'));
+		$this->assertEquals('/foo/bar/', \OC\Files\Filesystem::normalizePath('/foo/bar/./', false));
+		$this->assertEquals('/foo/bar', \OC\Files\Filesystem::normalizePath('/foo/bar/./.'));
+		$this->assertEquals('/foo/bar', \OC\Files\Filesystem::normalizePath('/foo/bar/././'));
+		$this->assertEquals('/foo/bar/', \OC\Files\Filesystem::normalizePath('/foo/bar/././', false));
+		$this->assertEquals('/foo/bar', \OC\Files\Filesystem::normalizePath('/foo/./bar/'));
+		$this->assertEquals('/foo/bar/', \OC\Files\Filesystem::normalizePath('/foo/./bar/', false));
+		$this->assertEquals('/foo/.bar', \OC\Files\Filesystem::normalizePath('/foo/.bar/'));
+		$this->assertEquals('/foo/.bar/', \OC\Files\Filesystem::normalizePath('/foo/.bar/', false));
+		$this->assertEquals('/foo/.bar/tee', \OC\Files\Filesystem::normalizePath('/foo/.bar/tee'));
+
+		// normalize does not resolve '..' (by design)
+		$this->assertEquals('/foo/..', \OC\Files\Filesystem::normalizePath('/foo/../'));
+
 		if (class_exists('Patchwork\PHP\Shim\Normalizer')) {
 			$this->assertEquals("/foo/bar\xC3\xBC", \OC\Files\Filesystem::normalizePath("/foo/baru\xCC\x88"));
 		}
 	}
 
+	public function testNormalizeWindowsPaths() {
+		$this->assertEquals('/', \OC\Files\Filesystem::normalizePath(''));
+		$this->assertEquals('/', \OC\Files\Filesystem::normalizePath('\\'));
+		$this->assertEquals('/', \OC\Files\Filesystem::normalizePath('\\', false));
+		$this->assertEquals('/', \OC\Files\Filesystem::normalizePath('\\\\'));
+		$this->assertEquals('/', \OC\Files\Filesystem::normalizePath('\\\\', false));
+		$this->assertEquals('/path', \OC\Files\Filesystem::normalizePath('\\path'));
+		$this->assertEquals('/path', \OC\Files\Filesystem::normalizePath('\\path', false));
+		$this->assertEquals('/path', \OC\Files\Filesystem::normalizePath('\\path\\'));
+		$this->assertEquals('/path/', \OC\Files\Filesystem::normalizePath('\\path\\', false));
+		$this->assertEquals('/foo/bar', \OC\Files\Filesystem::normalizePath('\\foo\\\\bar\\'));
+		$this->assertEquals('/foo/bar/', \OC\Files\Filesystem::normalizePath('\\foo\\\\bar\\', false));
+		$this->assertEquals('/foo/bar', \OC\Files\Filesystem::normalizePath('\\foo\\\\\\\\bar'));
+		$this->assertEquals('/foo/bar', \OC\Files\Filesystem::normalizePath('\\foo\\\\\\\\\\bar'));
+		$this->assertEquals('/foo/bar', \OC\Files\Filesystem::normalizePath('\\foo\\bar\\.'));
+		$this->assertEquals('/foo/bar', \OC\Files\Filesystem::normalizePath('\\foo\\bar\\.\\'));
+		$this->assertEquals('/foo/bar/', \OC\Files\Filesystem::normalizePath('\\foo\\bar\\.\\', false));
+		$this->assertEquals('/foo/bar', \OC\Files\Filesystem::normalizePath('\\foo\\bar\\.\\.'));
+		$this->assertEquals('/foo/bar', \OC\Files\Filesystem::normalizePath('\\foo\\bar\\.\\.\\'));
+		$this->assertEquals('/foo/bar/', \OC\Files\Filesystem::normalizePath('\\foo\\bar\\.\\.\\', false));
+		$this->assertEquals('/foo/bar', \OC\Files\Filesystem::normalizePath('\\foo\\.\\bar\\'));
+		$this->assertEquals('/foo/bar/', \OC\Files\Filesystem::normalizePath('\\foo\\.\\bar\\', false));
+		$this->assertEquals('/foo/.bar', \OC\Files\Filesystem::normalizePath('\\foo\\.bar\\'));
+		$this->assertEquals('/foo/.bar/', \OC\Files\Filesystem::normalizePath('\\foo\\.bar\\', false));
+		$this->assertEquals('/foo/.bar/tee', \OC\Files\Filesystem::normalizePath('\\foo\\.bar\\tee'));
+
+		// normalize does not resolve '..' (by design)
+		$this->assertEquals('/foo/..', \OC\Files\Filesystem::normalizePath('\\foo\\..\\'));
+
+		if (class_exists('Patchwork\PHP\Shim\Normalizer')) {
+			$this->assertEquals("/foo/bar\xC3\xBC", \OC\Files\Filesystem::normalizePath("\\foo\\baru\xCC\x88"));
+		}
+	}
+
 	public function testHooks() {
+		if (\OC\Files\Filesystem::getView()) {
+			$user = \OC_User::getUser();
+		} else {
+			$user = uniqid();
+			\OC\Files\Filesystem::init($user, '/' . $user . '/files');
+		}
 		\OC_Hook::clear('OC_Filesystem');
 		\OC_Hook::connect('OC_Filesystem', 'post_write', $this, 'dummyHook');
 		\OC_Util::setupFS();
 
 		\OC\Files\Filesystem::mount('OC\Files\Storage\Temporary', array(), '/');
 
+		$rootView = new \OC\Files\View('');
+		$rootView->mkdir('/' . $user);
+		$rootView->mkdir('/' . $user . '/files');
 		$rootView=new \OC\Files\View('');
 		$rootView->mkdir('/test');
 		$rootView->mkdir('/test/files');
@@ -156,7 +220,7 @@ class Filesystem extends \PHPUnit_Framework_TestCase {
 		$homeMount = \OC\Files\Filesystem::getStorage('/' . $userId . '/');
 
 		$this->assertInstanceOf('\OC\Files\Storage\Home', $homeMount);
-		$this->assertEquals('local::' . $datadir. '/' . $userId . '/', $homeMount->getId());
+		$this->assertEquals('local::' . $datadir . '/' . $userId . '/', $homeMount->getId());
 
 		\OC_User::deleteUser($userId);
 		// delete storage entry

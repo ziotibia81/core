@@ -102,6 +102,7 @@ $TRANSLATIONS = array(
 "Edit tags" => "Muuda silte",
 "Error loading dialog template: {error}" => "Viga dialoogi malli laadimisel: {error}",
 "No tags selected for deletion." => "Kustutamiseks pole ühtegi silti valitud.",
+"Please reload the page." => "Palun laadi see uuesti.",
 "The update was unsuccessful. Please report this issue to the <a href=\"https://github.com/owncloud/core/issues\" target=\"_blank\">ownCloud community</a>." => "Uuendus ebaõnnestus. Palun teavita probleemidest  <a href=\"https://github.com/owncloud/core/issues\" target=\"_blank\">ownCloud kogukonda</a>.",
 "The update was successful. Redirecting you to ownCloud now." => "Uuendus oli edukas. Kohe suunatakse Sind ownCloudi.",
 "%s password reset" => "%s parooli lähtestus",
@@ -111,7 +112,7 @@ $TRANSLATIONS = array(
 "You will receive a link to reset your password via Email." => "Sinu parooli taastamise link saadetakse sulle e-postile.",
 "Username" => "Kasutajanimi",
 "Your files are encrypted. If you haven't enabled the recovery key, there will be no way to get your data back after your password is reset. If you are not sure what to do, please contact your administrator before you continue. Do you really want to continue?" => "Sinu failid on krüpteeritud. Kui sa pole taastamise võtit veel määranud, siis pole präast parooli taastamist mingit võimalust sinu andmeid tagasi saada. Kui sa pole kindel, mida teha, siis palun väta enne jätkamist ühendust oma administaatoriga. Oled sa kindel, et sa soovid jätkata?",
-"Yes, I really want to reset my password now" => "Jah, ma tõesti soovin oma parooli praegu nullida",
+"Yes, I really want to reset my password now" => "Jah, ma tõesti soovin oma parooli praegu taastada",
 "Reset" => "Algseaded",
 "Your password was reset" => "Sinu parool on taastatud",
 "To login page" => "Sisselogimise lehele",
@@ -132,7 +133,7 @@ $TRANSLATIONS = array(
 "Access forbidden" => "Ligipääs on keelatud",
 "Cloud not found" => "Pilve ei leitud",
 "Hey there,\n\njust letting you know that %s shared %s with you.\nView it: %s\n\n" => "Hei,\n\nlihtsalt annan sulle teada, et %s jagas sulle välja %s.\nVaata seda: %s\n\n",
-"The share will expire on %s.\n\n" => "Jagamine aegub %s.\n\n",
+"The share will expire on %s." => "Jagamine aegub %s.",
 "Cheers!" => "Terekest!",
 "Security Warning" => "Turvahoiatus",
 "Your PHP version is vulnerable to the NULL Byte attack (CVE-2006-7243)" => "Sinu PHP versioon on haavatav NULL Baidi (CVE-2006-7243) rünnakuga.",
@@ -165,11 +166,12 @@ $TRANSLATIONS = array(
 "Log in" => "Logi sisse",
 "Alternative Logins" => "Alternatiivsed sisselogimisviisid",
 "Hey there,<br><br>just letting you know that %s shared »%s« with you.<br><a href=\"%s\">View it!</a><br><br>" => "Hei,<br><br>lihtsalt annan sulle teada, et %s jagas sulle välja »%s«.<br><a href=\"%s\">Vaata seda!</a><br><br>",
-"The share will expire on %s.<br><br>" => "Jagamine aegub %s.<br><br>",
+"This ownCloud instance is currently in single user mode." => "See ownCloud on momendil seadistatud ühe kasutaja jaoks.",
+"This means only administrators can use the instance." => "See tähendab, et seda saavad kasutada ainult administraatorid.",
+"Contact your system administrator if this message persists or appeared unexpectedly." => "Kontakteeru oma süsteemihalduriga, kui see teade püsib või on tekkinud ootamatult.",
+"Thank you for your patience." => "Täname kannatlikkuse eest.",
 "Updating ownCloud to version %s, this may take a while." => "ownCloudi uuendamine versioonile %s. See võib veidi aega võtta.",
 "This ownCloud instance is currently being updated, which may take a while." => "Seda ownCloud instantsi hetkel uuendatakse, võib võtta veidi aega.",
-"Please reload this page after a short time to continue using ownCloud." => "Palun laadi see leht uuesti veidi aja pärast jätkamaks ownCloud kasutamist.",
-"Contact your system administrator if this message persists or appeared unexpectedly." => "Kontakteeru oma süsteemihalduriga kui see teade püsib või on tekkinud ootamatult.",
-"Thank you for your patience." => "Täname kannatlikkuse eest."
+"Please reload this page after a short time to continue using ownCloud." => "Palun laadi see leht uuesti veidi aja pärast jätkamaks ownCloud kasutamist."
 );
 $PLURAL_FORMS = "nplurals=2; plural=(n != 1);";

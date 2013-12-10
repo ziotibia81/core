@@ -38,7 +38,8 @@ class Util {
 	const MIGRATION_OPEN = 0;         // user still needs to be migrated
 
 	private $view; // OC_FilesystemView object for filesystem operations
-	private $userId; // ID of the currently logged-in user
+	private $userId; // ID of the user we use to encrypt/decrypt files
+	private $keyId; // ID of the key we want to manipulate
 	private $client; // Client side encryption mode flag
 	private $publicKeyDir; // Dir containing all public user keys
 	private $encryptionDir; // Dir containing user's files_encryption
@@ -58,47 +59,33 @@ class Util {
 	public function __construct(\OC_FilesystemView $view, $userId, $client = false) {
 
 		$this->view = $view;
-		$this->userId = $userId;
 		$this->client = $client;
-		$this->isPublic = false;
+		$this->userId = $userId;
 
 		$this->publicShareKeyId = \OC_Appconfig::getValue('files_encryption', 'publicShareKeyId');
 		$this->recoveryKeyId = \OC_Appconfig::getValue('files_encryption', 'recoveryKeyId');
 
-		// if we are anonymous/public
-		if (\OCA\Encryption\Helper::isPublicAccess()) {
-			$this->userId = $this->publicShareKeyId;
-
-			// only handle for files_sharing app
-			if (isset($GLOBALS['app']) && $GLOBALS['app'] === 'files_sharing') {
-				$this->userDir = '/' . $GLOBALS['fileOwner'];
-				$this->fileFolderName = 'files';
-				$this->userFilesDir = '/' . $GLOBALS['fileOwner'] . '/'
-									  . $this->fileFolderName; // TODO: Does this need to be user configurable?
-				$this->publicKeyDir = '/' . 'public-keys';
-				$this->encryptionDir = '/' . $GLOBALS['fileOwner'] . '/' . 'files_encryption';
-				$this->keyfilesPath = $this->encryptionDir . '/' . 'keyfiles';
-				$this->shareKeysPath = $this->encryptionDir . '/' . 'share-keys';
-				$this->publicKeyPath =
-					$this->publicKeyDir . '/' . $this->userId . '.public.key'; // e.g. data/public-keys/admin.public.key
-				$this->privateKeyPath =
-					'/owncloud_private_key/' . $this->userId . '.private.key'; // e.g. data/admin/admin.private.key
-				$this->isPublic = true;
-			}
-
-		} else {
-			$this->userDir = '/' . $this->userId;
-			$this->fileFolderName = 'files';
-			$this->userFilesDir =
-				'/' . $this->userId . '/' . $this->fileFolderName; // TODO: Does this need to be user configurable?
-			$this->publicKeyDir = '/' . 'public-keys';
-			$this->encryptionDir = '/' . $this->userId . '/' . 'files_encryption';
-			$this->keyfilesPath = $this->encryptionDir . '/' . 'keyfiles';
-			$this->shareKeysPath = $this->encryptionDir . '/' . 'share-keys';
-			$this->publicKeyPath =
+		$this->userDir = '/' . $this->userId;
+		$this->fileFolderName = 'files';
+		$this->userFilesDir =
+				'/' . $userId . '/' . $this->fileFolderName; // TODO: Does this need to be user configurable?
+		$this->publicKeyDir = '/' . 'public-keys';
+		$this->encryptionDir = '/' . $this->userId . '/' . 'files_encryption';
+		$this->keyfilesPath = $this->encryptionDir . '/' . 'keyfiles';
+		$this->shareKeysPath = $this->encryptionDir . '/' . 'share-keys';
+		$this->publicKeyPath =
 				$this->publicKeyDir . '/' . $this->userId . '.public.key'; // e.g. data/public-keys/admin.public.key
-			$this->privateKeyPath =
+		$this->privateKeyPath =
 				$this->encryptionDir . '/' . $this->userId . '.private.key'; // e.g. data/admin/admin.private.key
+		// make sure that the owners home is mounted
+		\OC\Files\Filesystem::initMountPoints($userId);
+
+		if (\OCA\Encryption\Helper::isPublicAccess()) {
+			$this->keyId = $this->publicShareKeyId;
+			$this->isPublic = true;
+		} else {
+			$this->keyId = $this->userId;
+			$this->isPublic = false;
 		}
 	}
 
@@ -114,15 +101,24 @@ class Util {
 			or !$this->view->file_exists($this->publicKeyPath)
 			or !$this->view->file_exists($this->privateKeyPath)
 		) {
-
 			return false;
-
 		} else {
-
 			return true;
-
 		}
+	}
 
+	/**
+	 * @brief check if the users private & public key exists
+	 * @return boolean
+	 */
+	public function userKeysExists() {
+		if (
+				$this->view->file_exists($this->privateKeyPath) &&
+				$this->view->file_exists($this->publicKeyPath)) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	/**
@@ -184,13 +180,13 @@ class Util {
 			// check if public-key exists but private-key is missing
 			if ($this->view->file_exists($this->publicKeyPath) && !$this->view->file_exists($this->privateKeyPath)) {
 				\OCP\Util::writeLog('Encryption library',
-					'public key exists but private key is missing for "' . $this->userId . '"', \OCP\Util::FATAL);
+					'public key exists but private key is missing for "' . $this->keyId . '"', \OCP\Util::FATAL);
 				return false;
 			} else {
 				if (!$this->view->file_exists($this->publicKeyPath) && $this->view->file_exists($this->privateKeyPath)
 				) {
 					\OCP\Util::writeLog('Encryption library',
-						'private key exists but public key is missing for "' . $this->userId . '"', \OCP\Util::FATAL);
+						'private key exists but public key is missing for "' . $this->keyId . '"', \OCP\Util::FATAL);
 					return false;
 				}
 			}
@@ -363,7 +359,7 @@ class Util {
 							// scanning every file like this
 							// will eat server resources :(
 							if (
-								Keymanager::getFileKey($this->view, $this->userId, $relPath)
+								Keymanager::getFileKey($this->view, $this, $relPath)
 								&& $isEncryptedPath
 							) {
 
@@ -468,22 +464,19 @@ class Util {
 	 */
 	public function isEncryptedPath($path) {
 
-		// Disable encryption proxy so data retrieved is in its
-		// original form
-		$proxyStatus = \OC_FileProxy::$enabled;
-		\OC_FileProxy::$enabled = false;
+		$relPath = Helper::getPathToRealFile($path);
 
-		// we only need 24 byte from the last chunk
-		$data = '';
-		$handle = $this->view->fopen($path, 'r');
-		if (is_resource($handle) && !fseek($handle, -24, SEEK_END)) {
-			$data = fgets($handle);
+		if ($relPath === false) {
+			$relPath = Helper::stripUserFilesPath($path);
 		}
 
-		// re-enable proxy
-		\OC_FileProxy::$enabled = $proxyStatus;
+		$fileKey = Keymanager::getFileKey($this->view, $this, $relPath);
 
-		return Crypt::isCatfileContent($data);
+		if ($fileKey === false) {
+			return false;
+		}
+
+		return true;
 
 	}
 
@@ -717,17 +710,17 @@ class Util {
 			// Encrypt unencrypted files
 			foreach ($found['encrypted'] as $encryptedFile) {
 
-				//get file info
-				$fileInfo = \OC\Files\Filesystem::getFileInfo($encryptedFile['path']);
-
 				//relative to data/<user>/file
 				$relPath = Helper::stripUserFilesPath($encryptedFile['path']);
+
+				//get file info
+				$fileInfo = \OC\Files\Filesystem::getFileInfo($relPath);
 
 				//relative to /data
 				$rawPath = $encryptedFile['path'];
 
 				//get timestamp
-				$timestamp = $this->view->filemtime($rawPath);
+				$timestamp = $fileInfo['mtime'];
 
 				//enable proxy to use OC\Files\View to access the original file
 				\OC_FileProxy::$enabled = true;
@@ -768,16 +761,16 @@ class Util {
 
 				$this->view->rename($relPath . '.part', $relPath);
 
-				$this->view->chroot($fakeRoot);
-
 				//set timestamp
-				$this->view->touch($rawPath, $timestamp);
+				$this->view->touch($relPath, $timestamp);
+
+				$this->view->chroot($fakeRoot);
 
 				// Add the file to the cache
 				\OC\Files\Filesystem::putFileInfo($relPath, array(
 					'encrypted' => false,
 					'size' => $size,
-					'unencrypted_size' => $size,
+					'unencrypted_size' => 0,
 					'etag' => $fileInfo['etag']
 				));
 
@@ -839,7 +832,7 @@ class Util {
 				$rawPath = '/' . $this->userId . '/files/' . $plainFile['path'];
 
 				// keep timestamp
-				$timestamp = $this->view->filemtime($rawPath);
+				$timestamp = $fileInfo['mtime'];
 
 				// Open plain file handle for binary reading
 				$plainHandle = $this->view->fopen($rawPath, 'rb');
@@ -847,32 +840,35 @@ class Util {
 				// Open enc file handle for binary writing, with same filename as original plain file
 				$encHandle = fopen('crypt://' . $rawPath . '.part', 'wb');
 
-				// Move plain file to a temporary location
-				$size = stream_copy_to_stream($plainHandle, $encHandle);
+				if (is_resource($encHandle)) {
+					// Move plain file to a temporary location
+					$size = stream_copy_to_stream($plainHandle, $encHandle);
 
-				fclose($encHandle);
-				fclose($plainHandle);
+					fclose($encHandle);
+					fclose($plainHandle);
 
-				$fakeRoot = $this->view->getRoot();
-				$this->view->chroot('/' . $this->userId . '/files');
+					$fakeRoot = $this->view->getRoot();
+					$this->view->chroot('/' . $this->userId . '/files');
 
-				$this->view->rename($relPath . '.part', $relPath);
+					$this->view->rename($relPath . '.part', $relPath);
 
-				$this->view->chroot($fakeRoot);
+					// set timestamp
+					$this->view->touch($relPath, $timestamp);
 
-				// set timestamp
-				$this->view->touch($rawPath, $timestamp);
+					$encSize = $this->view->filesize($relPath);
 
-				// Add the file to the cache
-				\OC\Files\Filesystem::putFileInfo($relPath, array(
-					'encrypted' => true,
-					'size' => $size,
-					'unencrypted_size' => $size,
-					'etag' => $fileInfo['etag']
-				));
+					$this->view->chroot($fakeRoot);
 
-				$encryptedFiles[] = $relPath;
+					// Add the file to the cache
+					\OC\Files\Filesystem::putFileInfo($relPath, array(
+						'encrypted' => true,
+						'size' => $encSize,
+						'unencrypted_size' => $size,
+						'etag' => $fileInfo['etag']
+					));
 
+					$encryptedFiles[] = $relPath;
+				}
 			}
 
 			// Encrypt legacy encrypted files
@@ -1055,10 +1051,10 @@ class Util {
 	private function decryptKeyfile($filePath, $privateKey) {
 
 		// Get the encrypted keyfile
-		$encKeyfile = Keymanager::getFileKey($this->view, $this->userId, $filePath);
+		$encKeyfile = Keymanager::getFileKey($this->view, $this, $filePath);
 
 		// The file has a shareKey and must use it for decryption
-		$shareKey = Keymanager::getShareKey($this->view, $this->userId, $filePath);
+		$shareKey = Keymanager::getShareKey($this->view, $this->keyId, $this, $filePath);
 
 		$plainKeyfile = Crypt::multiKeyDecrypt($encKeyfile, $shareKey, $privateKey);
 
@@ -1109,8 +1105,8 @@ class Util {
 		// Save the recrypted key to it's owner's keyfiles directory
 		// Save new sharekeys to all necessary user directory
 		if (
-			!Keymanager::setFileKey($this->view, $filePath, $fileOwner, $multiEncKey['data'])
-			|| !Keymanager::setShareKeys($this->view, $filePath, $multiEncKey['keys'])
+			!Keymanager::setFileKey($this->view, $this, $filePath, $multiEncKey['data'])
+			|| !Keymanager::setShareKeys($this->view, $this, $filePath, $multiEncKey['keys'])
 		) {
 
 			\OCP\Util::writeLog('Encryption library',
@@ -1261,7 +1257,6 @@ class Util {
 		$sql = 'SELECT `migration_status` FROM `*PREFIX*encryption` WHERE `uid` = ?';
 
 		$args = array($this->userId);
-
 		$query = \OCP\DB::prepare($sql);
 
 		$result = $query->execute($args);
@@ -1282,20 +1277,23 @@ class Util {
 		// If no record is found
 		if (empty($migrationStatus)) {
 			\OCP\Util::writeLog('Encryption library', "Could not get migration status for " . $this->userId . ", no record found", \OCP\Util::ERROR);
-			// insert missing entry in DB with status open
-			$sql = 'INSERT INTO `*PREFIX*encryption` (`uid`,`mode`,`recovery_enabled`,`migration_status`) VALUES (?,?,?,?)';
-			$args = array(
-				$this->userId,
-				'server-side',
-				0,
-				self::MIGRATION_OPEN
-			);
-			$query = \OCP\DB::prepare($sql);
-			$query->execute($args);
+			// insert missing entry in DB with status open if the user exists
+			if (\OCP\User::userExists($this->userId)) {
+				$sql = 'INSERT INTO `*PREFIX*encryption` (`uid`,`mode`,`recovery_enabled`,`migration_status`) VALUES (?,?,?,?)';
+				$args = array(
+					$this->userId,
+					'server-side',
+					0,
+					self::MIGRATION_OPEN
+				);
+				$query = \OCP\DB::prepare($sql);
+				$query->execute($args);
 
-			return self::MIGRATION_OPEN;
-			// If a record is found
-		} else {
+				return self::MIGRATION_OPEN;
+			} else {
+				return false;
+			}
+		} else { // If a record is found
 			return (int)$migrationStatus[0];
 		}
 
@@ -1334,7 +1332,7 @@ class Util {
 		// handle public access
 		if ($this->isPublic) {
 			$filename = $path;
-			$fileOwnerUid = $GLOBALS['fileOwner'];
+			$fileOwnerUid = $this->userId;
 
 			return array(
 				$fileOwnerUid,
@@ -1557,6 +1555,13 @@ class Util {
 	 */
 	public function getUserId() {
 		return $this->userId;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getKeyId() {
+		return $this->keyId;
 	}
 
 	/**

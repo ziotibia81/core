@@ -127,6 +127,7 @@ class smb {
 		$old_locale = getenv('LC_ALL');
 		putenv('LC_ALL=en_US.UTF-8');
 		$output = popen (SMB4PHP_SMBCLIENT." -N {$auth} {$options} {$port} {$options} {$params} 2>/dev/null", 'r');
+		$gotInfo = false;
 		$info = array ();
 		$info['info']= array ();
 		$mode = '';
@@ -188,7 +189,12 @@ class smb {
 					}
 					trigger_error($regs[0].' params('.$params.')', E_USER_ERROR);
 				case 'error-connect':
-					return false;
+					// connection error can happen after obtaining share list if
+					// NetBIOS is disabled/blocked on the target server,
+					// in which case we keep the info and continue
+					if (!$gotInfo) {
+						return false;
+					}
 			}
 			if ($i) switch ($i[1]) {
 				case 'file':
@@ -196,6 +202,7 @@ class smb {
 				case 'disk':
 				case 'server':
 				case 'workgroup': $info[$i[1]][] = $i[0];
+				$gotInfo = true;
 			}
 		}
 		pclose($output);
@@ -295,6 +302,7 @@ class smb {
 	}
 
 	function rename ($url_from, $url_to) {
+		$replace = false;
 		list ($from, $to) = array (smb::parse_url($url_from), smb::parse_url($url_to));
 		if ($from['host'] <> $to['host'] ||
 			$from['share'] <> $to['share'] ||
@@ -307,7 +315,20 @@ class smb {
 			trigger_error('rename(): error in URL', E_USER_ERROR);
 		}
 		smb::clearstatcache ($url_from);
-		$result = smb::execute ('rename "'.$from['path'].'" "'.$to['path'].'"', $to);
+		$cmd = '';
+		// check if target file exists
+		if (smb::url_stat($url_to)) {
+			// delete target file first
+			$cmd = 'del "' . $to['path'] . '"; ';
+			$replace = true;
+		}
+		$cmd .= 'rename "' . $from['path'] . '" "' . $to['path'] . '"';
+		$result = smb::execute($cmd, $to);
+		if ($replace) {
+			// clear again, else the cache will return the info
+			// from the old file
+			smb::clearstatcache ($url_to);
+		}
 		return $result !== false;
 	}
 
@@ -460,7 +481,8 @@ class smb_stream_wrapper extends smb {
 
 	function stream_tell () { return ftell($this->stream); }
 
-	function stream_seek ($offset, $whence=null) { return fseek($this->stream, $offset, $whence); }
+	// PATCH: the wrapper must return true when fseek succeeded by returning 0.
+	function stream_seek ($offset, $whence=null) { return fseek($this->stream, $offset, $whence) === 0; }
 
 	function stream_flush () {
 		if ($this->mode <> 'r' && $this->need_flush) {

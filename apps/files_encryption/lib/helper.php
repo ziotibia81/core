@@ -165,7 +165,7 @@ class Helper {
 	public static function isPartialFilePath($path) {
 
 		$extension = pathinfo($path, PATHINFO_EXTENSION);
-		if ( $extension === 'part' || $extension === 'etmp') {
+		if ( $extension === 'part') {
 			return true;
 		} else {
 			return false;
@@ -183,7 +183,7 @@ class Helper {
 	public static function stripPartialFileExtension($path) {
 		$extension = pathinfo($path, PATHINFO_EXTENSION);
 
-		if ( $extension === 'part' || $extension === 'etmp') {
+		if ( $extension === 'part') {
 
 			$newLength = strlen($path) - 5; // 5 = strlen(".part") = strlen(".etmp")
 			$fPath = substr($path, 0, $newLength);
@@ -225,10 +225,7 @@ class Helper {
 	 * @return bool
 	 */
 	public static function isPublicAccess() {
-		if (\OCP\USER::getUser() === false
-			|| (isset($_GET['service']) && $_GET['service'] == 'files'
-				&& isset($_GET['t']))
-		) {
+		if (\OCP\User::getUser() === false) {
 			return true;
 		} else {
 			return false;
@@ -256,24 +253,88 @@ class Helper {
 	}
 
 	/**
-	 * @brief get path to the correspondig file in data/user/files
+	 * @brief try to get the user from the path if no user is logged in
+	 * @param string $path
+	 * @return mixed user or false if we couldn't determine a user
+	 */
+	public static function getUser($path) {
+
+		$user = \OCP\User::getUser();
+
+
+		// if we are logged in, then we return the userid
+		if ($user) {
+			return $user;
+		}
+
+		// if no user is logged in we try to access a publicly shared files.
+		// In this case we need to try to get the user from the path
+
+		$trimmed = ltrim($path, '/');
+		$split = explode('/', $trimmed);
+
+		// it is not a file relative to data/user/files
+		if (count($split) < 2 || $split[1] !== 'files') {
+			return false;
+		}
+
+		$user = $split[0];
+
+		if (\OCP\User::userExists($user)) {
+			return $user;
+		}
+
+		return false;
+	}
+
+	/**
+	 * @brief get path to the corresponding file in data/user/files if path points
+	 *        to a version or to a file in cache
 	 * @param string $path path to a version or a file in the trash
-	 * @return string path to correspondig file relative to data/user/files
+	 * @return string path to corresponding file relative to data/user/files
 	 */
 	public static function getPathToRealFile($path) {
 		$trimmed = ltrim($path, '/');
 		$split = explode('/', $trimmed);
+		$result = false;
 
-		if (count($split) < 3 || $split[1] !== "files_versions") {
-			return false;
+		if (count($split) >= 3 && ($split[1] === "files_versions" || $split[1] === 'cache')) {
+			$sliced = array_slice($split, 2);
+			$result = implode('/', $sliced);
+			if ($split[1] === "files_versions") {
+				// we skip user/files
+				$sliced = array_slice($split, 2);
+				$relPath = implode('/', $sliced);
+				//remove the last .v
+				$result = substr($relPath, 0, strrpos($relPath, '.v'));
+			}
+			if ($split[1] === "cache") {
+				// we skip /user/cache/transactionId
+				$sliced = array_slice($split, 3);
+				$result = implode('/', $sliced);
+				//prepare the folders
+				self::mkdirr($path, new \OC\Files\View('/'));
+			}
 		}
 
-		$sliced = array_slice($split, 2);
-		$realPath = implode('/', $sliced);
-		//remove the last .v
-		$realPath = substr($realPath, 0, strrpos($realPath, '.v'));
+		return $result;
+	}
 
-		return $realPath;
+	/**
+	 * @brief create directory recursively
+	 * @param string $path
+	 * @param \OC\Files\View $view
+	 */
+	public static function mkdirr($path, $view) {
+		$dirname = \OC_Filesystem::normalizePath(dirname($path));
+		$dirParts = explode('/', $dirname);
+		$dir = "";
+		foreach ($dirParts as $part) {
+			$dir = $dir . '/' . $part;
+			if (!$view->file_exists($dir)) {
+				$view->mkdir($dir);
+			}
+		}
 	}
 
 	/**

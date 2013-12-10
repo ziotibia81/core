@@ -5,9 +5,9 @@
 				<a><?php p($l->t('New'));?></a>
 				<ul>
 					<li style="background-image:url('<?php p(OCP\mimetype_icon('text/plain')) ?>')"
-						data-type='file'><p><?php p($l->t('Text file'));?></p></li>
+						data-type='file' data-newname='<?php p($l->t('New text file')) ?>.txt'><p><?php p($l->t('Text file'));?></p></li>
 					<li style="background-image:url('<?php p(OCP\mimetype_icon('dir')) ?>')"
-						data-type='folder'><p><?php p($l->t('Folder'));?></p></li>
+						data-type='folder' data-newname='<?php p($l->t('New folder')) ?>'><p><?php p($l->t('Folder'));?></p></li>
 					<li style="background-image:url('<?php p(OCP\image_path('core', 'places/link.svg')) ?>')"
 						data-type='web'><p><?php p($l->t('From link'));?></p></li>
 				</ul>
@@ -25,7 +25,7 @@
 						   data-url="<?php print_unescaped(OCP\Util::linkTo('files', 'ajax/upload.php')); ?>" />
 					<a href="#" class="svg"></a>
 			</div>
-			<?php if ($_['trash'] ): ?>
+			<?php if ($_['trash']): ?>
 			<input id="trash" type="button" value="<?php p($l->t('Deleted files'));?>" class="button" <?php $_['trashEmpty'] ? p('disabled') : '' ?>></input>
 			<?php endif; ?>
 			<div id="uploadprogresswrapper">
@@ -69,20 +69,11 @@
 			<th <?php if (!$_['fileHeader']):?>class="hidden"<?php endif; ?> id="headerDate">
 				<span id="modified"><?php p($l->t( 'Modified' )); ?></span>
 				<?php if ($_['permissions'] & OCP\PERMISSION_DELETE): ?>
-<!--					NOTE: Temporary fix to allow unsharing of files in root of Shared folder -->
-					<?php if ($_['dir'] == '/Shared'): ?>
-						<span class="selectedActions"><a href="" class="delete-selected">
-							<?php p($l->t('Unshare'))?>
-							<img class="svg" alt="<?php p($l->t('Unshare'))?>"
-								 src="<?php print_unescaped(OCP\image_path("core", "actions/delete.svg")); ?>" />
-						</a></span>
-					<?php else: ?>
-						<span class="selectedActions"><a href="" class="delete-selected">
-							<?php p($l->t('Delete'))?>
-							<img class="svg" alt="<?php p($l->t('Delete'))?>"
-								 src="<?php print_unescaped(OCP\image_path("core", "actions/delete.svg")); ?>" />
-						</a></span>
-					<?php endif; ?>
+					<span class="selectedActions"><a href="" class="delete-selected">
+						<?php p($l->t('Delete'))?>
+						<img class="svg" alt="<?php p($l->t('Delete'))?>"
+							 src="<?php print_unescaped(OCP\image_path("core", "actions/delete.svg")); ?>" />
+					</a></span>
 				<?php endif; ?>
 			</th>
 		</tr>
@@ -111,8 +102,9 @@
 <input type="hidden" name="ajaxLoad" id="ajaxLoad" value="<?php p($_['ajaxLoad']); ?>" />
 <input type="hidden" name="allowZipDownload" id="allowZipDownload" value="<?php p($_['allowZipDownload']); ?>" />
 <input type="hidden" name="usedSpacePercent" id="usedSpacePercent" value="<?php p($_['usedSpacePercent']); ?>" />
+<?php if (!$_['isPublic']) :?>
 <input type="hidden" name="encryptedFiles" id="encryptedFiles" value="<?php $_['encryptedFiles'] ? p('1') : p('0'); ?>" />
 <input type="hidden" name="encryptedInitStatus" id="encryptionInitStatus" value="<?php p($_['encryptionInitStatus']) ?>" />
 <input type="hidden" name="mailNotificationEnabled" id="mailNotificationEnabled" value="<?php p($_['mailNotificationEnabled']) ?>" />
 <input type="hidden" name="allowShareWithLink" id="allowShareWithLink" value="<?php p($_['allowShareWithLink']) ?>" />
-
+<?php endif;

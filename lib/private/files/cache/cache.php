@@ -178,6 +178,10 @@ class Cache {
 				if ($file['storage_mtime'] == 0) {
 					$file['storage_mtime'] = $file['mtime'];
 				}
+				if ($file['encrypted']) {
+					$file['encrypted_size'] = $file['size'];
+					$file['size'] = $file['unencrypted_size'];
+				}
 			}
 			return $files;
 		} else {
@@ -507,7 +511,7 @@ class Cache {
 		$entry = $this->get($path);
 		if ($entry && $entry['mimetype'] === 'httpd/unix-directory') {
 			$id = $entry['fileid'];
-			$sql = 'SELECT SUM(`size`), MIN(`size`) FROM `*PREFIX*filecache` '.
+			$sql = 'SELECT SUM(`size`) AS f1, MIN(`size`) AS f2 FROM `*PREFIX*filecache` '.
 				'WHERE `parent` = ? AND `storage` = ?';
 			$result = \OC_DB::executeAudited($sql, array($id, $this->getNumericStorageId()));
 			if ($row = $result->fetchRow()) {
