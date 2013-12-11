@@ -109,6 +109,7 @@ class Folder extends Node {
 						}
 					} else { //mountpoint in this folder, add an entry for it
 						$rootEntry['name'] = $relativePath;
+						$rootEntry['path'] = $this->path . '/' . $relativePath;
 						$rootEntry['storageObject'] = $subStorage;
 
 						//remove any existing entry with the same name
