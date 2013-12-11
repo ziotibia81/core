@@ -115,7 +115,7 @@ t.cache = {};
  */
 function n(app, text_singular, text_plural, count, vars) {
 	initL10N(app);
-	var identifier = '_' + text_singular + '__' + text_plural + '_';
+	var identifier = '_' + text_singular + '_::_' + text_plural + '_';
 	if( typeof( t.cache[app][identifier] ) !== 'undefined' ){
 		var translation = t.cache[app][identifier];
 		if ($.isArray(translation)) {
@@ -746,15 +746,7 @@ $(document).ready(function(){
 	});
 
 	var setShowPassword = function(input, label) {
-		input.showPassword().keyup(function(){
-			if (input.val().length == 0) {
-				label.hide();
-			}
-			else {
-				label.css("display", "inline").show();
-			}
-		});
-		label.hide();
+		input.showPassword().keyup();
 	};
 	setShowPassword($('#adminpass'), $('label[for=show]'));
 	setShowPassword($('#pass2'), $('label[for=personal-show]'));
@@ -941,7 +933,7 @@ jQuery.fn.selectRange = function(start, end) {
  */
 jQuery.fn.exists = function(){
 	return this.length > 0;
-}
+};
 
 /**
  * Calls the server periodically every 15 mins to ensure that session doesnt

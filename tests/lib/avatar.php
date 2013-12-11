@@ -9,15 +9,29 @@
 class Test_Avatar extends PHPUnit_Framework_TestCase {
 
 	public function testAvatar() {
-		$this->markTestSkipped("Setting custom avatars with encryption doesn't work yet");
 
 		$avatar = new \OC_Avatar(\OC_User::getUser());
 
 		$this->assertEquals(false, $avatar->get());
 
 		$expected = new OC_Image(\OC::$SERVERROOT.'/tests/data/testavatar.png');
-		$avatar->set($expected->data());
 		$expected->resize(64);
+		$avatar->set($expected->data());
+		$this->assertEquals($expected->data(), $avatar->get()->data());
+
+		$avatar->remove();
+		$this->assertEquals(false, $avatar->get());
+	}
+
+	public function testAvatarApi() {
+		$avatarManager = \OC::$server->getAvatarManager();
+		$avatar = $avatarManager->getAvatar(\OC_User::getUser());
+
+		$this->assertEquals(false, $avatar->get());
+
+		$expected = new OC_Image(\OC::$SERVERROOT.'/tests/data/testavatar.png');
+		$expected->resize(64);
+		$avatar->set($expected->data());
 		$this->assertEquals($expected->data(), $avatar->get()->data());
 
 		$avatar->remove();

@@ -8,7 +8,6 @@ $TRANSLATIONS = array(
 "Users" => "Gebruikers",
 "Admin" => "Beheerder",
 "Failed to upgrade \"%s\"." => "Upgrade \"%s\" mislukt.",
-"Custom profile pictures don't work with encryption yet" => "Maatwerk profielafbeelding werkt nog niet met versleuteling",
 "Unknown filetype" => "Onbekend bestandsformaat",
 "Invalid image" => "Ongeldige afbeelding",
 "web services under your control" => "Webdiensten in eigen beheer",
@@ -17,7 +16,7 @@ $TRANSLATIONS = array(
 "Files need to be downloaded one by one." => "Bestanden moeten één voor één worden gedownload.",
 "Back to Files" => "Terug naar bestanden",
 "Selected files too large to generate zip file." => "De geselecteerde bestanden zijn te groot om een zip bestand te maken.",
-"Download the files in smaller chunks, seperately or kindly ask your administrator." => "Download de bestanden in kleinere brokken, appart of vraag uw administrator.",
+"Please download the files separately in smaller chunks or kindly ask your administrator." => "Download de bestanden afzonderlijk in kleinere porties of vraag het uw beheerder,",
 "No source specified when installing app" => "Geen bron opgegeven bij installatie van de app",
 "No href specified when installing app from http" => "Geen href opgegeven bij installeren van de app vanaf http",
 "No path specified when installing app from local file" => "Geen pad opgegeven bij installeren van de app vanaf een lokaal bestand",
@@ -56,6 +55,7 @@ $TRANSLATIONS = array(
 "Set an admin password." => "Stel een beheerderswachtwoord in.",
 "Your web server is not yet properly setup to allow files synchronization because the WebDAV interface seems to be broken." => "Uw webserver is nog niet goed ingesteld voor bestandssynchronisatie omdat de WebDAV interface verbroken lijkt.",
 "Please double check the <a href='%s'>installation guides</a>." => "Controleer de <a href='%s'>installatiehandleiding</a> goed.",
+"Could not find category \"%s\"" => "Kon categorie \"%s\" niet vinden",
 "seconds ago" => "seconden geleden",
 "_%n minute ago_::_%n minutes ago_" => array("%n minuut geleden","%n minuten geleden"),
 "_%n hour ago_::_%n hours ago_" => array("%n uur geleden","%n uur geleden"),
@@ -66,7 +66,6 @@ $TRANSLATIONS = array(
 "_%n month ago_::_%n months ago_" => array("%n maand geleden","%n maanden geleden"),
 "last year" => "vorig jaar",
 "years ago" => "jaar geleden",
-"Caused by:" => "Gekomen door:",
-"Could not find category \"%s\"" => "Kon categorie \"%s\" niet vinden"
+"Caused by:" => "Gekomen door:"
 );
 $PLURAL_FORMS = "nplurals=2; plural=(n != 1);";

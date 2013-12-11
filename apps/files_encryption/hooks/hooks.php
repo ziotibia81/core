@@ -35,6 +35,12 @@ class Hooks {
 	 * @note This method should never be called for users using client side encryption
 	 */
 	public static function login($params) {
+
+		if (\OCP\App::isEnabled('files_encryption') === false) {
+			return true;
+		}
+
+
 		$l = new \OC_L10N('files_encryption');
 
 		$view = new \OC_FilesystemView('/');
@@ -92,8 +98,6 @@ class Hooks {
 			}
 
 			// Encrypt existing user files:
-			// This serves to upgrade old versions of the encryption
-			// app (see appinfo/spec.txt)
 			if (
 				$util->encryptAll('/' . $params['uid'] . '/' . 'files', $session->getLegacyKey(), $params['password'])
 			) {
@@ -119,11 +123,12 @@ class Hooks {
 	 * @note This method should never be called for users using client side encryption
 	 */
 	public static function postCreateUser($params) {
-		$view = new \OC_FilesystemView('/');
 
-		$util = new Util($view, $params['uid']);
-
-		Helper::setupUser($util, $params['password']);
+		if (\OCP\App::isEnabled('files_encryption')) {
+			$view = new \OC_FilesystemView('/');
+			$util = new Util($view, $params['uid']);
+			Helper::setupUser($util, $params['password']);
+		}
 	}
 
 	/**
@@ -131,26 +136,31 @@ class Hooks {
 	 * @note This method should never be called for users using client side encryption
 	 */
 	public static function postDeleteUser($params) {
-		$view = new \OC_FilesystemView('/');
 
-		// cleanup public key
-		$publicKey = '/public-keys/' . $params['uid'] . '.public.key';
+		if (\OCP\App::isEnabled('files_encryption')) {
+			$view = new \OC_FilesystemView('/');
 
-		// Disable encryption proxy to prevent recursive calls
-		$proxyStatus = \OC_FileProxy::$enabled;
-		\OC_FileProxy::$enabled = false;
+			// cleanup public key
+			$publicKey = '/public-keys/' . $params['uid'] . '.public.key';
 
-		$view->unlink($publicKey);
+			// Disable encryption proxy to prevent recursive calls
+			$proxyStatus = \OC_FileProxy::$enabled;
+			\OC_FileProxy::$enabled = false;
 
-		\OC_FileProxy::$enabled = $proxyStatus;
+			$view->unlink($publicKey);
+
+			\OC_FileProxy::$enabled = $proxyStatus;
+		}
 	}
 
 	/**
 	 * @brief If the password can't be changed within ownCloud, than update the key password in advance.
 	 */
 	public static function preSetPassphrase($params) {
-		if ( ! \OC_User::canUserChangePassword($params['uid']) ) {
-			self::setPassphrase($params);
+		if (\OCP\App::isEnabled('files_encryption')) {
+			if ( ! \OC_User::canUserChangePassword($params['uid']) ) {
+				self::setPassphrase($params);
+			}
 		}
 	}
 
@@ -160,14 +170,18 @@ class Hooks {
 	 */
 	public static function setPassphrase($params) {
 
+		if (\OCP\App::isEnabled('files_encryption') === false) {
+			return true;
+		}
+
 		// Only attempt to change passphrase if server-side encryption
 		// is in use (client-side encryption does not have access to
 		// the necessary keys)
 		if (Crypt::mode() === 'server') {
 
-			if ($params['uid'] === \OCP\User::getUser()) {
+			$view = new \OC_FilesystemView('/');
 
-				$view = new \OC_FilesystemView('/');
+			if ($params['uid'] === \OCP\User::getUser()) {
 
 				$session = new \OCA\Encryption\Session($view);
 
@@ -188,36 +202,41 @@ class Hooks {
 			} else { // admin changed the password for a different user, create new keys and reencrypt file keys
 
 				$user = $params['uid'];
-				$recoveryPassword = $params['recoveryPassword'];
-				$newUserPassword = $params['password'];
+				$util = new Util($view, $user);
+				$recoveryPassword = isset($params['recoveryPassword']) ? $params['recoveryPassword'] : null;
 
-				$view = new \OC_FilesystemView('/');
+				if (($util->recoveryEnabledForUser() && $recoveryPassword)
+						|| !$util->userKeysExists()) {
 
-				// make sure that the users home is mounted
-				\OC\Files\Filesystem::initMountPoints($user);
+					$recoveryPassword = $params['recoveryPassword'];
+					$newUserPassword = $params['password'];
 
-				$keypair = Crypt::createKeypair();
+					// make sure that the users home is mounted
+					\OC\Files\Filesystem::initMountPoints($user);
 
-				// Disable encryption proxy to prevent recursive calls
-				$proxyStatus = \OC_FileProxy::$enabled;
-				\OC_FileProxy::$enabled = false;
+					$keypair = Crypt::createKeypair();
 
-				// Save public key
-				$view->file_put_contents('/public-keys/' . $user . '.public.key', $keypair['publicKey']);
+					// Disable encryption proxy to prevent recursive calls
+					$proxyStatus = \OC_FileProxy::$enabled;
+					\OC_FileProxy::$enabled = false;
 
-				// Encrypt private key empty passphrase
-				$encryptedPrivateKey = Crypt::symmetricEncryptFileContent($keypair['privateKey'], $newUserPassword);
+					// Save public key
+					$view->file_put_contents('/public-keys/' . $user . '.public.key', $keypair['publicKey']);
 
-				// Save private key
-				$view->file_put_contents(
-					'/' . $user . '/files_encryption/' . $user . '.private.key', $encryptedPrivateKey);
+					// Encrypt private key empty passphrase
+					$encryptedPrivateKey = Crypt::symmetricEncryptFileContent($keypair['privateKey'], $newUserPassword);
 
-				if ($recoveryPassword) { // if recovery key is set we can re-encrypt the key files
-					$util = new Util($view, $user);
-					$util->recoverUsersFiles($recoveryPassword);
+					// Save private key
+					$view->file_put_contents(
+							'/' . $user . '/files_encryption/' . $user . '.private.key', $encryptedPrivateKey);
+
+					if ($recoveryPassword) { // if recovery key is set we can re-encrypt the key files
+						$util = new Util($view, $user);
+						$util->recoverUsersFiles($recoveryPassword);
+					}
+
+					\OC_FileProxy::$enabled = $proxyStatus;
 				}
-
-				\OC_FileProxy::$enabled = $proxyStatus;
 			}
 		}
 	}
@@ -229,6 +248,10 @@ class Hooks {
 	 * @param $params
 	 */
 	public static function preShared($params) {
+
+		if (\OCP\App::isEnabled('files_encryption') === false) {
+			return true;
+		}
 
 		$l = new \OC_L10N('files_encryption');
 		$users = array();
@@ -281,6 +304,10 @@ class Hooks {
 		// [run] => whether emitting script should continue to run
 		// TODO: Should other kinds of item be encrypted too?
 
+		if (\OCP\App::isEnabled('files_encryption') === false) {
+			return true;
+		}
+
 		if ($params['itemType'] === 'file' || $params['itemType'] === 'folder') {
 
 			$view = new \OC_FilesystemView('/');
@@ -296,8 +323,8 @@ class Hooks {
 				// get the parent from current share
 				$parent = $util->getShareParent($params['parent']);
 
-				// if parent is file the it is an 1:1 share
-				if ($parent['item_type'] === 'file') {
+				// if parent has the same type than the child it is a 1:1 share
+				if ($parent['item_type'] === $params['itemType']) {
 
 					// prefix path with Shared
 					$path = '/Shared' . $parent['file_target'];
@@ -374,6 +401,10 @@ class Hooks {
 		// [shareType] => 0
 		// [shareWith] => test1
 		// [itemParent] =>
+
+		if (\OCP\App::isEnabled('files_encryption') === false) {
+			return true;
+		}
 
 		if ($params['itemType'] === 'file' || $params['itemType'] === 'folder') {
 
@@ -456,6 +487,11 @@ class Hooks {
 	 * of the stored versions along the actual file
 	 */
 	public static function postRename($params) {
+
+		if (\OCP\App::isEnabled('files_encryption') === false) {
+			return true;
+		}
+
 		// Disable encryption proxy to prevent recursive calls
 		$proxyStatus = \OC_FileProxy::$enabled;
 		\OC_FileProxy::$enabled = false;
@@ -543,14 +579,29 @@ class Hooks {
 	}
 
 	/**
-	 * set migration status back to '0' so that all new files get encrypted
+	 * set migration status and the init status back to '0' so that all new files get encrypted
 	 * if the app gets enabled again
 	 * @param array $params contains the app ID
 	 */
 	public static function preDisable($params) {
 		if ($params['app'] === 'files_encryption') {
-			$query = \OC_DB::prepare('UPDATE `*PREFIX*encryption` SET `migration_status`=0');
-			$query->execute();
+
+			$setMigrationStatus = \OC_DB::prepare('UPDATE `*PREFIX*encryption` SET `migration_status`=0');
+			$setMigrationStatus->execute();
+
+			$session = new \OCA\Encryption\Session(new \OC\Files\View('/'));
+			$session->setInitialized(\OCA\Encryption\Session::NOT_INITIALIZED);
+		}
+	}
+
+	/**
+	 * set the init status to 'NOT_INITIALIZED' (0) if the app gets enabled
+	 * @param array $params contains the app ID
+	 */
+	public static function postEnable($params) {
+		if ($params['app'] === 'files_encryption') {
+			$session = new \OCA\Encryption\Session(new \OC\Files\View('/'));
+			$session->setInitialized(\OCA\Encryption\Session::NOT_INITIALIZED);
 		}
 	}
 

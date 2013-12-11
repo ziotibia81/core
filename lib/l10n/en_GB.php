@@ -8,7 +8,6 @@ $TRANSLATIONS = array(
 "Users" => "Users",
 "Admin" => "Admin",
 "Failed to upgrade \"%s\"." => "Failed to upgrade \"%s\".",
-"Custom profile pictures don't work with encryption yet" => "Custom profile pictures don't work with encryption yet",
 "Unknown filetype" => "Unknown filetype",
 "Invalid image" => "Invalid image",
 "web services under your control" => "web services under your control",
@@ -17,7 +16,7 @@ $TRANSLATIONS = array(
 "Files need to be downloaded one by one." => "Files need to be downloaded one by one.",
 "Back to Files" => "Back to Files",
 "Selected files too large to generate zip file." => "Selected files too large to generate zip file.",
-"Download the files in smaller chunks, seperately or kindly ask your administrator." => "Download the files in smaller chunks, seperately or kindly ask your administrator.",
+"Please download the files separately in smaller chunks or kindly ask your administrator." => "Please download the files separately in smaller chunks or kindly ask your administrator.",
 "No source specified when installing app" => "No source specified when installing app",
 "No href specified when installing app from http" => "No href specified when installing app from http",
 "No path specified when installing app from local file" => "No path specified when installing app from local file",
@@ -56,6 +55,7 @@ $TRANSLATIONS = array(
 "Set an admin password." => "Set an admin password.",
 "Your web server is not yet properly setup to allow files synchronization because the WebDAV interface seems to be broken." => "Your web server is not yet properly setup to allow files synchronisation because the WebDAV interface seems to be broken.",
 "Please double check the <a href='%s'>installation guides</a>." => "Please double check the <a href='%s'>installation guides</a>.",
+"Could not find category \"%s\"" => "Could not find category \"%s\"",
 "seconds ago" => "seconds ago",
 "_%n minute ago_::_%n minutes ago_" => array("%n minute ago","%n minutes ago"),
 "_%n hour ago_::_%n hours ago_" => array("%n hour ago","%n hours ago"),
@@ -66,7 +66,6 @@ $TRANSLATIONS = array(
 "_%n month ago_::_%n months ago_" => array("%n month ago","%n months ago"),
 "last year" => "last year",
 "years ago" => "years ago",
-"Caused by:" => "Caused by:",
-"Could not find category \"%s\"" => "Could not find category \"%s\""
+"Caused by:" => "Caused by:"
 );
 $PLURAL_FORMS = "nplurals=2; plural=(n != 1);";

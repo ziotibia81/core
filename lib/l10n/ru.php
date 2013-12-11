@@ -8,7 +8,6 @@ $TRANSLATIONS = array(
 "Users" => "Пользователи",
 "Admin" => "Admin",
 "Failed to upgrade \"%s\"." => "Не смог обновить \"%s\".",
-"Custom profile pictures don't work with encryption yet" => "Пользовательские картинки профиля ещё не поддерживают шифрование",
 "Unknown filetype" => "Неизвестный тип файла",
 "Invalid image" => "Изображение повреждено",
 "web services under your control" => "веб-сервисы под вашим управлением",
@@ -17,7 +16,7 @@ $TRANSLATIONS = array(
 "Files need to be downloaded one by one." => "Файлы должны быть загружены по одному.",
 "Back to Files" => "Назад к файлам",
 "Selected files too large to generate zip file." => "Выбранные файлы слишком велики, чтобы создать zip файл.",
-"Download the files in smaller chunks, seperately or kindly ask your administrator." => "Загрузите файл маленьшими порциями, раздельно или вежливо попросите Вашего администратора.",
+"Please download the files separately in smaller chunks or kindly ask your administrator." => "Загрузите файлы раздельно маленькими частями или вежливо попросите вашего администратора.",
 "No source specified when installing app" => "Не указан источник при установке приложения",
 "No href specified when installing app from http" => "Не указан атрибут href при установке приложения через http",
 "No path specified when installing app from local file" => "Не указан путь при установке приложения из локального файла",
@@ -56,6 +55,7 @@ $TRANSLATIONS = array(
 "Set an admin password." => "становит пароль для admin.",
 "Your web server is not yet properly setup to allow files synchronization because the WebDAV interface seems to be broken." => "Ваш веб сервер до сих пор не настроен правильно для возможности синхронизации файлов, похоже что проблема в неисправности интерфейса WebDAV.",
 "Please double check the <a href='%s'>installation guides</a>." => "Пожалуйста, дважды просмотрите <a href='%s'>инструкции по установке</a>.",
+"Could not find category \"%s\"" => "Категория \"%s\"  не найдена",
 "seconds ago" => "несколько секунд назад",
 "_%n minute ago_::_%n minutes ago_" => array("%n минута назад","%n минуты назад","%n минут назад"),
 "_%n hour ago_::_%n hours ago_" => array("%n час назад","%n часа назад","%n часов назад"),
@@ -66,7 +66,6 @@ $TRANSLATIONS = array(
 "_%n month ago_::_%n months ago_" => array("%n месяц назад","%n месяца назад","%n месяцев назад"),
 "last year" => "в прошлом году",
 "years ago" => "несколько лет назад",
-"Caused by:" => "Вызвано:",
-"Could not find category \"%s\"" => "Категория \"%s\"  не найдена"
+"Caused by:" => "Вызвано:"
 );
 $PLURAL_FORMS = "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);";

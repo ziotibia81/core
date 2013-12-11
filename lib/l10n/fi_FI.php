@@ -8,7 +8,6 @@ $TRANSLATIONS = array(
 "Users" => "Käyttäjät",
 "Admin" => "Ylläpitäjä",
 "Failed to upgrade \"%s\"." => "Kohteen \"%s\" päivitys epäonnistui.",
-"Custom profile pictures don't work with encryption yet" => "Omavalintaiset profiilikuvat eivät toimi salauksen kanssa vielä",
 "Unknown filetype" => "Tuntematon tiedostotyyppi",
 "Invalid image" => "Virheellinen kuva",
 "web services under your control" => "verkkopalvelut hallinnassasi",
@@ -46,6 +45,7 @@ $TRANSLATIONS = array(
 "Set an admin username." => "Aseta ylläpitäjän käyttäjätunnus.",
 "Set an admin password." => "Aseta ylläpitäjän salasana.",
 "Please double check the <a href='%s'>installation guides</a>." => "Lue tarkasti <a href='%s'>asennusohjeet</a>.",
+"Could not find category \"%s\"" => "Luokkaa \"%s\" ei löytynyt",
 "seconds ago" => "sekuntia sitten",
 "_%n minute ago_::_%n minutes ago_" => array("%n minuutti sitten","%n minuuttia sitten"),
 "_%n hour ago_::_%n hours ago_" => array("%n tunti sitten","%n tuntia sitten"),
@@ -56,7 +56,6 @@ $TRANSLATIONS = array(
 "_%n month ago_::_%n months ago_" => array("%n kuukausi sitten","%n kuukautta sitten"),
 "last year" => "viime vuonna",
 "years ago" => "vuotta sitten",
-"Caused by:" => "Aiheuttaja:",
-"Could not find category \"%s\"" => "Luokkaa \"%s\" ei löytynyt"
+"Caused by:" => "Aiheuttaja:"
 );
 $PLURAL_FORMS = "nplurals=2; plural=(n != 1);";
