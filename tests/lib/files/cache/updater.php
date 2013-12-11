@@ -45,6 +45,7 @@ class Updater extends \PHPUnit_Framework_TestCase {
 		$this->cache = $this->storage->getCache();
 
 		\OC\Files\Filesystem::tearDown();
+		\OC_Hook::clear('OC_Filesystem');
 		if (!self::$user) {
 			self::$user = uniqid();
 		}

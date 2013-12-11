@@ -39,7 +39,11 @@ class Storage {
 		} else {
 			$sql = 'INSERT INTO `*PREFIX*storages` (`id`) VALUES(?)';
 			\OC_DB::executeAudited($sql, array($this->storageId));
-			$this->numericId = \OC_DB::insertid('*PREFIX*storages');
+
+			$sql = 'SELECT `numeric_id` FROM `*PREFIX*storages` WHERE `id` = ?';
+			$result = \OC_DB::executeAudited($sql, array($this->storageId));
+			$row = $result->fetchRow();
+			$this->numericId = $row['numeric_id'];
 		}
 	}
 

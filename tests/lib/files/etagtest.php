@@ -24,7 +24,7 @@ class EtagTest extends \PHPUnit_Framework_TestCase {
 	private $userBackend;
 
 	public function setUp() {
-		\OC_Hook::clear('OC_Filesystem', 'setup');
+		\OC_Hook::clear('OC_Filesystem');
 		\OCP\Util::connectHook('OC_Filesystem', 'setup', '\OC\Files\Storage\Shared', 'setup');
 		\OCP\Share::registerBackend('file', 'OC_Share_Backend_File');
 		\OCP\Share::registerBackend('folder', 'OC_Share_Backend_Folder', 'file');
@@ -38,6 +38,7 @@ class EtagTest extends \PHPUnit_Framework_TestCase {
 		$this->userBackend = new \OC_User_Dummy();
 		\OC_User::useBackend($this->userBackend);
 		\OC_Util::tearDownFS();
+		\OC_Hook::clear('OC_Filesystem');
 	}
 
 	public function tearDown() {

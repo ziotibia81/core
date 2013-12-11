@@ -8,6 +8,7 @@
 
 namespace Test\Files\Cache;
 
+use OC\Files\Filesystem;
 use PHPUnit_Framework_MockObject_MockObject;
 
 class LongId extends \OC\Files\Storage\Temporary {
@@ -18,11 +19,11 @@ class LongId extends \OC\Files\Storage\Temporary {
 
 class Cache extends \PHPUnit_Framework_TestCase {
 	/**
-	 * @var \OC\Files\Storage\Temporary $storage ;
+	 * @var \OC\Files\Storage\Storage $storage ;
 	 */
 	private $storage;
 	/**
-	 * @var \OC\Files\Storage\Temporary $storage2 ;
+	 * @var \OC\Files\Storage\Storage $storage2 ;
 	 */
 	private $storage2;
 
@@ -386,9 +387,11 @@ class Cache extends \PHPUnit_Framework_TestCase {
 	}
 
 	public function setUp() {
+		Filesystem::tearDown();
+		\OC_User::setUserId(null);
 		$this->storage = new \OC\Files\Storage\Temporary(array());
 		$this->storage2 = new \OC\Files\Storage\Temporary(array());
-		$this->cache = new \OC\Files\Cache\Cache($this->storage);
-		$this->cache2 = new \OC\Files\Cache\Cache($this->storage2);
+		$this->cache = $this->storage->getCache('');
+		$this->cache2 = $this->storage2->getCache('');
 	}
 }

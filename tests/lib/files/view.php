@@ -37,6 +37,8 @@ class View extends \PHPUnit_Framework_TestCase {
 		\OC\Files\Filesystem::mount($storage, null, '/');
 		\OC\Files\Filesystem::init($this->user, '/' . $this->user . '/files');
 
+		\OC_Hook::clear('OC_Filesystem');
+
 		\OC\Files\Filesystem::clearMounts();
 	}
 

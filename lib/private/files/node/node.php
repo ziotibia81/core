@@ -339,7 +339,9 @@ class Node {
 					if ($subStorage) {
 						$subCache = $subStorage->getCache('');
 						$rootEntry = $subCache->get('');
-						$data['size'] += $rootEntry['size'];
+						if (is_array($rootEntry) and isset($rootEntry['size'])) {
+							$data['size'] += $rootEntry['size'];
+						}
 					}
 				}
 			}
@@ -446,6 +448,13 @@ class Node {
 	protected function moveInCache($targetNode) {
 		$cache = $this->storage->getCache($this->internalPath);
 		$cache->move($this->internalPath, $targetNode->getInternalPath());
+
+		if (pathinfo($this->getInternalPath(), PATHINFO_EXTENSION) !== pathinfo($targetNode->getInternalPath(), PATHINFO_EXTENSION)) {
+			// redetect mime type change
+			$mimeType = $targetNode->getStorage()->getMimeType($targetNode->getInternalPath());
+			$fileId = $targetNode->getStorage()->getCache()->getId($targetNode->getInternalPath());
+			$targetNode->getStorage()->getCache()->update($fileId, array('mimetype' => $mimeType));
+		}
 
 		$updater = new Updater($this->root);
 		$parent = $this->getParent();

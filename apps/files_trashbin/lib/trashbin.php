@@ -916,8 +916,8 @@ class Trashbin {
 
 	/**
 	 * @brief get the size from a given root folder
-	 * @param $view file view on the root folder
-	 * @return size of the folder
+	 * @param \OC\Files\View $view file view on the root folder
+	 * @return int size of the folder
 	 */
 	private static function calculateSize($view) {
 		$root = \OCP\Config::getSystemValue('datadirectory') . $view->getAbsolutePath('');

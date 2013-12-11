@@ -58,7 +58,11 @@ class View extends BasicEmitter {
 	private $rootFolder;
 
 	public function __construct($root) {
-		$this->rootFolder = Filesystem::getRootNode()->get($root);
+		try {
+			$this->rootFolder = Filesystem::getRootNode()->get($root);
+		} catch (NotfoundException $e) {
+			$this->rootFolder = Filesystem::getRootNode()->newFolder($root);
+		}
 		$this->connectHooks(Filesystem::getRootNode());
 	}
 
@@ -373,6 +377,7 @@ class View extends BasicEmitter {
 			$node = $this->rootFolder->newFile($path);
 		}
 		$node->putContent($data);
+		return true;
 	}
 
 	public function unlink($path) {
@@ -538,6 +543,7 @@ class View extends BasicEmitter {
 	 * get the filesystem info
 	 *
 	 * @param string $path
+	 * @param bool $includeMountPoints
 	 * @return array
 	 *
 	 * returns an associative array with the following keys:
@@ -547,8 +553,13 @@ class View extends BasicEmitter {
 	 * - encrypted
 	 * - versioned
 	 */
-	public function getFileInfo($path) {
-		return $this->stat($path);
+	public function getFileInfo($path, $includeMountPoints = true) {
+		if ($includeMountPoints) {
+			return $this->stat($path);
+		} else {
+			$node = $this->rootFolder->get($path);
+			return $node->getStorage()->getCache()->get($node->getInternalPath());
+		}
 	}
 
 	/**
