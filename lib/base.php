@@ -497,7 +497,7 @@ class OC {
 			}
 		}
 
-		if (defined('DEBUG') && DEBUG) {
+		if (defined('DEBUG') && DEBUG && !self::$CLI) {
 			self::$clockwork = new \Clockwork\Clockwork();
 			self::$coreLogger = new \OC\CoreLogger();
 			self::$coreLogger->startEvent('boot', 'Boot');
