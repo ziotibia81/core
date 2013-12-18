@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ownCloud\n"
 "Report-Msgid-Bugs-To: translations@owncloud.org\n"
-"POT-Creation-Date: 2013-12-05 22:23-0500\n"
-"PO-Revision-Date: 2013-12-04 23:20+0000\n"
+"POT-Creation-Date: 2013-12-17 06:45-0500\n"
+"PO-Revision-Date: 2013-12-15 13:10+0000\n"
 "Last-Translator: volkangezer <volkangezer@gmail.com>\n"
 "Language-Team: Turkish (http://www.transifex.com/projects/p/owncloud/language/tr/)\n"
 "MIME-Version: 1.0\n"
@@ -202,19 +202,19 @@ msgstr "Sil"
 msgid "add group"
 msgstr "grup ekle"
 
-#: js/users.js:451
+#: js/users.js:454
 msgid "A valid username must be provided"
 msgstr "Geçerli bir kullanıcı adı mutlaka sağlanmalı"
 
-#: js/users.js:452 js/users.js:458 js/users.js:473
+#: js/users.js:455 js/users.js:461 js/users.js:476
 msgid "Error creating user"
 msgstr "Kullanıcı oluşturulurken hata"
 
-#: js/users.js:457
+#: js/users.js:460
 msgid "A valid password must be provided"
 msgstr "Geçerli bir parola mutlaka sağlanmalı"
 
-#: js/users.js:481
+#: js/users.js:484
 msgid "Warning: Home directory for user \"{user}\" already exists"
 msgstr "Uyarı: \"{user}\" kullanıcısı için zaten bir Ev dizini mevcut"
 
@@ -389,7 +389,7 @@ msgstr "Kullanıcıların kendileri ile paylaşılan ögeleri yeniden paylaşmas
 
 #: templates/admin.php:203
 msgid "Allow users to share with anyone"
-msgstr "Kullanıcıların herşeyi paylaşmalarına izin ver"
+msgstr "Kullanıcıların her şeyi paylaşmalarına izin ver"
 
 #: templates/admin.php:206
 msgid "Allow users to only share with users in their groups"
@@ -540,7 +540,7 @@ msgstr "Tam Adı"
 
 #: templates/personal.php:73
 msgid "Email"
-msgstr "Eposta"
+msgstr "E-posta"
 
 #: templates/personal.php:75
 msgid "Your email address"
@@ -548,7 +548,7 @@ msgstr "E-posta adresiniz"
 
 #: templates/personal.php:76
 msgid "Fill in an email address to enable password recovery"
-msgstr "Parola kurtarmayı etkinleştirmek için bir eposta adresi girin"
+msgstr "Parola kurtarmayı etkinleştirmek için bir e-posta adresi girin"
 
 #: templates/personal.php:86
 msgid "Profile picture"

@@ -138,8 +138,8 @@ class OC {
 			OC::$THIRDPARTYROOT = rtrim(dirname(OC::$SERVERROOT), '/');
 		} else {
 			throw new Exception('3rdparty directory not found! Please put the ownCloud 3rdparty'
-				.' folder in the ownCloud folder or the folder above.'
-				.' You can also configure the location in the config.php file.');
+				. ' folder in the ownCloud folder or the folder above.'
+				. ' You can also configure the location in the config.php file.');
 		}
 		// search the apps folder
 		$config_paths = OC_Config::getValue('apps_paths', array());
@@ -163,7 +163,7 @@ class OC {
 
 		if (empty(OC::$APPSROOTS)) {
 			throw new Exception('apps directory not found! Please put the ownCloud apps folder in the ownCloud folder'
-				.' or the folder above. You can also configure the location in the config.php file.');
+				. ' or the folder above. You can also configure the location in the config.php file.');
 		}
 		$paths = array();
 		foreach (OC::$APPSROOTS as $path) {
@@ -183,7 +183,8 @@ class OC {
 
 	public static function checkConfig() {
 		if (file_exists(OC::$SERVERROOT . "/config/config.php")
-			and !is_writable(OC::$SERVERROOT . "/config/config.php")) {
+			and !is_writable(OC::$SERVERROOT . "/config/config.php")
+		) {
 			$defaults = new OC_Defaults();
 			if (self::$CLI) {
 				echo "Can't write into config directory!\n";
@@ -195,7 +196,7 @@ class OC {
 				OC_Template::printErrorPage(
 					"Can't write into config directory!",
 					'This can usually be fixed by '
-						.'<a href="' . \OC_Helper::linkToDocs('admin-dir_permissions') . '" target="_blank">giving the webserver write access to the config directory</a>.'
+					. '<a href="' . \OC_Helper::linkToDocs('admin-dir_permissions') . '" target="_blank">giving the webserver write access to the config directory</a>.'
 				);
 			}
 		}
@@ -261,28 +262,40 @@ class OC {
 		}
 	}
 
-	public static function checkUpgrade($showTemplate = true) {
+	/**
+	 * check if the instance needs to preform an upgrade
+	 *
+	 * @return bool
+	 */
+	public static function needUpgrade() {
 		if (OC_Config::getValue('installed', false)) {
 			$installedVersion = OC_Config::getValue('version', '0.0.0');
 			$currentVersion = implode('.', OC_Util::getVersion());
-			if (version_compare($currentVersion, $installedVersion, '>')) {
-				if ($showTemplate && !OC_Config::getValue('maintenance', false)) {
-					OC_Config::setValue('theme', '');
-					$minimizerCSS = new OC_Minimizer_CSS();
-					$minimizerCSS->clearCache();
-					$minimizerJS = new OC_Minimizer_JS();
-					$minimizerJS->clearCache();
-					OC_Util::addScript('update');
-					$tmpl = new OC_Template('', 'update.admin', 'guest');
-					$tmpl->assign('version', OC_Util::getVersionString());
-					$tmpl->printPage();
-					exit();
-				} else {
-					return true;
-				}
-			}
+			return version_compare($currentVersion, $installedVersion, '>');
+		} else {
 			return false;
 		}
+	}
+
+	public static function checkUpgrade($showTemplate = true) {
+		if (self::needUpgrade()) {
+			if ($showTemplate && !OC_Config::getValue('maintenance', false)) {
+				OC_Config::setValue('theme', '');
+				$minimizerCSS = new OC_Minimizer_CSS();
+				$minimizerCSS->clearCache();
+				$minimizerJS = new OC_Minimizer_JS();
+				$minimizerJS->clearCache();
+				OC_Util::addScript('config'); // needed for web root
+				OC_Util::addScript('update');
+				$tmpl = new OC_Template('', 'update.admin', 'guest');
+				$tmpl->assign('version', OC_Util::getVersionString());
+				$tmpl->printPage();
+				exit();
+			} else {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -476,7 +489,7 @@ class OC {
 			// OC_Util::getInstanceId() for namespacing. See #5409.
 			try {
 				self::$loader->setMemoryCache(\OC\Memcache\Factory::createLowLatency('Autoloader'));
-			} catch(\Exception $ex) {
+			} catch (\Exception $ex) {
 			}
 		}
 		OC_Util::isSetLocaleWorking();
@@ -539,7 +552,7 @@ class OC {
 		if (count($errors) > 0) {
 			if (self::$CLI) {
 				foreach ($errors as $error) {
-					echo $error['error']."\n";
+					echo $error['error'] . "\n";
 					echo $error['hint'] . "\n\n";
 				}
 			} else {
@@ -561,8 +574,8 @@ class OC {
 		OC_Group::useBackend(new OC_Group_Database());
 
 		if (isset($_SERVER['PHP_AUTH_USER']) && self::$session->exists('user_id')
-			&& $_SERVER['PHP_AUTH_USER'] != self::$session->get('user_id')) {
-			$sessionUser = self::$session->get('user_id');
+			&& $_SERVER['PHP_AUTH_USER'] !== self::$session->get('loginname')) {
+			$sessionUser = self::$session->get('loginname');
 			$serverUser = $_SERVER['PHP_AUTH_USER'];
 			OC_Log::write('core',
 				"Session user-id ($sessionUser) doesn't match SERVER[PHP_AUTH_USER] ($serverUser).",
@@ -638,13 +651,9 @@ class OC {
 	 * register hooks for the cache
 	 */
 	public static function registerCacheHooks() {
-		if (OC_Config::getValue('installed', false)) { //don't try to do this before we are properly setup
-			// register cache cleanup jobs
-			try { //if this is executed before the upgrade to the new backgroundjob system is completed it will throw an exception
-				\OCP\BackgroundJob::registerJob('OC\Cache\FileGlobalGC');
-			} catch (Exception $e) {
+		if (OC_Config::getValue('installed', false) && !self::needUpgrade()) { //don't try to do this before we are properly setup
+			\OCP\BackgroundJob::registerJob('OC\Cache\FileGlobalGC');
 
-			}
 			// NOTE: This will be replaced to use OCP
 			$userSession = \OC_User::getUserSession();
 			$userSession->listen('postLogin', '\OC\Cache\File', 'loginListener');
@@ -655,14 +664,9 @@ class OC {
 	 * register hooks for the cache
 	 */
 	public static function registerLogRotate() {
-		if (OC_Config::getValue('installed', false) && OC_Config::getValue('log_rotate_size', false)) {
+		if (OC_Config::getValue('installed', false) && OC_Config::getValue('log_rotate_size', false) && !self::needUpgrade()) {
 			//don't try to do this before we are properly setup
-			// register cache cleanup jobs
-			try { //if this is executed before the upgrade to the new backgroundjob system is completed it will throw an exception
-				\OCP\BackgroundJob::registerJob('OC\Log\Rotate', OC_Config::getValue("datadirectory", OC::$SERVERROOT.'/data').'/owncloud.log');
-			} catch (Exception $e) {
-
-			}
+			\OCP\BackgroundJob::registerJob('OC\Log\Rotate', OC_Config::getValue("datadirectory", OC::$SERVERROOT . '/data') . '/owncloud.log');
 		}
 	}
 
@@ -689,7 +693,7 @@ class OC {
 	 * register hooks for sharing
 	 */
 	public static function registerShareHooks() {
-		if(\OC_Config::getValue('installed')) {
+		if (\OC_Config::getValue('installed')) {
 			OC_Hook::connect('OC_User', 'post_deleteUser', 'OCP\Share', 'post_deleteUser');
 			OC_Hook::connect('OC_User', 'post_addToGroup', 'OCP\Share', 'post_addToGroup');
 			OC_Hook::connect('OC_User', 'post_removeFromGroup', 'OCP\Share', 'post_removeFromGroup');
@@ -713,7 +717,7 @@ class OC {
 		}
 
 		$request = OC_Request::getPathInfo();
-		if(substr($request, -3) !== '.js') {// we need these files during the upgrade
+		if (substr($request, -3) !== '.js') { // we need these files during the upgrade
 			self::checkMaintenanceMode();
 			self::checkUpgrade();
 		}
@@ -849,18 +853,16 @@ class OC {
 		// auth possible via apache module?
 		if (OC::tryApacheAuth()) {
 			$error[] = 'apacheauthfailed';
-		}
-		// remember was checked after last login
+		} // remember was checked after last login
 		elseif (OC::tryRememberLogin()) {
 			$error[] = 'invalidcookie';
-		}
-		// logon via web form
+		} // logon via web form
 		elseif (OC::tryFormLogin()) {
 			$error[] = 'invalidpassword';
 			if ( OC_Config::getValue('log_authfailip', false) ) {
 				OC_Log::write('core', 'Login failed: user \''.$_POST["user"].'\' , wrong password, IP:'.$_SERVER['REMOTE_ADDR'],
 				OC_Log::WARN);
-			} else { 
+			} else {
 				OC_Log::write('core', 'Login failed: user \''.$_POST["user"].'\' , wrong password, IP:set log_authfailip=true in conf',
                                 OC_Log::WARN);
 			}
