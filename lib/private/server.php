@@ -71,10 +71,18 @@ class Server extends SimpleContainer implements IServerContainer {
 			return new Root($manager, $user, $userManager);
 		});
 		$this->registerService('UserManager', function($c) {
-			return new \OC\User\Manager();
+			/**
+			 * @var SimpleContainer $c
+			 * @var \OC\AllConfig $config
+			 */
+			$config = $c->query('AllConfig');
+			return new \OC\User\Manager($config);
 		});
 		$this->registerService('UserSession', function($c) {
-			/** @var $c SimpleContainer */
+			/**
+			 * @var SimpleContainer $c
+			 * @var \OC\User\Manager $manager
+			 */
 			$manager = $c->query('UserManager');
 			$userSession = new \OC\User\Session($manager, \OC::$session);
 			$userSession->listen('\OC\User', 'preCreateUser', function ($uid, $password) {
