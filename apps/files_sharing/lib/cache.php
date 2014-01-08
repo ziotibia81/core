@@ -278,11 +278,31 @@ class Shared_Cache extends Cache {
 	 * @return array
 	 */
 	private function searchWithWhere($sqlwhere, $wherevalue, $chunksize = self::MAX_SQL_CHUNK_SIZE) {
-
-		$ids = $this->getAll();
-
 		$files = array();
-		
+
+		$query = \OC_DB::prepare('SELECT `id` FROM `*PREFIX*mimetypes` WHERE `mimetype` = ?');
+		$result = $query->execute(array('httpd/unix-directory'));
+		if ($row = $result->fetchRow()) {
+			$dirMimeType = $row['id'];
+		} else {
+			$dirMimeType = -1;
+		}
+		$sharedFiles = \OCP\Share::getItemsSharedWith('file', \OC_Share_Backend_File::FORMAT_GET_FOLDER_CONTENTS);
+
+		$ids = array();
+		$dirIds = array();
+
+		foreach ($sharedFiles as $file) {
+			if ($file['mimetype'] === $dirMimeType) {
+				$dirIds[] = $file['fileid'];
+			}
+			else {
+				$ids[] = $file['fileid'];
+			}
+		}
+
+		// process files directly under "/Shared"
+
 		// divide into chunks
 		$chunks = array_chunk($ids, $chunksize);
 		
@@ -305,6 +325,32 @@ class Shared_Cache extends Cache {
 				$files[] = $row;
 			}
 		}
+
+		// process directories under "/Shared"
+
+		// divide into chunks
+		$chunks = array_chunk($dirIds, $chunksize);
+
+		foreach ($chunks as $chunk) {
+			$placeholders = join(',', array_fill(0, count($chunk), '?'));
+			$sql = 'SELECT `fileid`, `storage`, `path`, `parent`, `name`, `mimetype`, `mimepart`, `size`, `mtime`,
+					`encrypted`, `unencrypted_size`, `etag`
+					FROM `*PREFIX*filecache` WHERE ' . $sqlwhere . ' `parent` IN (' . $placeholders . ')';
+
+			$stmt = \OC_DB::prepare($sql);
+
+			$result = $stmt->execute(array_merge(array($wherevalue), $chunk));
+
+			while ($row = $result->fetchRow()) {
+				if (substr($row['path'], 0, 6) === 'files/') {
+					$row['path'] = substr($row['path'], 6); // remove 'files/' from path as it's relative to '/Shared'
+				}
+				$row['mimetype'] = $this->getMimetype($row['mimetype']);
+				$row['mimepart'] = $this->getMimetype($row['mimepart']);
+				$files[] = $row;
+			}
+		}
+
 		return $files;
 	}
 
