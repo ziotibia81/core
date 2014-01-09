@@ -588,17 +588,14 @@ $(document).ready(function() {
 									// TODO: ideally addFile should be able to receive
 									// all attributes and set them automatically,
 									// and also auto-load the preview
-									var tr = FileList.addFile(name, 0, date, false, hidden);
+									var tr = FileList.addFile(name, result.data.etag, 0, date, false, hidden);
 									tr.attr('data-size', result.data.size);
 									tr.attr('data-mime', result.data.mime);
 									tr.attr('data-id', result.data.id);
 									tr.attr('data-etag', result.data.etag);
 									tr.find('.filesize').text(humanFileSize(result.data.size));
-									var path = getPathForPreview(name);
-									Files.lazyLoadPreview(path, result.data.mime, function(previewpath) {
-										tr.find('td.filename').attr('style','background-image:url('+previewpath+')');
-									}, null, null, result.data.etag);
 									FileActions.display(tr.find('td.filename'), true);
+									$('#fileList .lazy').lazyload();
 								} else {
 									OC.dialogs.alert(result.data.message, t('core', 'Could not create file'));
 								}
@@ -658,11 +655,8 @@ $(document).ready(function() {
 							var tr = FileList.findFileEl(localName);
 							tr.data('mime', mime).data('id', id);
 							tr.attr('data-id', id);
-							var path = $('#dir').val()+'/'+localName;
-							Files.lazyLoadPreview(path, mime, function(previewpath) {
-								tr.find('td.filename').attr('style', 'background-image:url('+previewpath+')');
-							}, null, null, data.etag);
 							FileActions.display(tr.find('td.filename'), true);
+							$('#fileList .lazy').lazyload();
 						});
 						eventSource.listen('error',function(error) {
 							$('#uploadprogressbar').fadeOut();

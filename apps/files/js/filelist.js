@@ -14,6 +14,8 @@ var FileList={
 		return $('#fileList tr').filterAttr('data-file', fileName);
 	},
 	update:function(fileListHtml) {
+		$('#fileList .lazy').removeLazyload();
+
 		var $fileList = $('#fileList');
 		$fileList.empty().html(fileListHtml);
 		FileList.updateEmptyContent();
@@ -40,8 +42,9 @@ var FileList={
 		});
 		// filename td
 		td = $('<td></td>').attr({
-			"class": "filename",
-			"style": 'background-image:url('+iconurl+'); background-size: 32px;'
+			"class": "filename lazy",
+			"style": 'background-size: 32px;',
+			"data-original": iconurl
 		});
 		var rand = Math.random().toString(16).slice(2);
 		td.append('<input id="select-'+rand+'" type="checkbox" /><label for="select-'+rand+'"></label>');
@@ -97,8 +100,9 @@ var FileList={
 		tr.append(td);
 		return tr;
 	},
-	addFile:function(name, size, lastModified, loading, hidden, param) {
+	addFile:function(name, etag, size, lastModified, loading, hidden, param) {
 		var imgurl;
+		var filepath = getPathForPreview(name);
 
 		if (!param) {
 			param = {};
@@ -106,7 +110,7 @@ var FileList={
 
 		var download_url = null;
 		if (!param.download_url) {
-			download_url = OC.Router.generate('download', { file: $('#dir').val()+'/'+name });
+			download_url = OC.Router.generate('download', { file: filepath });
 		} else {
 			download_url = param.download_url;
 		}
@@ -114,7 +118,7 @@ var FileList={
 		if (loading) {
 			imgurl = OC.imagePath('core', 'loading.gif');
 		} else {
-			imgurl = OC.imagePath('core', 'filetypes/file.png');
+			imgurl = Files.getPreviewIconURL(filepath, null, null, etag)
 		}
 		var tr = this.createRow(
 			'file',
@@ -711,6 +715,8 @@ var FileList={
 				$connector.show();
 			}
 		}
+
+		$('#fileList .lazy').lazyload();
 	},
 	updateEmptyContent: function() {
 		var $fileList = $('#fileList');
@@ -780,6 +786,8 @@ var FileList={
 
 $(document).ready(function() {
 	var isPublic = !!$('#isPublic').val();
+
+	$('#fileList .lazy').lazyload();
 
 	// handle upload events
 	var file_upload_start = $('#file_upload_start');
@@ -895,6 +903,8 @@ $(document).ready(function() {
 					return;
 				}
 
+				$('#fileList .lazy').removeLazyload();				
+
 				// add as stand-alone row to filelist
 				var size=t('files', 'Pending');
 				if (data.files[0].size>=0) {
@@ -909,7 +919,7 @@ $(document).ready(function() {
 				FileList.remove(file.name);
 
 				// create new file context
-				data.context = FileList.addFile(file.name, file.size, date, false, false, param);
+				data.context = FileList.addFile(file.name, file.etag, file.size, date, false, false, param);
 
 				// update file data
 				data.context.attr('data-mime',file.mime).attr('data-id',file.id).attr('data-etag', file.etag);
@@ -920,11 +930,7 @@ $(document).ready(function() {
 					data.context.data('permissions', file.permissions);
 				}
 				FileActions.display(data.context.find('td.filename'), true);
-
-				var path = getPathForPreview(file.name);
-				Files.lazyLoadPreview(path, file.mime, function(previewpath) {
-					data.context.find('td.filename').attr('style','background-image:url('+previewpath+')');
-				}, null, null, file.etag);
+				$('#fileList .lazy').lazyload();
 			}
 		}
 	});
