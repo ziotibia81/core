@@ -494,6 +494,12 @@ class OC {
 		}
 		OC_Util::isSetLocaleWorking();
 
+		// setup 3rdparty autoloader
+		$vendorAutoLoad = OC::$THIRDPARTYROOT . '/3rdparty/autoload.php';
+		if (file_exists($vendorAutoLoad)) {
+			require_once $vendorAutoLoad;
+		}
+
 		// set debug mode if an xdebug session is active
 		if (!defined('DEBUG') || !DEBUG) {
 			if (isset($_COOKIE['XDEBUG_SESSION'])) {
@@ -573,12 +579,12 @@ class OC {
 		OC_User::useBackend(new OC_User_Database());
 		OC_Group::useBackend(new OC_Group_Database());
 
-		if (isset($_SERVER['PHP_AUTH_USER']) && self::$session->exists('user_id')
+		if (isset($_SERVER['PHP_AUTH_USER']) && self::$session->exists('loginname')
 			&& $_SERVER['PHP_AUTH_USER'] !== self::$session->get('loginname')) {
 			$sessionUser = self::$session->get('loginname');
 			$serverUser = $_SERVER['PHP_AUTH_USER'];
 			OC_Log::write('core',
-				"Session user-id ($sessionUser) doesn't match SERVER[PHP_AUTH_USER] ($serverUser).",
+				"Session loginname ($sessionUser) doesn't match SERVER[PHP_AUTH_USER] ($serverUser).",
 				OC_Log::WARN);
 			OC_User::logout();
 		}
