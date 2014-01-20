@@ -85,7 +85,10 @@ class OC {
 	 */
 	public static $loader = null;
 
-	private static $coreLogger;
+	/**
+	 * @var \OC\CoreLogger $coreLogger
+	 */
+	public static $coreLogger;
 
 	/**
 	 * @var \Clockwork\Clockwork

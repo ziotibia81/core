@@ -183,4 +183,28 @@ class CoreLogger extends DataSource implements SQLLogger {
 	public function copyHook($params) {
 		$this->log->log('Rename ' . $params['oldpath'] . ' to ' . $params['newpath'], Log::INFO);
 	}
+
+	public function log($message, $level = Log::INFO) {
+		$stack = xdebug_get_function_stack();
+		array_pop($stack);
+		$stackMessage = '';
+		$i = 0;
+		foreach ($stack as $stackLine) {
+			$i++;
+			$stackMessage .= "\n" . $i . '. ';
+			$file = substr($stackLine['file'], strlen(\OC::$SERVERROOT));
+			if (isset($stackLine['class'])) {
+				$function = $stackLine['class'] . '::' . $stackLine['function'];
+			} elseif (isset($stackMessage['function'])) {
+				$function = $stackLine['function'];
+			} else {
+				$function = '';
+			}
+			$stackMessage .= $function . ' in ' . $file;
+			if (isset($stackLine['line'])) {
+				$stackMessage .= ' line ' . $stackLine['line'];
+			}
+		}
+		$this->log->log($message . $stackMessage, $level);
+	}
 }

@@ -112,6 +112,7 @@ class Cache {
 	 * @return array | false
 	 */
 	public function get($file) {
+		\OC::$coreLogger->log('Get file info for ' . $file);
 		if (is_string($file) or $file == '') {
 			// normalize file
 			$file = $this->normalize($file);
