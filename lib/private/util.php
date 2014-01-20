@@ -580,7 +580,7 @@ class OC_Util {
 		// Check if we are a user
 		if( !OC_User::isLoggedIn()) {
 			header( 'Location: '.OC_Helper::linkToAbsolute( '', 'index.php',
-				array('redirectUrl' => OC_Request::requestUri())
+				array('redirect_url' => OC_Request::requestUri())
 			));
 			exit();
 		}
@@ -890,6 +890,11 @@ class OC_Util {
 		// in case there is no internet connection on purpose return false
 		if (self::isInternetConnectionEnabled() === false) {
 			return false;
+		}
+
+		// in case the connection is via proxy return true to avoid connecting to owncloud.org
+		if(OC_Config::getValue('proxy', '') != '') {
+			return true;
 		}
 
 		// try to connect to owncloud.org to see if http connections to the internet are possible.
