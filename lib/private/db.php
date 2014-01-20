@@ -101,9 +101,10 @@ class OC_DB {
 					);
 					$connectionParams['adapter'] = '\OC\DB\Adapter';
 					$connectionParams['wrapperClass'] = 'OC\DB\Connection';
-					// Send "SET NAMES utf8". Only required on PHP 5.3 below 5.3.6.
+					// Send "SET NAMES utf8 COLLATE utf8_general_cl". SET NAMES is only required on PHP 5.3 below 5.3.6.
+					// COLLATE is required in any version to stop mysql from creating the tables case insensitive
 					// See http://stackoverflow.com/questions/4361459/php-pdo-charset-set-names#4361485
-					$eventManager->addEventSubscriber(new \Doctrine\DBAL\Event\Listeners\MysqlSessionInit);
+					$eventManager->addEventSubscriber(new \Doctrine\DBAL\Event\Listeners\MysqlSessionInit('utf8', 'utf8_bin'));
 					break;
 				case 'pgsql':
 					$connectionParams = array(
