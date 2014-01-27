@@ -71,19 +71,18 @@ class Cache {
 		if (empty(self::$mimetypeIds)) {
 			$this->loadMimetypes();
 		}
-		
+
 		if (!isset(self::$mimetypeIds[$mime])) {
-			try{
+			try {
 				$result = \OC_DB::executeAudited('INSERT INTO `*PREFIX*mimetypes`(`mimetype`) VALUES(?)', array($mime));
 				self::$mimetypeIds[$mime] = \OC_DB::insertid('*PREFIX*mimetypes');
 				self::$mimetypes[self::$mimetypeIds[$mime]] = $mime;
-			}
-			catch (\Doctrine\DBAL\DBALException $e){
+			} catch (\Doctrine\DBAL\DBALException $e) {
 				\OC_Log::write('core', 'Exception during mimetype insertion: ' . $e->getmessage(), \OC_Log::DEBUG);
 				return -1;
 			}
-		} 
-				
+		}
+
 		return self::$mimetypeIds[$mime];
 	}
 
@@ -95,24 +94,26 @@ class Cache {
 		return isset(self::$mimetypes[$id]) ? self::$mimetypes[$id] : null;
 	}
 
-	public function loadMimetypes(){
-			$result = \OC_DB::executeAudited('SELECT `id`, `mimetype` FROM `*PREFIX*mimetypes`', array());
-			if ($result) {
-				while ($row = $result->fetchRow()) {
-					self::$mimetypeIds[$row['mimetype']] = $row['id'];
-					self::$mimetypes[$row['id']] = $row['mimetype'];
-				}
+	public function loadMimetypes() {
+		$result = \OC_DB::executeAudited('SELECT `id`, `mimetype` FROM `*PREFIX*mimetypes`', array());
+		if ($result) {
+			while ($row = $result->fetchRow()) {
+				self::$mimetypeIds[$row['mimetype']] = $row['id'];
+				self::$mimetypes[$row['id']] = $row['mimetype'];
 			}
+		}
 	}
 
 	/**
 	 * get the stored metadata of a file or folder
 	 *
-	 * @param string/int $file
+	 * @param string /int $file
 	 * @return array | false
 	 */
 	public function get($file) {
-		\OC::$coreLogger->log('Get file info for ' . $file);
+		if (\OC::$coreLogger) {
+			\OC::$coreLogger->log('Get file info for ' . $file);
+		}
 		if (is_string($file) or $file == '') {
 			// normalize file
 			$file = $this->normalize($file);
@@ -136,7 +137,7 @@ class Cache {
 		}
 
 		//merge partial data
-		if (!$data and  is_string($file)) {
+		if (!$data and is_string($file)) {
 			if (isset($this->partial[$file])) {
 				$data = $this->partial[$file];
 			}
@@ -147,7 +148,7 @@ class Cache {
 			$data['mtime'] = (int)$data['mtime'];
 			$data['storage_mtime'] = (int)$data['storage_mtime'];
 			$data['encrypted'] = (bool)$data['encrypted'];
-            $data['unencrypted_size'] = (int)$data['unencrypted_size'];
+			$data['unencrypted_size'] = (int)$data['unencrypted_size'];
 			$data['storage'] = $this->storageId;
 			$data['mimetype'] = $this->getMimetype($data['mimetype']);
 			$data['mimepart'] = $this->getMimetype($data['mimepart']);
@@ -171,7 +172,7 @@ class Cache {
 			$sql = 'SELECT `fileid`, `storage`, `path`, `parent`, `name`, `mimetype`, `mimepart`, `size`, `mtime`,
 						   `storage_mtime`, `encrypted`, `unencrypted_size`, `etag`
 					FROM `*PREFIX*filecache` WHERE `parent` = ? ORDER BY `name` ASC';
-			$result = \OC_DB::executeAudited($sql,array($fileId));
+			$result = \OC_DB::executeAudited($sql, array($fileId));
 			$files = $result->fetchAll();
 			foreach ($files as &$file) {
 				$file['mimetype'] = $this->getMimetype($file['mimetype']);
@@ -244,12 +245,12 @@ class Cache {
 	 */
 	public function update($id, array $data) {
 
-		if(isset($data['path'])) {
+		if (isset($data['path'])) {
 			// normalize path
 			$data['path'] = $this->normalize($data['path']);
 		}
 
-		if(isset($data['name'])) {
+		if (isset($data['name'])) {
 			// normalize path
 			$data['name'] = $this->normalize($data['name']);
 		}
@@ -358,7 +359,7 @@ class Cache {
 				$this->remove($child['path']);
 			}
 		}
-		
+
 		$sql = 'DELETE FROM `*PREFIX*filecache` WHERE `fileid` = ?';
 		\OC_DB::executeAudited($sql, array($entry['fileid']));
 
@@ -571,7 +572,7 @@ class Cache {
 	 */
 	public function getIncomplete() {
 		$query = \OC_DB::prepare('SELECT `path` FROM `*PREFIX*filecache`'
-			. ' WHERE `storage` = ? AND `size` = -1 ORDER BY `fileid` DESC',1);
+			. ' WHERE `storage` = ? AND `size` = -1 ORDER BY `fileid` DESC', 1);
 		$result = \OC_DB::executeAudited($query, array($this->getNumericStorageId()));
 		if ($row = $result->fetchRow()) {
 			return $row['path'];
@@ -605,6 +606,7 @@ class Cache {
 
 	/**
 	 * normalize the given path
+	 *
 	 * @param $path
 	 * @return string
 	 */
