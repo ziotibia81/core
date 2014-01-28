@@ -60,9 +60,49 @@ window.oc_appswebroots = {
 
 // global setup for all tests
 (function setupTests() {
-	var fakeServer = null;
+	var fakeServer = null,
+		firstRun = true;
+
+	/**
+	 * Little hack of console.log to report tests directly in the HTML page
+	 */
+	function setupPageReporter() {
+		var $ = jQuery;
+		var $reportEl = $('<div id="#testResult"></div>');
+		$('body').append($reportEl);
+
+		$reportEl.before('<div class="notice">Please check the browser console for details</div>');
+
+		var oldLog = console.log;
+		console.log = function(msg) {
+			if (typeof(msg) !== 'string') {
+				return oldLog.apply(this, arguments);
+			}
+			var pos = msg.indexOf(' ');
+			if (pos >= 0) {
+				var testState = msg.substr(0, pos);
+				if (testState === 'SUCCESS') {
+					// it is indeed a test result message
+					var $result = $('<div class="success"></div>');
+					$result.text(msg);
+					$reportEl.append($result);
+				}
+				else if (testState === 'FAILED') {
+					// it is indeed a test result message
+					var $result = $('<div class="failed"></div>');
+					$result.text(msg);
+					$reportEl.append($result);
+				}
+			}
+			return oldLog.apply(this, arguments);
+		}
+	}
 
 	beforeEach(function() {
+		if (firstRun) {
+			firstRun = false;
+			setupPageReporter();
+		}
 		// enforce fake XHR, tests should not depend on the server and
 		// must use fake responses for expected calls
 		fakeServer = sinon.fakeServer.create();
@@ -86,4 +126,3 @@ window.oc_appswebroots = {
 		fakeServer.restore();
 	});
 })();
-
