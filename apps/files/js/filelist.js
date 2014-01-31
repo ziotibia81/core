@@ -477,6 +477,7 @@ var FileList={
 					td.find('a.name span.extension').text(newname.substr(newname.lastIndexOf('.')));
 				}
 				form.remove();
+				FileActions.display( tr.find('td.filename'), true);
 				td.children('a.name').show();
 			} catch (error) {
 				input.attr('title', error);
@@ -780,6 +781,20 @@ var FileList={
 		$('#fileList tr.searchresult').each(function(i,e) {
 			$(e).removeClass("searchresult");
 		});
+	},
+
+	/**
+	 * Returns the download URL of the given file
+	 * @param filename file name of the file
+	 * @param dir optional directory in which the file name is, defaults to the current directory
+	 */
+	getDownloadUrl: function(filename, dir) {
+		var params = {
+			files: filename,
+			dir: dir || FileList.getCurrentDirectory(),
+			download: null
+		};
+		return OC.filePath('files', 'ajax', 'download.php') + '?' + OC.buildQueryString(params);
 	}
 };
 
