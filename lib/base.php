@@ -414,7 +414,13 @@ class OC {
 	public static function getRouter() {
 		if (!isset(OC::$router)) {
 			OC::$router = new OC_Router();
+			if ($logger = \OC::$coreLogger) {
+				$logger->startEvent('loadRoutes', 'Load routes');
+			}
 			OC::$router->loadRoutes();
+			if ($logger) {
+				$logger->endEvent('loadRoutes');
+			}
 		}
 
 		return OC::$router;
