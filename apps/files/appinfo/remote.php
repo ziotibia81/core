@@ -29,14 +29,13 @@ OC_App::loadApps($RUNTIME_APPTYPES);
 
 OC_Util::obEnd();
 
+// Create ownCloud Dir
+$objectTree = new \OC\Connector\Sabre\ObjectTree();
+
 // Backends
-$authBackend = new OC_Connector_Sabre_Auth();
+$authBackend = new OC_Connector_Sabre_Auth($objectTree);
 $lockBackend = new OC_Connector_Sabre_Locks();
 $requestBackend = new OC_Connector_Sabre_Request();
-
-// Create ownCloud Dir
-$rootDir = new OC_Connector_Sabre_Directory('');
-$objectTree = new \OC\Connector\Sabre\ObjectTree($rootDir);
 
 // Fire up server
 $server = new OC_Connector_Sabre_Server($objectTree);

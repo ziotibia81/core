@@ -11,13 +11,23 @@ namespace OC\Connector\Sabre;
 use OC\Files\Filesystem;
 
 class ObjectTree extends \Sabre_DAV_ObjectTree {
-
 	/**
 	 * keep this public to allow mock injection during unit test
 	 *
 	 * @var \OC\Files\View
 	 */
-	public $fileView;
+	private $view;
+
+	/**
+	 * @param \OC\Files\View $view
+	 */
+	public function init($view) {
+		$this->view = $view;
+		$this->rootNode = new \OC_Connector_Sabre_Directory($this->view->getFileInfo(''), $this->view);
+	}
+
+	public function __construct() {
+	}
 
 	/**
 	 * Returns the INode object for the requested path
@@ -40,30 +50,32 @@ class ObjectTree extends \Sabre_DAV_ObjectTree {
 
 		if (pathinfo($path, PATHINFO_EXTENSION) === 'part') {
 			// read from storage
-			$absPath = $this->getFileView()->getAbsolutePath($path);
+			$absPath = $this->view->getAbsolutePath($path);
 			list($storage, $internalPath) = Filesystem::resolvePath('/' . $absPath);
 			if ($storage) {
+				/**
+				 * @var \OC\Files\Storage\Storage $storage
+				 */
 				$scanner = $storage->getScanner($internalPath);
 				// get data directly
 				$info = $scanner->getData($internalPath);
+			} else {
+				$info = null;
 			}
-		}
-		else {
+		} else {
 			// read from cache
-			$info = $this->getFileView()->getFileInfo($path);
+			$info = $this->view->getFileInfo($path);
 		}
 
 		if (!$info) {
 			throw new \Sabre_DAV_Exception_NotFound('File with name ' . $path . ' could not be located');
 		}
 
-		if ($info['mimetype'] === 'httpd/unix-directory') {
-			$node = new \OC_Connector_Sabre_Directory($path);
+		if ($info->getMimetype() === 'httpd/unix-directory') {
+			$node = new \OC_Connector_Sabre_Directory($info, $this->view);
 		} else {
-			$node = new \OC_Connector_Sabre_File($path);
+			$node = new \OC_Connector_Sabre_File($info, $this->view);
 		}
-
-		$node->setFileinfoCache($info);
 
 		$this->cache[$path] = $node;
 		return $node;
@@ -88,32 +100,31 @@ class ObjectTree extends \Sabre_DAV_ObjectTree {
 		list($destinationDir,) = \Sabre_DAV_URLUtil::splitPath($destinationPath);
 
 		// check update privileges
-		$fs = $this->getFileView();
-		if (!$fs->isUpdatable($sourcePath)) {
+		if (!$this->view->isUpdatable($sourcePath)) {
 			throw new \Sabre_DAV_Exception_Forbidden();
 		}
 		if ($sourceDir !== $destinationDir) {
 			// for a full move we need update privileges on sourcePath and sourceDir as well as destinationDir
-			if (!$fs->isUpdatable($sourceDir)) {
+			if (!$this->view->isUpdatable($sourceDir)) {
 				throw new \Sabre_DAV_Exception_Forbidden();
 			}
-			if (!$fs->isUpdatable($destinationDir)) {
+			if (!$this->view->isUpdatable($destinationDir)) {
 				throw new \Sabre_DAV_Exception_Forbidden();
 			}
-			if (!$fs->isDeletable($sourcePath)) {
+			if (!$this->view->isDeletable($sourcePath)) {
 				throw new \Sabre_DAV_Exception_Forbidden();
 			}
 		}
 
-		$renameOkay = $fs->rename($sourcePath, $destinationPath);
+		$renameOkay = $this->view->rename($sourcePath, $destinationPath);
 		if (!$renameOkay) {
 			throw new \Sabre_DAV_Exception_Forbidden('');
 		}
 
 		// update properties
-		$query = \OC_DB::prepare( 'UPDATE `*PREFIX*properties` SET `propertypath` = ?'
-		.' WHERE `userid` = ? AND `propertypath` = ?' );
-		$query->execute( array( $destinationPath, \OC_User::getUser(), $sourcePath ));
+		$query = \OC_DB::prepare('UPDATE `*PREFIX*properties` SET `propertypath` = ?'
+			. ' WHERE `userid` = ? AND `propertypath` = ?');
+		$query->execute(array($destinationPath, \OC_User::getUser(), $sourcePath));
 
 		$this->markDirty($sourceDir);
 		$this->markDirty($destinationDir);
@@ -132,12 +143,12 @@ class ObjectTree extends \Sabre_DAV_ObjectTree {
 	 */
 	public function copy($source, $destination) {
 
-		if (Filesystem::is_file($source)) {
-			Filesystem::copy($source, $destination);
+		if ($this->view->is_file($source)) {
+			$this->view->copy($source, $destination);
 		} else {
-			Filesystem::mkdir($destination);
-			$dh = Filesystem::opendir($source);
-			if(is_resource($dh)) {
+			$this->view->mkdir($destination);
+			$dh = $this->view->opendir($source);
+			if (is_resource($dh)) {
 				while (($subnode = readdir($dh)) !== false) {
 
 					if ($subnode == '.' || $subnode == '..') continue;
@@ -149,15 +160,5 @@ class ObjectTree extends \Sabre_DAV_ObjectTree {
 
 		list($destinationDir,) = \Sabre_DAV_URLUtil::splitPath($destination);
 		$this->markDirty($destinationDir);
-	}
-
-	/**
-	 * @return \OC\Files\View
-	 */
-	public function getFileView() {
-		if (is_null($this->fileView)) {
-			$this->fileView = \OC\Files\Filesystem::getView();
-		}
-		return $this->fileView;
 	}
 }

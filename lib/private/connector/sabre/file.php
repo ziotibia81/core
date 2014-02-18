@@ -22,7 +22,6 @@
  */
 
 class OC_Connector_Sabre_File extends OC_Connector_Sabre_Node implements Sabre_DAV_IFile {
-
 	/**
 	 * Updates the data
 	 *
@@ -46,10 +45,8 @@ class OC_Connector_Sabre_File extends OC_Connector_Sabre_Node implements Sabre_D
 	 */
 	public function put($data) {
 
-		$fs = $this->getFS();
-
-		if ($fs->file_exists($this->path) &&
-			!$fs->isUpdatable($this->path)) {
+		if ($this->view->file_exists($this->path) &&
+			!$this->info->isUpdateable()) {
 			throw new \Sabre_DAV_Exception_Forbidden();
 		}
 
@@ -74,10 +71,10 @@ class OC_Connector_Sabre_File extends OC_Connector_Sabre_Node implements Sabre_D
 		}
 
 		try {
-			$putOkay = $fs->file_put_contents($partpath, $data);
+			$putOkay = $this->view->file_put_contents($partpath, $data);
 			if ($putOkay === false) {
 				\OC_Log::write('webdav', '\OC\Files\Filesystem::file_put_contents() failed', \OC_Log::ERROR);
-				$fs->unlink($partpath);
+				$this->view->unlink($partpath);
 				// because we have no clue about the cause we can only throw back a 500/Internal Server Error
 				throw new Sabre_DAV_Exception('Could not write file contents');
 			}
@@ -100,18 +97,18 @@ class OC_Connector_Sabre_File extends OC_Connector_Sabre_Node implements Sabre_D
 		}
 
 		// rename to correct path
-		$renameOkay = $fs->rename($partpath, $this->path);
-		$fileExists = $fs->file_exists($this->path);
+		$renameOkay = $this->view->rename($partpath, $this->path);
+		$fileExists = $this->view->file_exists($this->path);
 		if ($renameOkay === false || $fileExists === false) {
 			\OC_Log::write('webdav', '\OC\Files\Filesystem::rename() failed', \OC_Log::ERROR);
-			$fs->unlink($partpath);
+			$this->view->unlink($partpath);
 			throw new Sabre_DAV_Exception('Could not rename part file to final file');
 		}
 
 		// allow sync clients to send the mtime along in a header
 		$mtime = OC_Request::hasModificationTime();
 		if ($mtime !== false) {
-			if($fs->touch($this->path, $mtime)) {
+			if($this->view->touch($this->path, $mtime)) {
 				header('X-OC-MTime: accepted');
 			}
 		}
@@ -120,9 +117,10 @@ class OC_Connector_Sabre_File extends OC_Connector_Sabre_Node implements Sabre_D
 	}
 
 	/**
-	 * Returns the data
+	 * return the data
 	 *
 	 * @return string
+	 * @throws Sabre_DAV_Exception_ServiceUnavailable
 	 */
 	public function get() {
 
@@ -130,7 +128,7 @@ class OC_Connector_Sabre_File extends OC_Connector_Sabre_Node implements Sabre_D
 		if (\OC_Util::encryptedFiles()) {
 			throw new \Sabre_DAV_Exception_ServiceUnavailable();
 		} else {
-			return \OC\Files\Filesystem::fopen($this->path, 'rb');
+			return $this->view->fopen($this->path, 'rb');
 		}
 
 	}
@@ -147,10 +145,10 @@ class OC_Connector_Sabre_File extends OC_Connector_Sabre_Node implements Sabre_D
 			throw new \Sabre_DAV_Exception_Forbidden();
 		}
 
-		if (!\OC\Files\Filesystem::isDeletable($this->path)) {
+		if (!$this->info->isDeletable()) {
 			throw new \Sabre_DAV_Exception_Forbidden();
 		}
-		\OC\Files\Filesystem::unlink($this->path);
+		$this->view->unlink($this->path);
 
 		// remove properties
 		$this->removeProperties();
@@ -163,9 +161,8 @@ class OC_Connector_Sabre_File extends OC_Connector_Sabre_Node implements Sabre_D
 	 * @return int
 	 */
 	public function getSize() {
-		$this->getFileinfoCache();
-		if ($this->fileinfo_cache['size'] > -1) {
-			return $this->fileinfo_cache['size'];
+		if ($this->info->getSize() > -1) {
+			return $this->info->getSize();
 		} else {
 			return null;
 		}
@@ -183,11 +180,7 @@ class OC_Connector_Sabre_File extends OC_Connector_Sabre_Node implements Sabre_D
 	 * @return mixed
 	 */
 	public function getETag() {
-		$properties = $this->getProperties(array(self::GETETAG_PROPERTYNAME));
-		if (isset($properties[self::GETETAG_PROPERTYNAME])) {
-			return $properties[self::GETETAG_PROPERTYNAME];
-		}
-		return null;
+		return $this->info->getEtag();
 	}
 
 	/**
@@ -198,11 +191,7 @@ class OC_Connector_Sabre_File extends OC_Connector_Sabre_Node implements Sabre_D
 	 * @return mixed
 	 */
 	public function getContentType() {
-		if (isset($this->fileinfo_cache['mimetype'])) {
-			return $this->fileinfo_cache['mimetype'];
-		}
-
-		return \OC\Files\Filesystem::getMimeType($this->path);
+		return $this->info->getMimetype();
 
 	}
 
@@ -236,15 +225,14 @@ class OC_Connector_Sabre_File extends OC_Connector_Sabre_Node implements Sabre_D
 			$chunk_handler->file_assemble($partFile);
 
 			// here is the final atomic rename
-			$fs = $this->getFS();
 			$targetPath = $path . '/' . $info['name'];
-			$renameOkay = $fs->rename($partFile, $targetPath);
-			$fileExists = $fs->file_exists($targetPath);
+			$renameOkay = $this->view->rename($partFile, $targetPath);
+			$fileExists = $this->view->file_exists($targetPath);
 			if ($renameOkay === false || $fileExists === false) {
 				\OC_Log::write('webdav', '\OC\Files\Filesystem::rename() failed', \OC_Log::ERROR);
 				// only delete if an error occurred and the target file was already created
 				if ($fileExists) {
-					$fs->unlink($targetPath);
+					$this->view->unlink($targetPath);
 				}
 				throw new Sabre_DAV_Exception('Could not rename part file assembled from chunks');
 			}
@@ -252,7 +240,7 @@ class OC_Connector_Sabre_File extends OC_Connector_Sabre_Node implements Sabre_D
 			// allow sync clients to send the mtime along in a header
 			$mtime = OC_Request::hasModificationTime();
 			if ($mtime !== false) {
-				if($fs->touch($targetPath, $mtime)) {
+				if($this->view->touch($targetPath, $mtime)) {
 					header('X-OC-MTime: accepted');
 				}
 			}

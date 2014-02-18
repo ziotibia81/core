@@ -20,9 +20,7 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
 class OC_Connector_Sabre_Directory extends OC_Connector_Sabre_Node implements Sabre_DAV_ICollection, Sabre_DAV_IQuota {
-
 	/**
 	 * Creates a new file in the directory
 	 *
@@ -60,20 +58,21 @@ class OC_Connector_Sabre_Directory extends OC_Connector_Sabre_Node implements Sa
 
 			// exit if we can't create a new file and we don't updatable existing file
 			$info = OC_FileChunking::decodeName($name);
-			if (!\OC\Files\Filesystem::isCreatable($this->path) &&
-					!\OC\Files\Filesystem::isUpdatable($this->path . '/' . $info['name'])) {
+			if (!$this->info->isUpdateable() &&
+				!\OC\Files\Filesystem::isUpdatable($this->path . '/' . $info['name'])
+			) {
 				throw new \Sabre_DAV_Exception_Forbidden();
 			}
 
 		} else {
 			// For non-chunked upload it is enough to check if we can create a new file
-			if (!\OC\Files\Filesystem::isCreatable($this->path)) {
+			if (!$this->info->isUpdateable()) {
 				throw new \Sabre_DAV_Exception_Forbidden();
 			}
 		}
 
 		$path = $this->path . '/' . $name;
-		$node = new OC_Connector_Sabre_File($path);
+		$node = new OC_Connector_Sabre_File($this->view->getFileInfo($path), $this->view);
 		return $node->put($data);
 	}
 
@@ -90,13 +89,13 @@ class OC_Connector_Sabre_Directory extends OC_Connector_Sabre_Node implements Sa
 			throw new \Sabre_DAV_Exception_Forbidden();
 		}
 
-		if (!\OC\Files\Filesystem::isCreatable($this->path)) {
+		if (!$this->info->isUpdateable()) {
 			throw new \Sabre_DAV_Exception_Forbidden();
 		}
 
 		$newPath = $this->path . '/' . $name;
-		if(!\OC\Files\Filesystem::mkdir($newPath)) {
-			throw new Sabre_DAV_Exception_Forbidden('Could not create directory '.$newPath);
+		if (!$this->view->mkdir($newPath)) {
+			throw new Sabre_DAV_Exception_Forbidden('Could not create directory ' . $newPath);
 		}
 
 	}
@@ -105,14 +104,15 @@ class OC_Connector_Sabre_Directory extends OC_Connector_Sabre_Node implements Sa
 	 * Returns a specific child node, referenced by its name
 	 *
 	 * @param string $name
-	 * @throws Sabre_DAV_Exception_FileNotFound
+	 * @param \OCP\Files\FileInfo $info
+	 * @throws Sabre_DAV_Exception_NotFound
 	 * @return Sabre_DAV_INode
 	 */
 	public function getChild($name, $info = null) {
 
 		$path = $this->path . '/' . $name;
 		if (is_null($info)) {
-			$info = \OC\Files\Filesystem::getFileInfo($path);
+			$info = $this->view->getFileInfo($path);
 		}
 
 		if (!$info) {
@@ -120,12 +120,11 @@ class OC_Connector_Sabre_Directory extends OC_Connector_Sabre_Node implements Sa
 		}
 
 		if ($info['mimetype'] == 'httpd/unix-directory') {
-			$node = new OC_Connector_Sabre_Directory($path);
+			$node = new OC_Connector_Sabre_Directory($info, $this->view);
 		} else {
-			$node = new OC_Connector_Sabre_File($path);
+			$node = new OC_Connector_Sabre_File($info, $this->view);
 		}
 
-		$node->setFileinfoCache($info);
 		return $node;
 	}
 
@@ -136,13 +135,13 @@ class OC_Connector_Sabre_Directory extends OC_Connector_Sabre_Node implements Sa
 	 */
 	public function getChildren() {
 
-		$folder_content = \OC\Files\Filesystem::getDirectoryContent($this->path);
+		$folder_content = $this->view->getDirectoryContent($this->path);
 		$paths = array();
-		foreach($folder_content as $info) {
-			$paths[] = $this->path.'/'.$info['name'];
-			$properties[$this->path.'/'.$info['name']][self::GETETAG_PROPERTYNAME] = '"' . $info['etag'] . '"';
+		foreach ($folder_content as $info) {
+			$paths[] = $this->path . '/' . $info['name'];
+			$properties[$this->path . '/' . $info['name']][self::GETETAG_PROPERTYNAME] = '"' . $info['etag'] . '"';
 		}
-		if(count($paths)>0) {
+		if (count($paths) > 0) {
 			//
 			// the number of arguments within IN conditions are limited in most databases
 			// we chunk $paths into arrays of 200 items each to meet this criteria
@@ -150,15 +149,15 @@ class OC_Connector_Sabre_Directory extends OC_Connector_Sabre_Node implements Sa
 			$chunks = array_chunk($paths, 200, false);
 			foreach ($chunks as $pack) {
 				$placeholders = join(',', array_fill(0, count($pack), '?'));
-				$query = OC_DB::prepare( 'SELECT * FROM `*PREFIX*properties`'
-					.' WHERE `userid` = ?' . ' AND `propertypath` IN ('.$placeholders.')' );
+				$query = OC_DB::prepare('SELECT * FROM `*PREFIX*properties`'
+					. ' WHERE `userid` = ?' . ' AND `propertypath` IN (' . $placeholders . ')');
 				array_unshift($pack, OC_User::getUser()); // prepend userid
-				$result = $query->execute( $pack );
-				while($row = $result->fetchRow()) {
+				$result = $query->execute($pack);
+				while ($row = $result->fetchRow()) {
 					$propertypath = $row['propertypath'];
 					$propertyname = $row['propertyname'];
 					$propertyvalue = $row['propertyvalue'];
-					if($propertyname !== self::GETETAG_PROPERTYNAME) {
+					if ($propertyname !== self::GETETAG_PROPERTYNAME) {
 						$properties[$propertypath][$propertyname] = $propertyvalue;
 					}
 				}
@@ -166,9 +165,9 @@ class OC_Connector_Sabre_Directory extends OC_Connector_Sabre_Node implements Sa
 		}
 
 		$nodes = array();
-		foreach($folder_content as $info) {
+		foreach ($folder_content as $info) {
 			$node = $this->getChild($info['name'], $info);
-			$node->setPropertyCache($properties[$this->path.'/'.$info['name']]);
+			$node->setPropertyCache($properties[$this->path . '/' . $info['name']]);
 			$nodes[] = $node;
 		}
 		return $nodes;
@@ -183,7 +182,7 @@ class OC_Connector_Sabre_Directory extends OC_Connector_Sabre_Node implements Sa
 	public function childExists($name) {
 
 		$path = $this->path . '/' . $name;
-		return \OC\Files\Filesystem::file_exists($path);
+		return $this->view->file_exists($path);
 
 	}
 
@@ -199,11 +198,11 @@ class OC_Connector_Sabre_Directory extends OC_Connector_Sabre_Node implements Sa
 			throw new \Sabre_DAV_Exception_Forbidden();
 		}
 
-		if (!\OC\Files\Filesystem::isDeletable($this->path)) {
+		if (!$this->info->isDeletable()) {
 			throw new \Sabre_DAV_Exception_Forbidden();
 		}
 
-		\OC\Files\Filesystem::rmdir($this->path);
+		$this->view->rmdir($this->path);
 
 	}
 

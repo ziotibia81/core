@@ -20,8 +20,16 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
 class OC_Connector_Sabre_Auth extends Sabre_DAV_Auth_Backend_AbstractBasic {
+	private $objectTree;
+
+	/**
+	 * @param \OC\Connector\Sabre\ObjectTree $objectTree
+	 */
+	public function __construct($objectTree) {
+		$this->objectTree = $objectTree;
+	}
+
 	/**
 	 * Validates a username and password
 	 *
@@ -35,12 +43,12 @@ class OC_Connector_Sabre_Auth extends Sabre_DAV_Auth_Backend_AbstractBasic {
 			OC_Util::setupFS(OC_User::getUser());
 			return true;
 		} else {
-			OC_Util::setUpFS();//login hooks may need early access to the filesystem
-			if(OC_User::login($username, $password)) {
+			OC_Util::setUpFS(); //login hooks may need early access to the filesystem
+			if (OC_User::login($username, $password)) {
 				OC_Util::setUpFS(OC_User::getUser());
+				$this->objectTree->init(\OC\Files\Filesystem::getView()); //once the filesystem is setup we can initialize
 				return true;
-			}
-			else{
+			} else {
 				return false;
 			}
 		}
@@ -55,31 +63,32 @@ class OC_Connector_Sabre_Auth extends Sabre_DAV_Auth_Backend_AbstractBasic {
 	 */
 	public function getCurrentUser() {
 		$user = OC_User::getUser();
-		if(!$user) {
+		if (!$user) {
 			return null;
 		}
 		return $user;
 	}
 
 	/**
-	  * Override function here. We want to cache authentication cookies
-	  * in the syncing client to avoid HTTP-401 roundtrips.
-	  * If the sync client supplies the cookies, then OC_User::isLoggedIn()
-	  * will return true and we can see this WebDAV request as already authenticated,
-	  * even if there are no HTTP Basic Auth headers.
-	  * In other case, just fallback to the parent implementation.
-	  *
-	  * @return bool
-	  */
+	 * Override function here. We want to cache authentication cookies
+	 * in the syncing client to avoid HTTP-401 roundtrips.
+	 * If the sync client supplies the cookies, then OC_User::isLoggedIn()
+	 * will return true and we can see this WebDAV request as already authenticated,
+	 * even if there are no HTTP Basic Auth headers.
+	 * In other case, just fallback to the parent implementation.
+	 *
+	 * @return bool
+	 */
 	public function authenticate(Sabre_DAV_Server $server, $realm) {
 
 		if (OC_User::handleApacheAuth() || OC_User::isLoggedIn()) {
 			$user = OC_User::getUser();
 			OC_Util::setupFS($user);
+			$this->objectTree->init(\OC\Files\Filesystem::getView()); //once the filesystem is setup we can initialize
 			$this->currentUser = $user;
 			return true;
 		}
 
 		return parent::authenticate($server, $realm);
-    }
+	}
 }
