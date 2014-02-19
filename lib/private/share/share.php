@@ -255,29 +255,7 @@ class Share extends \OC\Share\Constants {
 		} else {
 			$queryLimit = null;
 		}
-		if ($format == self::FORMAT_STATUSES) {
-			if ($fileDependent) {
-				$select = '`*PREFIX*share`.`id`, `*PREFIX*share`.`parent`, `share_type`, `path`, `share_with`, `uid_owner`';
-			} else {
-				$select = '`id`, `parent`, `share_type`, `share_with`, `uid_owner`';
-			}
-		} else {
-			if ($fileDependent) {
-				if ($format == \OC_Share_Backend_File::FORMAT_GET_FOLDER_CONTENTS || $format == \OC_Share_Backend_File::FORMAT_FILE_APP_ROOT
-				) {
-					$select = '`*PREFIX*share`.`id`, `item_type`, `item_source`, `*PREFIX*share`.`parent`, `uid_owner`, '
-							. '`share_type`, `share_with`, `file_source`, `path`, `file_target`, '
-							. '`permissions`, `expiration`, `storage`, `*PREFIX*filecache`.`parent` as `file_parent`, '
-							. '`name`, `mtime`, `mimetype`, `mimepart`, `size`, `unencrypted_size`, `encrypted`, `etag`, `mail_send`';
-				} else {
-					$select = '`*PREFIX*share`.`id`, `item_type`, `item_source`, `item_target`,
-							`*PREFIX*share`.`parent`, `share_type`, `share_with`, `uid_owner`,
-							`file_source`, `path`, `file_target`, `permissions`, `stime`, `expiration`, `token`, `storage`, `mail_send`';
-				}
-			} else {
-				$select = '*';
-			}
-		}
+		$select = self::createSelectStatement($format, $fileDependent);
 		$query = \OC_DB::prepare('SELECT ' . $select . ' FROM `*PREFIX*share` ' . $where, $queryLimit);
 		$result = $query->execute($queryArgs);
 		if (\OC_DB::isError($result)) {
@@ -518,10 +496,227 @@ class Share extends \OC\Share\Constants {
 	 * @param bool include collections
 	 * @return Return depends on format
 	 */
-	public static function getItemsShared($itemType, $format = self::FORMAT_NONE, $parameters = null,
-		$limit = -1, $includeCollections = false) {
-		return self::getItems($itemType, null, null, null, \OC_User::getUser(), $format,
-			$parameters, $limit, $includeCollections);
+	public static function getItemsShared($itemType, $format = self::FORMAT_NONE, $parameters = null, $limit = -1, $includeCollections = false) {
+
+		$uidOwner = \OC_User::getUser();
+
+		if (!self::isEnabled()) {
+
+			if ($limit == 1) {
+				return false;
+			} else {
+				return array();
+			}
+		}
+		$backend = self::getBackend($itemType);
+		$collectionTypes = false;
+		// Get filesystem root to add it to the file target and remove from the
+		// file source, match file_source with the file cache
+		if ($itemType == 'file' || $itemType == 'folder') {
+			$root = \OC\Files\Filesystem::getRoot();
+			$where = 'INNER JOIN `*PREFIX*filecache` ON `file_source` = `*PREFIX*filecache`.`fileid`';
+			$where .= ' WHERE `file_target` IS NOT NULL';
+			$fileDependent = true;
+			$queryArgs = array();
+		} else {
+			$fileDependent = false;
+			$root = '';
+			$collectionTypes = self::getCollectionItemTypes($itemType);
+			if ($includeCollections && ($collectionTypes)) {
+				// If includeCollections is true, find collections of this item type, e.g. a music album contains songs
+				if (!in_array($itemType, $collectionTypes)) {
+					$itemTypes = array_merge(array($itemType), $collectionTypes);
+				} else {
+					$itemTypes = $collectionTypes;
+				}
+				$placeholders = join(',', array_fill(0, count($itemTypes), '?'));
+				$where = ' WHERE `item_type` IN (' . $placeholders . '))';
+				$queryArgs = $itemTypes;
+			} else {
+				$where = ' WHERE `item_type` = ?';
+				$queryArgs = array($itemType);
+			}
+		}
+		if (\OC_Appconfig::getValue('core', 'shareapi_allow_links', 'yes') !== 'yes') {
+			$where .= ' AND `share_type` != ?';
+			$queryArgs[] = self::SHARE_TYPE_LINK;
+		}
+
+		$where .= ' AND `uid_owner` = ?';
+		$queryArgs[] = $uidOwner;
+		// Prevent unique user targets for group shares from being selected
+		$where .= ' AND `share_type` != ?';
+		$queryArgs[] = self::$shareTypeGroupUserUnique;
+		if ($itemType == 'file' || $itemType == 'folder') {
+			$column = 'file_source';
+		} else {
+			$column = 'item_source';
+		}
+
+		if ($limit != -1 && !$includeCollections) {
+			// The limit must be at least 3, because filtering needs to be done
+			if ($limit < 3) {
+				$queryLimit = 3;
+			} else {
+				$queryLimit = $limit;
+			}
+		} else {
+			$queryLimit = null;
+		}
+		$select = self::createSelectStatement($format, $fileDependent, $uidOwner);
+		$root = strlen($root);
+		$query = \OC_DB::prepare('SELECT ' . $select . ' FROM `*PREFIX*share` ' . $where, $queryLimit);
+		$result = $query->execute($queryArgs);
+		if (\OC_DB::isError($result)) {
+			\OC_Log::write('OCP\Share', \OC_DB::getErrorMessage($result) . ', select=' . $select . ' where=' . $where, \OC_Log::ERROR);
+		}
+		$items = array();
+		$targets = array();
+		$switchedItems = array();
+		$mounts = array();
+		while ($row = $result->fetchRow()) {
+			self::transformDBResults($row);
+			// Filter out duplicate group shares for users with unique targets
+			if ($row['share_type'] == self::$shareTypeGroupUserUnique && isset($items[$row['parent']])) {
+				$row['share_type'] = self::SHARE_TYPE_GROUP;
+				$row['share_with'] = $items[$row['parent']]['share_with'];
+				// Remove the parent group share
+				unset($items[$row['parent']]);
+				if ($row['permissions'] == 0) {
+					continue;
+				}
+			} else if (!isset($uidOwner)) {
+				// Check if the same target already exists
+				if (isset($targets[$row[$column]])) {
+					// Check if the same owner shared with the user twice
+					// through a group and user share - this is allowed
+					$id = $targets[$row[$column]];
+					if (isset($items[$id]) && $items[$id]['uid_owner'] == $row['uid_owner']) {
+						// Switch to group share type to ensure resharing conditions aren't bypassed
+						if ($items[$id]['share_type'] != self::SHARE_TYPE_GROUP) {
+							$items[$id]['share_type'] = self::SHARE_TYPE_GROUP;
+							$items[$id]['share_with'] = $row['share_with'];
+						}
+						// Switch ids if sharing permission is granted on only
+						// one share to ensure correct parent is used if resharing
+						if (~(int) $items[$id]['permissions'] & \OCP\PERMISSION_SHARE && (int) $row['permissions'] & \OCP\PERMISSION_SHARE) {
+							$items[$row['id']] = $items[$id];
+							$switchedItems[$id] = $row['id'];
+							unset($items[$id]);
+							$id = $row['id'];
+						}
+						// Combine the permissions for the item
+						$items[$id]['permissions'] |= (int) $row['permissions'];
+						continue;
+					}
+				} else {
+					$targets[$row[$column]] = $row['id'];
+				}
+			}
+			// Remove root from file source paths if retrieving own shared items
+			if (isset($uidOwner) && isset($row['path'])) {
+				if (isset($row['parent'])) {
+					$row['path'] = '/Shared/' . basename($row['path']);
+				} else {
+					if (!isset($mounts[$row['storage']])) {
+						$mountPoints = \OC\Files\Filesystem::getMountByNumericId($row['storage']);
+						if (is_array($mountPoints)) {
+							$mounts[$row['storage']] = current($mountPoints);
+						}
+					}
+					if ($mounts[$row['storage']]) {
+						$path = $mounts[$row['storage']]->getMountPoint() . $row['path'];
+						$row['path'] = substr($path, $root);
+					}
+				}
+			}
+			if (self::expireItem($row)) {
+				continue;
+			}
+			// Check if resharing is allowed, if not remove share permission
+			if (isset($row['permissions']) && !self::isResharingAllowed()) {
+				$row['permissions'] &= ~\OCP\PERMISSION_SHARE;
+			}
+			// Add display names to result
+			if (isset($row['share_with']) && $row['share_with'] != '') {
+				$row['share_with_displayname'] = \OCP\User::getDisplayName($row['share_with']);
+			}
+			if (isset($row['uid_owner']) && $row['uid_owner'] != '') {
+				$row['displayname_owner'] = \OCP\User::getDisplayName($row['uid_owner']);
+			}
+
+			$items[$row['id']] = $row;
+		}
+		if (!empty($items)) {
+			$collectionItems = array();
+			foreach ($items as &$row) {
+
+				// Check if this is a collection of the requested item type
+				if ($includeCollections && $collectionTypes && in_array($row['item_type'], $collectionTypes)) {
+					if (($collectionBackend = self::getBackend($row['item_type'])) && $collectionBackend instanceof \OCP\Share_Backend_Collection) {
+						$collection = array();
+						$collection['item_type'] = $row['item_type'];
+						if ($row['item_type'] == 'file' || $row['item_type'] == 'folder') {
+							$collection['path'] = basename($row['path']);
+						}
+						$row['collection'] = $collection;
+						// Fetch all of the children sources
+						$children = $collectionBackend->getChildren($row[$column]);
+						foreach ($children as $child) {
+							$childItem = $row;
+							$childItem['item_type'] = $itemType;
+							if ($row['item_type'] != 'file' && $row['item_type'] != 'folder') {
+								$childItem['item_source'] = $child['source'];
+								$childItem['item_target'] = $child['target'];
+							}
+							if ($backend instanceof \OCP\Share_Backend_File_Dependent) {
+								if ($row['item_type'] == 'file' || $row['item_type'] == 'folder') {
+									$childItem['file_source'] = $child['source'];
+								} else {
+									$meta = \OC\Files\Filesystem::getFileInfo($child['file_path']);
+									$childItem['file_source'] = $meta['fileid'];
+								}
+								$childItem['file_target'] = \OC\Files\Filesystem::normalizePath($child['file_path']);
+							}
+							$collectionItems[] = $childItem;
+						}
+					}
+					// Remove collection item
+					$toRemove = $row['id'];
+					if (array_key_exists($toRemove, $switchedItems)) {
+						$toRemove = $switchedItems[$toRemove];
+					}
+					unset($items[$toRemove]);
+				}
+			}
+			if (!empty($collectionItems)) {
+				$items = array_merge($items, $collectionItems);
+			}
+			if (empty($items) && $limit == 1) {
+				return false;
+			}
+			if ($format == self::FORMAT_NONE) {
+				return $items;
+			} else if ($format == self::FORMAT_STATUSES) {
+				$statuses = array();
+				foreach ($items as $item) {
+					if ($item['share_type'] == self::SHARE_TYPE_LINK) {
+						$statuses[$item[$column]]['link'] = true;
+					} else if (!isset($statuses[$item[$column]])) {
+						$statuses[$item[$column]]['link'] = false;
+					}
+					if ($fileDependent) {
+						$statuses[$item[$column]]['path'] = $item['path'];
+					}
+				}
+				return $statuses;
+			} else {
+				return $backend->formatItems($items, $format, $parameters);
+			}
+		} else if ($limit == 1) {
+			return false;
+		}
+		return array();
 	}
 
 	/**
@@ -1080,7 +1275,8 @@ class Share extends \OC\Share\Constants {
 		} else {
 			$fileDependent = false;
 			$root = '';
-			if ($includeCollections && !isset($item) && ($collectionTypes = self::getCollectionItemTypes($itemType))) {
+			$collectionTypes = self::getCollectionItemTypes($itemType);
+			if ($includeCollections && !isset($item) && ($collectionTypes)) {
 				// If includeCollections is true, find collections of this item type, e.g. a music album contains songs
 				if (!in_array($itemType, $collectionTypes)) {
 					$itemTypes = array_merge(array($itemType), $collectionTypes);
@@ -1143,7 +1339,8 @@ class Share extends \OC\Share\Constants {
 			}
 		}
 		if (isset($item)) {
-			if ($includeCollections && $collectionTypes = self::getCollectionItemTypes($itemType)) {
+			$collectionTypes = self::getCollectionItemTypes($itemType);
+			if ($includeCollections && $collectionTypes) {
 				$where .= ' AND (';
 			} else {
 				$where .= ' AND';
@@ -1189,42 +1386,7 @@ class Share extends \OC\Share\Constants {
 		} else {
 			$queryLimit = null;
 		}
-		if ($format == self::FORMAT_STATUSES) {
-			if ($fileDependent) {
-				$select = '`*PREFIX*share`.`id`, `*PREFIX*share`.`parent`, `share_type`, `path`, `share_with`, `uid_owner`';
-			} else {
-				$select = '`id`, `parent`, `share_type`, `share_with`, `uid_owner`';
-			}
-		} else {
-			if (isset($uidOwner)) {
-				if ($itemType == 'file' || $itemType == 'folder') {
-					$select = '`*PREFIX*share`.`id`, `item_type`, `item_source`, `*PREFIX*share`.`parent`,'
-						.' `share_type`, `share_with`, `file_source`, `path`, `permissions`, `stime`,'
-						.' `expiration`, `token`, `storage`, `mail_send`, `uid_owner`';
-				} else {
-					$select = '`id`, `item_type`, `item_source`, `parent`, `share_type`, `share_with`, `permissions`,'
-						.' `stime`, `file_source`, `expiration`, `token`, `mail_send`, `uid_owner`';
-				}
-			} else {
-				if ($fileDependent) {
-					if (($itemType == 'file' || $itemType == 'folder')
-						&& $format == \OC_Share_Backend_File::FORMAT_GET_FOLDER_CONTENTS
-						|| $format == \OC_Share_Backend_File::FORMAT_FILE_APP_ROOT
-					) {
-						$select = '`*PREFIX*share`.`id`, `item_type`, `item_source`, `*PREFIX*share`.`parent`, `uid_owner`, '
-							.'`share_type`, `share_with`, `file_source`, `path`, `file_target`, '
-							.'`permissions`, `expiration`, `storage`, `*PREFIX*filecache`.`parent` as `file_parent`, '
-							.'`name`, `mtime`, `mimetype`, `mimepart`, `size`, `unencrypted_size`, `encrypted`, `etag`, `mail_send`';
-					} else {
-						$select = '`*PREFIX*share`.`id`, `item_type`, `item_source`, `item_target`,
-							`*PREFIX*share`.`parent`, `share_type`, `share_with`, `uid_owner`,
-							`file_source`, `path`, `file_target`, `permissions`, `stime`, `expiration`, `token`, `storage`, `mail_send`';
-					}
-				} else {
-					$select = '*';
-				}
-			}
-		}
+		$select = self::createSelectStatement($format, $fileDependent, $uidOwner);
 		$root = strlen($root);
 		$query = \OC_DB::prepare('SELECT '.$select.' FROM `*PREFIX*share` '.$where, $queryLimit);
 		$result = $query->execute($queryArgs);
@@ -1429,6 +1591,42 @@ class Share extends \OC\Share\Constants {
 			return false;
 		}
 		return array();
+	}
+
+	private static function createSelectStatement($format, $fileDependent, $uidOwner = null) {
+		$select = '*';
+		if ($format == self::FORMAT_STATUSES) {
+			if ($fileDependent) {
+				$select = '`*PREFIX*share`.`id`, `*PREFIX*share`.`parent`, `share_type`, `path`, `share_with`, `uid_owner`';
+			} else {
+				$select = '`id`, `parent`, `share_type`, `share_with`, `uid_owner`';
+			}
+		} else {
+			if (isset($uidOwner)) {
+				if ($fileDependent) {
+					$select = '`*PREFIX*share`.`id`, `item_type`, `item_source`, `*PREFIX*share`.`parent`,'
+							. ' `share_type`, `share_with`, `file_source`, `path`, `permissions`, `stime`,'
+							. ' `expiration`, `token`, `storage`, `mail_send`, `uid_owner`';
+				} else {
+					$select = '`id`, `item_type`, `item_source`, `parent`, `share_type`, `share_with`, `permissions`,'
+							. ' `stime`, `file_source`, `expiration`, `token`, `mail_send`, `uid_owner`';
+				}
+			} else {
+				if ($fileDependent) {
+					if ($format == \OC_Share_Backend_File::FORMAT_GET_FOLDER_CONTENTS || $format == \OC_Share_Backend_File::FORMAT_FILE_APP_ROOT) {
+						$select = '`*PREFIX*share`.`id`, `item_type`, `item_source`, `*PREFIX*share`.`parent`, `uid_owner`, '
+								. '`share_type`, `share_with`, `file_source`, `path`, `file_target`, '
+								. '`permissions`, `expiration`, `storage`, `*PREFIX*filecache`.`parent` as `file_parent`, '
+								. '`name`, `mtime`, `mimetype`, `mimepart`, `size`, `unencrypted_size`, `encrypted`, `etag`, `mail_send`';
+					} else {
+						$select = '`*PREFIX*share`.`id`, `item_type`, `item_source`, `item_target`,
+							`*PREFIX*share`.`parent`, `share_type`, `share_with`, `uid_owner`,
+							`file_source`, `path`, `file_target`, `permissions`, `stime`, `expiration`, `token`, `storage`, `mail_send`';
+					}
+				}
+			}
+		}
+		return $select;
 	}
 
 	/**
