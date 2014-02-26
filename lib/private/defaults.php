@@ -39,6 +39,9 @@ class OC_Defaults {
 		}
 	}
 
+	/**
+	 * @param string $method
+	 */
 	private function themeExist($method) {
 		if (OC_Util::getTheme() !== '' && method_exists('OC_Theme', $method)) {
 			return true;
@@ -169,6 +172,13 @@ class OC_Defaults {
 		}
 
 		return $footer;
+	}
+
+	public function buildDocLinkToKey($key) {
+		if ($this->themeExist('buildDocLinkToKey')) {
+			return $this->theme->buildDocLinkToKey($key);
+		}
+		return $this->getDocBaseUrl() . '/server/6.0/go.php?to=' . $key;
 	}
 
 }
