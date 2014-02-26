@@ -9,7 +9,8 @@
 namespace OC;
 
 use Clockwork\DataSource\DataSource;
-use Clockwork\Request\Log;
+use Clockwork\Request\Log as CWLog;
+use Psr\Log\LogLevel;
 use Clockwork\Request\Request;
 use Clockwork\Request\Timeline;
 use Doctrine\DBAL\Logging\SQLLogger;
@@ -50,7 +51,7 @@ class CoreLogger extends DataSource implements SQLLogger {
 	public function __construct() {
 		$this->timeline = new Timeline();
 		$this->queries = new Timeline();
-		$this->log = new Log();
+		$this->log = new CWLog();
 		$this->attachHooks();
 	}
 
@@ -173,18 +174,18 @@ class CoreLogger extends DataSource implements SQLLogger {
 	}
 
 	public function writeHook($params) {
-		$this->log->log('Write ' . $params['path'], Log::INFO);
+		$this->log->log('Write ' . $params['path'], LogLevel::INFO);
 	}
 
 	public function renameHook($params) {
-		$this->log->log('Rename ' . $params['oldpath'] . ' to ' . $params['newpath'], Log::INFO);
+		$this->log->log('Rename ' . $params['oldpath'] . ' to ' . $params['newpath'], LogLevel::INFO);
 	}
 
 	public function copyHook($params) {
-		$this->log->log('Rename ' . $params['oldpath'] . ' to ' . $params['newpath'], Log::INFO);
+		$this->log->log('Rename ' . $params['oldpath'] . ' to ' . $params['newpath'], LogLevel::INFO);
 	}
 
-	public function log($message, $level = Log::INFO) {
+	public function log($message, $level = LogLevel::INFO) {
 		$stack = xdebug_get_function_stack();
 		array_pop($stack);
 		$stackMessage = '';
@@ -205,6 +206,6 @@ class CoreLogger extends DataSource implements SQLLogger {
 				$stackMessage .= ' line ' . $stackLine['line'];
 			}
 		}
-		$this->log->log($message . $stackMessage, $level);
+		$this->log->log($level, $message . $stackMessage);
 	}
 }
