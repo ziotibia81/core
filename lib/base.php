@@ -808,7 +808,8 @@ class OC {
 					$logger->startEvent('logout', 'Logout');
 				}
 				OC_User::logout();
-				header("Location: " . OC::$WEBROOT . '/');
+				// redirect to webroot and add slash if webroot is empty
+				header("Location: " . OC::$WEBROOT.(empty(OC::$WEBROOT) ? '/' : ''));
 			} else {
 				if (is_null($file)) {
 					$param['file'] = 'index.php';
