@@ -588,16 +588,10 @@ class OC {
 			OC_User::logout();
 		}
 
-		// Load Apps
-		// This includes plugins for users and filesystems as well
-		global $RUNTIME_NOAPPS;
-		global $RUNTIME_APPTYPES;
-		if (!$RUNTIME_NOAPPS && !self::checkUpgrade(false)) {
-			if ($RUNTIME_APPTYPES) {
-				OC_App::loadApps($RUNTIME_APPTYPES);
-			} else {
-				OC_App::loadApps();
-			}
+		// Load minimum set of apps - which is filesystem, authentication and logging
+		if (!self::checkUpgrade(false)) {
+			OC_App::loadApps(array('authentication'));
+			OC_App::loadApps(array('filesystem', 'logging'));
 		}
 
 		//setup extra user backends
@@ -702,10 +696,10 @@ class OC {
 	 */
 	public static function registerShareHooks() {
 		if (\OC_Config::getValue('installed')) {
-			OC_Hook::connect('OC_User', 'post_deleteUser', 'OCP\Share', 'post_deleteUser');
-			OC_Hook::connect('OC_User', 'post_addToGroup', 'OCP\Share', 'post_addToGroup');
-			OC_Hook::connect('OC_User', 'post_removeFromGroup', 'OCP\Share', 'post_removeFromGroup');
-			OC_Hook::connect('OC_User', 'post_deleteGroup', 'OCP\Share', 'post_deleteGroup');
+			OC_Hook::connect('OC_User', 'post_deleteUser', 'OC\Share\Hooks', 'post_deleteUser');
+			OC_Hook::connect('OC_User', 'post_addToGroup', 'OC\Share\Hooks', 'post_addToGroup');
+			OC_Hook::connect('OC_User', 'post_removeFromGroup', 'OC\Share\Hooks', 'post_removeFromGroup');
+			OC_Hook::connect('OC_User', 'post_deleteGroup', 'OC\Share\Hooks', 'post_deleteGroup');
 		}
 	}
 
@@ -907,7 +901,7 @@ class OC {
 		) {
 			return false;
 		}
-		OC_App::loadApps(array('authentication'));
+
 		if (defined("DEBUG") && DEBUG) {
 			OC_Log::write('core', 'Trying to login from cookie', OC_Log::DEBUG);
 		}
@@ -979,7 +973,7 @@ class OC {
 		) {
 			return false;
 		}
-		OC_App::loadApps(array('authentication'));
+
 		if (OC_User::login($_SERVER["PHP_AUTH_USER"], $_SERVER["PHP_AUTH_PW"])) {
 			//OC_Log::write('core',"Logged in with HTTP Authentication", OC_Log::DEBUG);
 			OC_User::unsetMagicInCookie();
@@ -988,11 +982,6 @@ class OC {
 		return true;
 	}
 
-}
-
-// define runtime variables - unless this already has been done
-if (!isset($RUNTIME_NOAPPS)) {
-	$RUNTIME_NOAPPS = false;
 }
 
 if (!function_exists('get_temp_dir')) {
@@ -1013,4 +1002,3 @@ if (!function_exists('get_temp_dir')) {
 }
 
 OC::init();
-

@@ -47,6 +47,8 @@ class Router implements IRouter {
 
 	protected $loaded = false;
 
+	protected $loadedApps = array();
+
 	public function __construct() {
 		$baseUrl = \OC_Helper::linkTo('', 'index.php');
 		if (!\OC::$CLI) {
@@ -93,32 +95,60 @@ class Router implements IRouter {
 	/**
 	 * loads the api routes
 	 */
-	public function loadRoutes() {
+	public function loadRoutes($app = null) {
 		if ($this->loaded) {
 			return;
 		}
-		if ($logger = \OC::$coreLogger) {
-			$logger->startEvent('loadRoutes', 'Load routes');
+		$loadApp = $app;
+		$logger = \OC::$coreLogger;
+		if (is_null($app)) {
+			if ($logger) {
+				$logger->startEvent('loadRoutes', 'Load routes');
+			}
+			$this->loaded = true;
+			$routingFiles = $this->getRoutingFiles();
+		} else {
+			if (isset($this->loadedApps[$app])) {
+				return;
+			}
+			if ($logger) {
+				$logger->startEvent('loadRoutes' . $loadApp, 'Load routes for ' . $loadApp);
+			}
+			$file = \OC_App::getAppPath($app) . '/appinfo/routes.php';
+			if (file_exists($file)) {
+				$routingFiles = array($app => $file);
+			} else {
+				$routingFiles = array();
+			}
 		}
-		$this->loaded = true;
-		foreach ($this->getRoutingFiles() as $app => $file) {
-			$this->useCollection($app);
-			require_once $file;
-			$collection = $this->getCollection($app);
-			$collection->addPrefix('/apps/' . $app);
+		foreach ($routingFiles as $app => $file) {
+			if (!isset($this->loadedApps[$app])) {
+				$this->loadedApps[$app] = true;
+				$this->useCollection($app);
+				require_once $file;
+				$collection = $this->getCollection($app);
+				$collection->addPrefix('/apps/' . $app);
+				$this->root->addCollection($collection);
+			}
+		}
+		if (!isset($this->loadedApps['core'])) {
+			$this->loadedApps['core'] = true;
+			$this->useCollection('root');
+			require_once 'settings/routes.php';
+			require_once 'core/routes.php';
+		
+			// include ocs routes
+			require_once 'ocs/routes.php';
+			$collection = $this->getCollection('ocs');
+			$collection->addPrefix('/ocs');
 			$this->root->addCollection($collection);
 		}
-		$this->useCollection('root');
-		require_once 'settings/routes.php';
-		require_once 'core/routes.php';
-
-		// include ocs routes
-		require_once 'ocs/routes.php';
-		$collection = $this->getCollection('ocs');
-		$collection->addPrefix('/ocs');
-		$this->root->addCollection($collection);
 		if ($logger) {
-			$logger->endEvent('loadRoutes');
+			if ($loadApp) {
+				$logger->endEvent('loadRoutes' . $loadApp);
+			} else {
+				$logger->endEvent('loadRoutes');
+			}
 		}
 	}
 
@@ -158,12 +188,21 @@ class Router implements IRouter {
 	}
 
 	/**
-	 * Find the route matching $url.
+	 * Find the route matching $url
 	 *
 	 * @param string $url The url to find
 	 * @throws \Exception
 	 */
 	public function match($url) {
+		if (substr($url, 0, 6) === '/apps/') {
+			// empty string / 'apps' / $app / rest of the route
+			list(, , $app,) = explode('/', $url, 4);
+			$this->loadRoutes($app);
+		} else if (substr($url, 0, 6) === '/core/' or substr($url, 0, 5) === '/ocs/' or substr($url, 0, 10) === '/settings/') {
+			$this->loadRoutes('core');
+		} else {
+			$this->loadRoutes();
+		}
 		$logger = \OC::getCoreLogger();
 		if ($logger) {
 			$logger->startEvent('matchRoute', 'Match route ' . $url);
@@ -215,6 +254,7 @@ class Router implements IRouter {
 	 * @return string
 	 */
 	public function generate($name, $parameters = array(), $absolute = false) {
+		$this->loadRoutes();
 		return $this->getGenerator()->generate($name, $parameters, $absolute);
 	}
 

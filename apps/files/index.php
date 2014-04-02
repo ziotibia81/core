@@ -27,6 +27,7 @@ OCP\User::checkLoggedIn();
 // Load the files we need
 OCP\Util::addStyle('files', 'files');
 OCP\Util::addStyle('files', 'upload');
+OCP\Util::addStyle('files', 'mobile');
 OCP\Util::addscript('files', 'file-upload');
 OCP\Util::addscript('files', 'jquery.iframe-transport');
 OCP\Util::addscript('files', 'jquery.fileupload');
@@ -39,7 +40,7 @@ $dir = isset($_GET['dir']) ? stripslashes($_GET['dir']) : '';
 $dir = \OC\Files\Filesystem::normalizePath($dir);
 $dirInfo = \OC\Files\Filesystem::getFileInfo($dir);
 // Redirect if directory does not exist
-if (!$dirInfo->getType() === 'dir') {
+if (!$dirInfo || !$dirInfo->getType() === 'dir') {
 	header('Location: ' . OCP\Util::getScriptName() . '');
 	exit();
 }
