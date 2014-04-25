@@ -189,15 +189,18 @@ class USER_LDAP extends BackendUtility implements \OCP\UserInterface {
 			$this->access->connection->ldapUserFilter,
 			$this->access->getFilterPartForUserSearch($search)
 		));
+		$attrs = array($this->access->connection->ldapUserDisplayName, 'dn');
+		$additionalAttribute = $this->access->connection->ldapUserDisplayName2;
+		if(!empty($additionalAttribute)) {
+			$attrs[] = $additionalAttribute;
+		}
 
 		\OCP\Util::writeLog('user_ldap',
 			'getUsers: Options: search '.$search.' limit '.$limit.' offset '.$offset.' Filter: '.$filter,
 			\OCP\Util::DEBUG);
 		//do the search and translate results to owncloud names
 		$ldap_users = $this->access->fetchListOfUsers(
-			$filter,
-			array($this->access->connection->ldapUserDisplayName, 'dn'),
-			$limit, $offset);
+			$filter, $attrs, $limit, $offset);
 		$ldap_users = $this->access->ownCloudUserNames($ldap_users);
 		\OCP\Util::writeLog('user_ldap', 'getUsers: '.count($ldap_users). ' Users found', \OCP\Util::DEBUG);
 
@@ -306,13 +309,29 @@ class USER_LDAP extends BackendUtility implements \OCP\UserInterface {
 			return $displayName;
 		}
 
+		//Check whether the display name is configured to have a 2nd feature
+		$additionalAttribute = $this->access->connection->ldapUserDisplayName2;
+		if(!empty($additionalAttribute)) {
+			$displayName2 = $this->readAttribute(
+				$this->username2dn($uid),
+				$additionalAttribute);
+		} else {
+			$displayName2 = false;
+		}
+
 		$displayName = $this->access->readAttribute(
 			$this->access->username2dn($uid),
 			$this->access->connection->ldapUserDisplayName);
 
 		if($displayName && (count($displayName) > 0)) {
-			$this->access->connection->writeToCache($cacheKey, $displayName[0]);
-			return $displayName[0];
+			$displayName = $displayName[0];
+
+			if($displayName2 && (count($displayName2) > 0)) {
+				$displayName .= ' ('.$displayName2[0].')';
+			}
+
+			$this->access->connection->writeToCache($cacheKey, $displayName);
+			return $displayName;
 		}
 
 		return null;

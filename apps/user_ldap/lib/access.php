@@ -486,6 +486,7 @@ class Access extends LDAPUtility {
 	private function ldap2ownCloudNames($ldapObjects, $isUsers) {
 		if($isUsers) {
 			$nameAttribute = $this->connection->ldapUserDisplayName;
+			$sndAttribute  = $this->connection->ldapUserDisplayName2;
 		} else {
 			$nameAttribute = $this->connection->ldapGroupDisplayName;
 		}
@@ -499,7 +500,9 @@ class Access extends LDAPUtility {
 				if($isUsers) {
 					//cache the user names so it does not need to be retrieved
 					//again later (e.g. sharing dialogue).
-					$this->cacheUserDisplayName($ocname, $nameByLDAP);
+					$sndName = isset($ldapObject[$sndAttribute])
+						? $ldapObject[$sndAttribute] : '';
+					$this->cacheUserDisplayName($ocname, $nameByLDAP, $sndName);
 				}
 			}
 			continue;
@@ -512,8 +515,11 @@ class Access extends LDAPUtility {
 	 * @param string the internal owncloud username
 	 * @param string the display name
 	 */
-	public function cacheUserDisplayName($ocname, $displayName) {
+	public function cacheUserDisplayName($ocname, $displayName, $displayName2) {
 		$cacheKeyTrunk = 'getDisplayName';
+		if(!empty($displayName2)) {
+			$displayName .= ' (' . $displayName2 . ')';
+		}
 		$this->connection->writeToCache($cacheKeyTrunk.$ocname, $displayName);
 	}
 
