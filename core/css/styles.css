@@ -429,19 +429,21 @@ input[type="submit"].enabled {
 }
 
 /* Icons for username and password fields to better recognize them */
-#adminlogin,
+/*#adminlogin,
 #adminpass,
 input[name='adminpass-clone'],
 #user,
 #password,
-input[name='password-clone'] {
+input[name='password-clone']*/
+.input-with-icon {
 	width: 223px !important;
 	padding-left: 36px !important;
 }
-#adminlogin+label+img,
+/*#adminlogin+label+img,
 #adminpass-icon,
 #user+label+img,
-#password-icon {
+#password-icon*/
+.input-icon {
 	position: absolute;
 	left: 1.25em;
 	top: 1.65em;
