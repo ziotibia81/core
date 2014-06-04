@@ -136,8 +136,6 @@ class Test_Encryption_Stream extends \PHPUnit_Framework_TestCase {
 		// set stream options
 		$this->assertTrue(stream_set_blocking($handle, 1));
 
-		fclose($handle);
-
 		// tear down
 		$view->unlink($filename);
 	}
@@ -160,8 +158,6 @@ class Test_Encryption_Stream extends \PHPUnit_Framework_TestCase {
 		// set stream options
 		$this->assertFalse(stream_set_timeout($handle, 1));
 
-		fclose($handle);
-
 		// tear down
 		$view->unlink($filename);
 	}
@@ -180,8 +176,6 @@ class Test_Encryption_Stream extends \PHPUnit_Framework_TestCase {
 
 		// set stream options
 		$this->assertEquals(0, stream_set_write_buffer($handle, 1024));
-
-		fclose($handle);
 
 		// tear down
 		$view->unlink($filename);

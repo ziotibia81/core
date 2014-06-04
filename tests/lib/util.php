@@ -154,7 +154,7 @@ class Test_Util extends PHPUnit_Framework_TestCase {
 
 		$userMount = \OC\Files\Filesystem::getMountManager()->find('/' . $user1 . '/');
 		$this->assertNotNull($userMount);
-		$this->assertTrue($userMount->getStorage()->instanceOfStorage('\OC\Files\Storage\Wrapper\Quota'));
+		$this->assertInstanceOf('\OC\Files\Storage\Wrapper\Quota', $userMount->getStorage());
 
 		// ensure that root wasn't wrapped
 		$rootMount = \OC\Files\Filesystem::getMountManager()->find('/');
