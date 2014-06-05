@@ -404,6 +404,7 @@ var LdapWizard = {
 					$('#'+multisel).append("<option value='"+objc+"'>"+objc+"</option>");
 				}
 				LdapWizard.hideSpinner('#'+multisel);
+				LdapWizard.Infobox.drop('nogroups');
 				LdapWizard.applyChanges(result);
 				$('#'+multisel).multiselect('refresh');
 				part = type.slice(0, -1);
@@ -429,6 +430,8 @@ var LdapWizard = {
 					LdapWizard.userFilterAvailableGroupsHasRun = true;
 					LdapWizard.postInitUserFilter();
 				}
+				LdapWizard.Infobox.show('nogroups', 'No groups were found. Maybe your groups have a special (yet unsupported) objectClass.');
+				console.log('nix groups');
 			}
 		);
 	},
@@ -514,7 +517,7 @@ var LdapWizard = {
 
 	init: function() {
 		LdapWizard.Infobox =
-			new OCA.LDAP.Wizard.Infobox($('#ldapWizard1 .ldapWizardInfo'));
+			new OCA.LDAP.Wizard.Infobox($('.ldapWizardInfo'));
 
 		LdapWizard.basicStatusCheck();
 		LdapWizard.functionalityCheck();
@@ -584,6 +587,7 @@ var LdapWizard = {
 
 	onTabChange: function(event, ui) {
 		newTabIndex = 0;
+		LdapWizard.Infobox.hide();
 		if(ui.newTab[0].id === '#ldapWizard2') {
 			LdapWizard.initUserFilter();
 			newTabIndex = 1;
