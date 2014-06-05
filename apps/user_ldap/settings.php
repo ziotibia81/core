@@ -27,6 +27,7 @@ OC_Util::checkAdminUser();
 
 OCP\Util::addScript('user_ldap', 'ldapFilter');
 OCP\Util::addScript('user_ldap', 'settings');
+OCP\Util::addScript('user_ldap', 'wizardInfobox');
 OCP\Util::addScript('core', 'jquery.multiselect');
 OCP\Util::addStyle('user_ldap', 'settings');
 OCP\Util::addStyle('core', 'jquery.multiselect');

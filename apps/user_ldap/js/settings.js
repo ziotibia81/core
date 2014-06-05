@@ -139,7 +139,6 @@ var LdapConfiguration = {
 };
 
 var LdapWizard = {
-	checkPortInfoShown: false,
 	saveBlacklist: {},
 	userFilterGroupSelectState: 'enable',
 	spinner: '<img class="wizSpinner" src="'+ OC.imagePath('core', 'loading.gif') +'">',
@@ -235,14 +234,13 @@ var LdapWizard = {
 					LdapWizard.applyChanges(result);
 					LdapWizard.hideSpinner('#ldap_base');
 					if($('#ldap_base').val()) {
-						LdapWizard.hideInfoBox();
+						LdapWizard.Infobox.drop('base');
 					}
 					$('#ldap_base').prop('disabled', false);
 				},
 				function (result) {
 					LdapWizard.hideSpinner('#ldap_base');
-					LdapWizard.showInfoBox('Please specify a Base DN');
-					LdapWizard.showInfoBox('Could not determine Base DN');
+					LdapWizard.Infobox.show('base', 'The Base DN could not be determined. Please specify a Base DN');
 					$('#ldap_base').prop('disabled', false);
 				}
 			);
@@ -267,13 +265,13 @@ var LdapWizard = {
 					if($('#ldap_port').val()) {
 						LdapWizard.checkBaseDN();
 						$('#ldap_port').prop('disabled', false);
-						LdapWizard.hideInfoBox();
+						LdapWizard.Infobox.drop('port');
 					}
 				},
 				function (result) {
 					LdapWizard.hideSpinner('#ldap_port');
 					$('#ldap_port').prop('disabled', false);
-					LdapWizard.showInfoBox('Please specify the port');
+					LdapWizard.Infobox.show('port', 'Please specify the port');
 				}
 			);
 		}
@@ -507,13 +505,6 @@ var LdapWizard = {
 		}
 	},
 
-	hideInfoBox: function() {
-		if(LdapWizard.checkInfoShown) {
-			$('#ldapWizard1 .ldapWizardInfo').addClass('invisible');
-			LdapWizard.checkInfoShown = false;
-		}
-	},
-
 	hideSpinner: function(id) {
 		$(id+' + .wizSpinner').remove();
 		$(id + " + button").css('display', 'inline');
@@ -522,6 +513,9 @@ var LdapWizard = {
 	isConfigurationActiveControlLocked: true,
 
 	init: function() {
+		LdapWizard.Infobox =
+			new OCA.LDAP.Wizard.Infobox($('#ldapWizard1 .ldapWizardInfo'));
+
 		LdapWizard.basicStatusCheck();
 		LdapWizard.functionalityCheck();
 		LdapWizard.isConfigurationActiveControlLocked = false;
@@ -584,6 +578,10 @@ var LdapWizard = {
 
 	/** end of init user filter tab section **/
 
+	onConfigChange: function() {
+		LdapWizard.Infobox.hide();
+	},
+
 	onTabChange: function(event, ui) {
 		newTabIndex = 0;
 		if(ui.newTab[0].id === '#ldapWizard2') {
@@ -604,7 +602,7 @@ var LdapWizard = {
 	},
 
 	processChanges: function(triggerObj) {
-		LdapWizard.hideInfoBox();
+		LdapWizard.Infobox.hide();
 
 		if(triggerObj.id == 'ldap_host'
 		   || triggerObj.id == 'ldap_port'
@@ -685,12 +683,6 @@ var LdapWizard = {
 				}
 			}
 		);
-	},
-
-	showInfoBox: function(text) {
-		$('#ldapWizard1 .ldapWizardInfo').text(t('user_ldap', text));
-		$('#ldapWizard1 .ldapWizardInfo').removeClass('invisible');
-		LdapWizard.checkInfoShown = true;
 	},
 
 	showSpinner: function(id) {
@@ -804,6 +796,12 @@ var LdapWizard = {
 	}
 };
 
+if(typeof OCA === "undefined") {
+	OCA = {};
+}
+OCA.LDAP = {};
+OCA.LDAP.Wizard = {};
+
 $(document).ready(function() {
 	$('#ldapAdvancedAccordion').accordion({ heightStyle: 'content', animate: 'easeInOutCirc'});
 	$('#ldapSettings').tabs({ beforeActivate: LdapWizard.onTabChange });
@@ -912,6 +910,7 @@ $(document).ready(function() {
 	});
 
 	$('#ldap_serverconfig_chooser').change(function(event) {
+		LdapWizard.onConfigChange();
 		value = $('#ldap_serverconfig_chooser option:selected:first').attr('value');
 		if(value === 'NEW') {
 			LdapConfiguration.addConfiguration(false);

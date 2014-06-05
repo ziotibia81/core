@@ -53,6 +53,10 @@
 	width: 96.5% !important;
 }
 
+.ldapWizardInfo span {
+	text-align: left !important;
+}
+
 .tableCellInput {
 	margin-left: -40%;
 	width: 100%;
