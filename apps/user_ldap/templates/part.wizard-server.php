@@ -62,10 +62,6 @@
 				</textarea>
 			</div>
 
-			<div class="tablerow">
-				<div class="tablecell ldapWizardInfo invisible">&nbsp;
-				</div>
-			</div>
 		</div>
 		<?php print_unescaped($_['wizardControls']); ?>
 	</fieldset>

@@ -3,7 +3,8 @@
 (function() {
 	var WizardInfobox = function($el) {
 		this.$el = $el;
-		this.entries = {};
+		this.noteClassPrefix = 'wizardInfoNote-';
+		this.noteClassCommon = 'wizardInfoNote';
 	}
 
 	WizardInfobox.prototype = {
@@ -13,21 +14,20 @@
 		 * @param {string} text
 		 */
 		show: function(id, text) {
-			$p = $('<span></span>');
+			var $p = $('<span class="'+this.noteClassCommon+'"></span>');
 			$p.text(text);
+			$p.addClass(this.noteClassPrefix+id);
 			this.$el.append($p);
-			this.entries[id] = $p;
+
 			this.autoVisibility();
 		},
 
 		/**
-		 * hides the infobox
+		 * hides the infobox (and thus removes all notes)
 		 */
 		hide: function() {
-			for (id in this.entries) {
-				this.drop(id);
-			}
-			//drop() will set visibilty when no note is left
+			$('.'+this.noteClassCommon).remove();
+			this.autoVisibility();
 		},
 
 		/**
@@ -35,10 +35,7 @@
 		 * @returns {boolean}
 		 */
 		isEmpty: function() {
-			for(id in this.entries) {
-				return false;
-			}
-			return true;
+			return ($('.'+this.noteClassCommon).length === 0);
 		},
 
 		/**
@@ -54,12 +51,12 @@
 		 * decides to hide or show the infobox
 		 */
 		autoVisibility: function() {
-			if($this.isEmpty()) {
+			if(this.isEmpty()) {
 				this.setVisibility(false);
 			} else {
 				this.setVisibility(true);
 			}
-		}
+		},
 
 		/**
 		 * makes the infbox visible or invisible
@@ -78,9 +75,11 @@
 		 * @param {string} id
 		 */
 		drop: function(id) {
-			if(typeof this.entries[id] !== "undefined") {
-				this.entries[id].remove();
-				delete this.entries[id];
+			if($('.'+this.noteClassPrefix+id).length > 0) {
+				console.log('removing '+id);
+				$('.'+this.noteClassPrefix+id).remove();
+			} else {
+				console.log('NOT removing '+id);
 			}
 
 			this.autoVisibility();

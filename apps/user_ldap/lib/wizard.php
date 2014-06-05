@@ -255,6 +255,7 @@ class Wizard extends LDAPUtility {
 		}
 
 		$obclasses = array('posixGroup', 'group', 'zimbraDistributionList');
+		$obclasses = array('zimbraDistributionList');
 		$this->determineFeature($obclasses, 'cn', $dbkey, $confkey);
 
 		if($testMemberOf) {

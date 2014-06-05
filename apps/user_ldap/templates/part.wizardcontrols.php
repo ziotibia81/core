@@ -1,4 +1,7 @@
 <div class="ldapWizardControls">
+	<p>
+		<div class="ldapWizardInfo invisible">&nbsp;</div>
+	</p>
 	<span class="ldap_config_state_indicator"></span> <span class="ldap_config_state_indicator_sign"></span>
 	<button class="ldap_action_back invisible" name="ldap_action_back"
 			type="button">

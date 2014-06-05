@@ -38,9 +38,6 @@
 				title="<?php p($l->t('Defines the filter to apply, when login is attempted. %%uid replaces the username in the login action. Example: "uid=%%uid"'));?>"
 			/>
 		</p>
-		<p>
-			<div class="ldapWizardInfo invisible">&nbsp;</div>
-		</p>
 
 		<?php print_unescaped($_['wizardControls']); ?>
 	</div>
