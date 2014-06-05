@@ -76,10 +76,7 @@
 		 */
 		drop: function(id) {
 			if($('.'+this.noteClassPrefix+id).length > 0) {
-				console.log('removing '+id);
 				$('.'+this.noteClassPrefix+id).remove();
-			} else {
-				console.log('NOT removing '+id);
 			}
 
 			this.autoVisibility();
