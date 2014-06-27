@@ -602,6 +602,16 @@ $(document).ready(function () {
 					if (result.data.groups) {
 						var addedGroups = result.data.groups;
 						UserList.availableGroups = $.unique($.merge(UserList.availableGroups, addedGroups));
+						$('li.isgroup').each(function () {
+							var currentgroup = $(this).attr('data-gid');
+							console.log(UserList.availableGroups);
+							if (UserList.availableGroups.indexOf(result.data.groups)) {
+								var count = 0;
+								count = parseInt($('li[data-gid=' + currentgroup + ']').children().children('.usercount').text());
+								count = count + 1;
+								$('li[data-gid=' + currentgroup + ']').children().children('.usercount').empty().append(count);
+							}
+						});
 					}
 					if (result.data.homeExists){
 						OC.Notification.hide();
