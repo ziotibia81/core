@@ -356,6 +356,7 @@ class OC {
 		OC_Util::addStyle("styles");
 		OC_Util::addStyle("header");
 		OC_Util::addStyle("mobile");
+		OC_Util::addStyle("inputs");
 		OC_Util::addStyle("icons");
 		OC_Util::addStyle("fonts");
 		OC_Util::addStyle("apps");
