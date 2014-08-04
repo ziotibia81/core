@@ -38,7 +38,10 @@ class Loader {
 	 */
 	public function wrap($mountPoint, $storage) {
 		foreach ($this->storageWrappers as $wrapper) {
-			$storage = $wrapper($mountPoint, $storage);
+			$result = $wrapper($mountPoint, $storage);
+			if ($result instanceof \OC\Files\Storage\Storage) {
+				$storage = $result;
+			}
 		}
 		return $storage;
 	}
