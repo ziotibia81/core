@@ -535,6 +535,12 @@ var LdapWizard = {
 	},
 
 	/** init login filter tab section **/
+	getLoginFilter: function() {
+		if (!LdapWizard.loginFilter) {
+			LdapWizard.initLoginFilter();
+		}
+		return LdapWizard.loginFilter;
+	},
 
 	initLoginFilter: function() {
 		LdapWizard.loginFilter = new LdapFilter('Login');
@@ -543,7 +549,7 @@ var LdapWizard = {
 
 	postInitLoginFilter: function() {
 		if($('#rawLoginFilterContainer').hasClass('invisible')) {
-			LdapWizard.loginFilter.compose();
+			LdapWizard.getLoginFilter().compose();
 		}
 	},
 
@@ -626,7 +632,7 @@ var LdapWizard = {
 
 		if(triggerObj.id == 'ldap_loginfilter_username'
 		   || triggerObj.id == 'ldap_loginfilter_email') {
-			LdapWizard.loginFilter.compose();
+			LdapWizard.getLoginFilter().compose();
 		}
 
 		if($('#ldapSettings').tabs('option', 'active') == 0) {
@@ -659,9 +665,9 @@ var LdapWizard = {
 			LdapWizard.userFilter.compose();
 			//when user filter is changed afterwards, login filter needs to
 			//be adjusted, too
-			LdapWizard.loginFilter.compose();
+			LdapWizard.getLoginFilter().compose();
 		} else if(originalObj == 'ldap_loginfilter_attributes') {
-			LdapWizard.loginFilter.compose();
+			LdapWizard.getLoginFilter().compose();
 		} else if(originalObj == 'ldap_groupfilter_objectclass'
 		   || originalObj == 'ldap_groupfilter_groups') {
 			LdapWizard.groupFilter.compose();
@@ -757,7 +763,7 @@ var LdapWizard = {
 		$('#ldap_loginfilter_username').prop('disabled', property);
 		LdapWizard._save({ id: 'ldapLoginFilterMode' }, mode);
 		if(action == 'enable') {
-			LdapWizard.loginFilter.compose();
+			LdapWizard.getLoginFilter().compose();
 		}
 	},
 
