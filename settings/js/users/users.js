@@ -96,8 +96,9 @@ var UserList = {
 		var lastLoginRel = t('settings', 'never');
 		var lastLoginAbs = lastLoginRel;
 		if(lastLogin !== 0) {
-			lastLoginRel = OC.Util.relativeModifiedDate(lastLogin);
-			lastLoginAbs = OC.Util.formatDate(lastLogin);
+			lastLogin = new Date(lastLogin * 1000);
+			lastLoginRel = relative_modified_date(lastLogin.getTime() / 1000);
+			lastLoginAbs = formatDate(lastLogin.getTime());
 		}
 		var $tdLastLogin = $tr.find('td.lastLogin');
 		$tdLastLogin.text(lastLoginRel);
