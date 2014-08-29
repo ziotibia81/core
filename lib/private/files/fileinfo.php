@@ -30,8 +30,10 @@ class FileInfo implements \OCP\Files\FileInfo, \ArrayAccess {
 	private $internalPath;
 
 	/**
-	 * @param string|boolean $path
-	 * @param Storage\Storage $storage
+	 * @param string $path
+	 * @param \OC\Files\Storage\Storage $storage
+	 * @param string $internalPath
+	 * @param array $data
 	 */
 	public function __construct($path, $storage, $internalPath, $data) {
 		$this->path = $path;
