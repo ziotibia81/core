@@ -81,6 +81,7 @@ class Scanner extends BasicEmitter {
 		$data['etag'] = $this->storage->getETag($path);
 		$data['storage_mtime'] = $data['mtime'];
 		$data['permissions'] = $this->storage->getPermissions($path);
+		$data['hidden'] = $this->storage->isHidden($path);
 		return $data;
 	}
 

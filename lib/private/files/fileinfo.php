@@ -201,6 +201,7 @@ class FileInfo implements \OCP\Files\FileInfo, \ArrayAccess {
 
 	/**
 	 * Check if a file or folder is shared
+	 *
 	 * @return bool
 	 */
 	public function isShared() {
@@ -221,5 +222,14 @@ class FileInfo implements \OCP\Files\FileInfo, \ArrayAccess {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Check if a file or folder is hidden
+	 *
+	 * @return bool
+	 */
+	public function isHidden() {
+		return $this->data['hidden'];
 	}
 }

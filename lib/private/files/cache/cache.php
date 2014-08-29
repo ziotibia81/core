@@ -123,7 +123,7 @@ class Cache {
 			$params = array($file);
 		}
 		$sql = 'SELECT `fileid`, `storage`, `path`, `parent`, `name`, `mimetype`, `mimepart`, `size`, `mtime`,
-					   `storage_mtime`, `encrypted`, `unencrypted_size`, `etag`, `permissions`
+					   `storage_mtime`, `encrypted`, `unencrypted_size`, `etag`, `permissions`, `hidden`
 				FROM `*PREFIX*filecache` ' . $where;
 		$result = \OC_DB::executeAudited($sql, $params);
 		$data = $result->fetchRow();
@@ -154,6 +154,7 @@ class Cache {
 				$data['storage_mtime'] = $data['mtime'];
 			}
 			$data['permissions'] = (int)$data['permissions'];
+			$data['hidden'] = (bool)$data['hidden'];
 		}
 
 		return $data;
@@ -179,7 +180,7 @@ class Cache {
 	public function getFolderContentsById($fileId) {
 		if ($fileId > -1) {
 			$sql = 'SELECT `fileid`, `storage`, `path`, `parent`, `name`, `mimetype`, `mimepart`, `size`, `mtime`,
-						   `storage_mtime`, `encrypted`, `unencrypted_size`, `etag`, `permissions`
+						   `storage_mtime`, `encrypted`, `unencrypted_size`, `etag`, `permissions`, `hidden`
 					FROM `*PREFIX*filecache` WHERE `parent` = ? ORDER BY `name` ASC';
 			$result = \OC_DB::executeAudited($sql,array($fileId));
 			$files = $result->fetchAll();
@@ -194,6 +195,7 @@ class Cache {
 					$file['size'] = $file['unencrypted_size'];
 				}
 				$file['permissions'] = (int)$file['permissions'];
+				$data['hidden'] = (bool)$data['hidden'];
 			}
 			return $files;
 		} else {
@@ -281,7 +283,7 @@ class Cache {
 	function buildParts(array $data) {
 		$fields = array(
 			'path', 'parent', 'name', 'mimetype', 'size', 'mtime', 'storage_mtime', 'encrypted', 'unencrypted_size',
-			'etag', 'permissions');
+			'etag', 'permissions', 'hidden');
 		$params = array();
 		$queryParts = array();
 		foreach ($data as $name => $value) {

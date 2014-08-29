@@ -162,4 +162,11 @@ interface FileInfo {
 	 * @return bool
 	 */
 	public function isMounted();
+
+	/**
+	 * Check if a file or folder is hidden
+	 *
+	 * @return bool
+	 */
+	public function isHidden();
 }

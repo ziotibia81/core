@@ -411,6 +411,16 @@ abstract class Common implements \OC\Files\Storage\Storage {
 	}
 
 	/**
+	 * On default files and folders starting with a dot are hidden
+	 *
+	 * @param string $path
+	 * @return bool
+	 */
+	public function isHidden($path) {
+		return substr($path, 0, 1) === '.' or strpos($path, '/.');
+	}
+
+	/**
 	 * @param string $path
 	 */
 	protected function getCachedFile($path) {
