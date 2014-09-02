@@ -247,56 +247,6 @@ class OC_User {
 	}
 
 	/**
-	 * Try to login a user, assuming authentication
-	 * has already happened (e.g. via Single Sign On).
-	 *
-	 * Log in a user and regenerate a new session.
-	 *
-	 * @param \OCP\Authentication\IApacheBackend $backend
-	 * @return bool
-	 */
-	public static function loginWithApache(\OCP\Authentication\IApacheBackend $backend) {
-
-		$uid = $backend->getCurrentUserId();
-		$run = true;
-		OC_Hook::emit( "OC_User", "pre_login", array( "run" => &$run, "uid" => $uid ));
-
-		if($uid) {
-			self::setUserId($uid);
-			self::setDisplayName($uid);
-			self::getUserSession()->setLoginName($uid);
-
-			OC_Hook::emit( "OC_User", "post_login", array( "uid" => $uid, 'password'=>'' ));
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * Verify with Apache whether user is authenticated.
-	 *
-	 * @return boolean|null
-	 *          true: authenticated
-	 *          false: not authenticated
-	 *          null: not handled / no backend available
-	 */
-	public static function handleApacheAuth() {
-		$backend = self::findFirstActiveUsedBackend();
-		if ($backend) {
-			OC_App::loadApps();
-
-			//setup extra user backends
-			self::setupBackends();
-			self::unsetMagicInCookie();
-
-			return self::loginWithApache($backend);
-		}
-
-		return null;
-	}
-
-
-	/**
 	 * Sets user id for session and triggers emit
 	 */
 	public static function setUserId($uid) {
@@ -624,21 +574,5 @@ class OC_User {
 	 */
 	public static function unsetMagicInCookie() {
 		self::getUserSession()->unsetMagicInCookie();
-	}
-
-	/**
-	 * Returns the first active backend from self::$_usedBackends.
-	 * @return OCP\Authentication\IApacheBackend|null if no backend active, otherwise OCP\Authentication\IApacheBackend
-	 */
-	private static function findFirstActiveUsedBackend() {
-		foreach (self::$_usedBackends as $backend) {
-			if ($backend instanceof OCP\Authentication\IApacheBackend) {
-				if ($backend->isSessionActive()) {
-					return $backend;
-				}
-			}
-		}
-
-		return null;
 	}
 }
