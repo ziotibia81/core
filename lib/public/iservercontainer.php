@@ -115,6 +115,13 @@ interface IServerContainer {
 	function getUserSession();
 
 	/**
+	 * Returns the authentication manager
+	 *
+	 * @return \OCP\Authentication\IManager
+	 */
+	function getAuthenticationManager();
+
+	/**
 	 * Returns the navigation manager
 	 *
 	 * @return \OCP\INavigationManager

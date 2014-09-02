@@ -5,6 +5,7 @@ namespace OC;
 use OC\AppFramework\Http\Request;
 use OC\AppFramework\Db\Db;
 use OC\AppFramework\Utility\SimpleContainer;
+use OC\Authentication\Manager;
 use OC\Cache\UserCache;
 use OC\Security\CertificateManager;
 use OC\DB\ConnectionWrapper;
@@ -204,6 +205,9 @@ class Server extends SimpleContainer implements IServerContainer {
 		$this->registerService('Db', function ($c) {
 			return new Db();
 		});
+		$this->registerService('AuthenticationManager', function ($c) {
+			return new Manager();
+		});
 	}
 
 	/**
@@ -310,6 +314,15 @@ class Server extends SimpleContainer implements IServerContainer {
 			$folder = $root->get($dir);
 		}
 		return $folder;
+	}
+
+	/**
+	 * Returns the authentication manager
+	 *
+	 * @return \OCP\Authentication\IManager
+	 */
+	function getAuthenticationManager() {
+		return $this->query('AuthenticationManager');
 	}
 
 	/**
