@@ -310,12 +310,7 @@ class OC_User {
 	 * @return string with one or more HTML attributes.
 	 */
 	public static function getLogoutAttribute() {
-		$backend = self::findFirstActiveUsedBackend();
-		if ($backend) {
-			return $backend->getLogoutAttribute();
-		}
-
-		return 'href="' . link_to('', 'index.php') . '?logout=true&requesttoken=' . OC_Util::callRegister() . '"';
+		return \OC::$server->getAuthenticationManager()->getLogoutLink();
 	}
 
 	/**

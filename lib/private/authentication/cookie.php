@@ -12,9 +12,9 @@ use OCP\Authentication\Exception;
 use OCP\Authentication\IProvider;
 
 /**
- * Auth provider for HTTP Basic Auth
+ * Auth provider for remember-me cookie
  */
-class Basic extends Base implements IProvider {
+class Cookie extends Base implements IProvider {
 	/**
 	 * @param array $server the $_SERVER environment
 	 * @param array $post the $_POST data
@@ -25,19 +25,25 @@ class Basic extends Base implements IProvider {
 	 * @throws \OCP\Authentication\Exception
 	 */
 	public function tryAuth(&$server, $post, $cookie) {
-		if (!isset($server['PHP_AUTH_USER'])
-			|| !isset($server['PHP_AUTH_PW'])
-			|| (isset($cookie['oc_ignore_php_auth_user']) && $cookie['oc_ignore_php_auth_user'] === $server['PHP_AUTH_USER'])
+		if (!isset($_COOKIE["oc_remember_login"])
+			|| !isset($_COOKIE["oc_token"])
+			|| !isset($_COOKIE["oc_username"])
+			|| !$_COOKIE["oc_remember_login"]
+			|| !\OC_Util::rememberLoginAllowed()
 		) {
 			return IProvider::NOT_APPLICABLE;
 		}
 
-		if ($this->userSession->login($server['PHP_AUTH_USER'], $server['PHP_AUTH_PW'])) {
-			$this->userSession->unsetMagicInCookie();
-			$server['HTTP_REQUESTTOKEN'] = \OC_Util::callRegister();
-			return true;
-		} else {
-			throw new Exception('invalidbasic');
+		if ($this->userSession->getManager()->userExists($_COOKIE['oc_username'])) {
+			$this->cleanupLoginTokens($_COOKIE['oc_username']);
+			// verify whether the supplied "remember me" token was valid
+			$granted = $this->userSession->loginWithCookie(
+				$_COOKIE['oc_username'], $_COOKIE['oc_token']);
+			if ($granted === true) {
+				return IProvider::SUCCESS_REDIRECT;
+			}
 		}
+		$this->userSession->unsetMagicInCookie();
+		throw new Exception('invalidcookie');
 	}
 }

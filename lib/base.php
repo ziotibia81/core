@@ -96,9 +96,9 @@ class OC {
 			get_include_path()
 		);
 
-		if(defined('PHPUNIT_CONFIG_DIR')) {
+		if (defined('PHPUNIT_CONFIG_DIR')) {
 			self::$configDir = OC::$SERVERROOT . '/' . PHPUNIT_CONFIG_DIR . '/';
-		} elseif(defined('PHPUNIT_RUN') and PHPUNIT_RUN and is_dir(OC::$SERVERROOT . '/tests/config/')) {
+		} elseif (defined('PHPUNIT_RUN') and PHPUNIT_RUN and is_dir(OC::$SERVERROOT . '/tests/config/')) {
 			self::$configDir = OC::$SERVERROOT . '/tests/config/';
 		} else {
 			self::$configDir = OC::$SERVERROOT . '/config/';
@@ -135,7 +135,7 @@ class OC {
 		// search the 3rdparty folder
 		OC::$THIRDPARTYROOT = OC_Config::getValue('3rdpartyroot', null);
 		OC::$THIRDPARTYWEBROOT = OC_Config::getValue('3rdpartyurl', null);
-		
+
 		if (empty(OC::$THIRDPARTYROOT) && empty(OC::$THIRDPARTYWEBROOT)) {
 			if (file_exists(OC::$SERVERROOT . '/3rdparty')) {
 				OC::$THIRDPARTYROOT = OC::$SERVERROOT;
@@ -151,7 +151,7 @@ class OC {
 				. ' You can also configure the location in the config.php file.');
 			return;
 		}
-		
+
 		// search the apps folder
 		$config_paths = OC_Config::getValue('apps_paths', array());
 		if (!empty($config_paths)) {
@@ -198,17 +198,17 @@ class OC {
 			and !is_writable(self::$configDir . "/config.php")
 		) {
 			if (self::$CLI) {
-				echo $l->t('Cannot write into "config" directory!')."\n";
-				echo $l->t('This can usually be fixed by giving the webserver write access to the config directory')."\n";
+				echo $l->t('Cannot write into "config" directory!') . "\n";
+				echo $l->t('This can usually be fixed by giving the webserver write access to the config directory') . "\n";
 				echo "\n";
-				echo $l->t('See %s', array(\OC_Helper::linkToDocs('admin-dir_permissions')))."\n";
+				echo $l->t('See %s', array(\OC_Helper::linkToDocs('admin-dir_permissions'))) . "\n";
 				exit;
 			} else {
 				OC_Template::printErrorPage(
 					$l->t('Cannot write into "config" directory!'),
 					$l->t('This can usually be fixed by '
-					. '%sgiving the webserver write access to the config directory%s.',
-					 array('<a href="'.\OC_Helper::linkToDocs('admin-dir_permissions').'" target="_blank">', '</a>'))
+						. '%sgiving the webserver write access to the config directory%s.',
+						array('<a href="' . \OC_Helper::linkToDocs('admin-dir_permissions') . '" target="_blank">', '</a>'))
 				);
 			}
 		}
@@ -288,6 +288,7 @@ class OC {
 
 	/**
 	 * Checks if the version requires an update and shows
+	 *
 	 * @param bool $showTemplate Whether an update screen should get shown
 	 * @return bool|void
 	 */
@@ -307,7 +308,7 @@ class OC {
 				$incompatibleApps = array();
 				foreach ($apps as $appId) {
 					$info = OC_App::getAppInfo($appId);
-					if(!OC_App::isAppCompatible($version, $info)) {
+					if (!OC_App::isAppCompatible($version, $info)) {
 						$incompatibleApps[] = $info;
 					}
 				}
@@ -384,7 +385,7 @@ class OC {
 			$useCustomSession = false;
 			$session = self::$server->getSession();
 			OC_Hook::emit('OC', 'initSession', array('session' => &$session, 'sessionName' => &$sessionName, 'useCustomSession' => &$useCustomSession));
-			if($useCustomSession) {
+			if ($useCustomSession) {
 				// use the session reference as the new Session
 				self::$server->setSession($session);
 			} else {
@@ -573,7 +574,7 @@ class OC {
 		}
 
 		// Check whether the sample configuration has been copied
-		if(OC_Config::getValue('copied_sample_config', false)) {
+		if (OC_Config::getValue('copied_sample_config', false)) {
 			$l = \OC::$server->getL10N('lib');
 			header('HTTP/1.1 503 Service Temporarily Unavailable');
 			header('Status: 503 Service Temporarily Unavailable');
@@ -586,7 +587,7 @@ class OC {
 	}
 
 	private static function registerLocalAddressBook() {
-		self::$server->getContactsManager()->register(function() {
+		self::$server->getContactsManager()->register(function () {
 			$userManager = \OC::$server->getUserManager();
 			\OC::$server->getContactsManager()->registerAddressBook(
 				new \OC\Contacts\LocalAddressBook($userManager));
@@ -705,11 +706,10 @@ class OC {
 		}
 
 		if (!OC_User::isLoggedIn()) {
-			// Test it the user is already authenticated using Apaches AuthType Basic... very usable in combination with LDAP
 			if (!OC_Config::getValue('maintenance', false) && !self::checkUpgrade(false)) {
 				OC_App::loadApps(array('authentication'));
 			}
-			OC::tryBasicAuthLogin();
+			OC::tryLogin();
 		}
 
 
@@ -734,7 +734,7 @@ class OC {
 		// Load minimum set of apps
 		if (!self::checkUpgrade(false)) {
 			// For logged-in users: Load everything
-			if(OC_User::isLoggedIn()) {
+			if (OC_User::isLoggedIn()) {
 				OC_App::loadApps();
 			} else {
 				// For guests: Load only authentication, filesystem and logging
@@ -767,8 +767,8 @@ class OC {
 		// Redirect to index if the logout link is accessed without valid session
 		// this is needed to prevent "Token expired" messages while login if a session is expired
 		// @see https://github.com/owncloud/core/pull/8443#issuecomment-42425583
-		if(isset($_GET['logout']) && !OC_User::isLoggedIn()) {
-			header("Location: " . OC::$WEBROOT.(empty(OC::$WEBROOT) ? '/' : ''));
+		if (isset($_GET['logout']) && !OC_User::isLoggedIn()) {
+			header("Location: " . OC::$WEBROOT . (empty(OC::$WEBROOT) ? '/' : ''));
 			return;
 		}
 
@@ -784,22 +784,22 @@ class OC {
 				if (isset($_SERVER['PHP_AUTH_USER'])) {
 					if (isset($_COOKIE['oc_ignore_php_auth_user'])) {
 						// Ignore HTTP Authentication for 5 more mintues.
-						setcookie('oc_ignore_php_auth_user', $_SERVER['PHP_AUTH_USER'], time() + 300, OC::$WEBROOT.(empty(OC::$WEBROOT) ? '/' : ''));
+						setcookie('oc_ignore_php_auth_user', $_SERVER['PHP_AUTH_USER'], time() + 300, OC::$WEBROOT . (empty(OC::$WEBROOT) ? '/' : ''));
 					} elseif ($_SERVER['PHP_AUTH_USER'] === self::$server->getSession()->get('loginname')) {
 						// Ignore HTTP Authentication to allow a different user to log in.
-						setcookie('oc_ignore_php_auth_user', $_SERVER['PHP_AUTH_USER'], 0, OC::$WEBROOT.(empty(OC::$WEBROOT) ? '/' : ''));
+						setcookie('oc_ignore_php_auth_user', $_SERVER['PHP_AUTH_USER'], 0, OC::$WEBROOT . (empty(OC::$WEBROOT) ? '/' : ''));
 					}
 				}
 				OC_User::logout();
 				// redirect to webroot and add slash if webroot is empty
-				header("Location: " . OC::$WEBROOT.(empty(OC::$WEBROOT) ? '/' : ''));
+				header("Location: " . OC::$WEBROOT . (empty(OC::$WEBROOT) ? '/' : ''));
 			} else {
 				// Redirect to default application
 				OC_Util::redirectToDefaultPage();
 			}
 		} else {
 			// Not handled and not logged in
-			self::handleLogin();
+			\OC_Util::displayLoginPage();
 		}
 	}
 
@@ -824,145 +824,24 @@ class OC {
 		}
 	}
 
-	protected static function handleLogin() {
+	protected static function tryLogin() {
+		$authManager = \OC::$server->getAuthenticationManager();
 		OC_App::loadApps(array('prelogin'));
-		$error = array();
 
-		// auth possible via apache module?
-		if (OC::tryApacheAuth()) {
-			$error[] = 'apacheauthfailed';
-		} // remember was checked after last login
-		elseif (OC::tryRememberLogin()) {
-			$error[] = 'invalidcookie';
-		} // logon via web form
-		elseif (OC::tryFormLogin()) {
-			$error[] = 'invalidpassword';
-		}
-
-		OC_Util::displayLoginPage(array_unique($error));
-	}
-
-	/**
-	 * Try to login a user via HTTP authentication
-	 * @return bool|void
-	 */
-	protected static function tryApacheAuth() {
-		$return = OC_User::handleApacheAuth();
-
-		// if return is true we are logged in -> redirect to the default page
-		if ($return === true) {
-			$_REQUEST['redirect_url'] = \OC_Request::requestUri();
-			OC_Util::redirectToDefaultPage();
-			exit;
-		}
-
-		// in case $return is null apache based auth is not enabled
-		return is_null($return) ? false : true;
-	}
-
-	/**
-	 * Try to login a user using the remember me cookie.
-	 * @return bool Whether the provided cookie was valid
-	 */
-	protected static function tryRememberLogin() {
-		if (!isset($_COOKIE["oc_remember_login"])
-			|| !isset($_COOKIE["oc_token"])
-			|| !isset($_COOKIE["oc_username"])
-			|| !$_COOKIE["oc_remember_login"]
-			|| !OC_Util::rememberLoginAllowed()
-		) {
-			return false;
-		}
-
-		if (defined("DEBUG") && DEBUG) {
-			OC_Log::write('core', 'Trying to login from cookie', OC_Log::DEBUG);
-		}
-
-		if(OC_User::userExists($_COOKIE['oc_username'])) {
-			self::cleanupLoginTokens($_COOKIE['oc_username']);
-			// verify whether the supplied "remember me" token was valid
-			$granted = OC_User::loginWithCookie(
-				$_COOKIE['oc_username'], $_COOKIE['oc_token']);
-			if($granted === true) {
-				OC_Util::redirectToDefaultPage();
-				// doesn't return
+		try {
+			if ($authManager->tryAuth($_SERVER, $_POST, $_COOKIE) == \OCP\Authentication\IProvider::SUCCESS_REDIRECT) {
+				\OC_Util::redirectToDefaultPage();
 			}
-			OC_Log::write('core', 'Authentication cookie rejected for user ' .
-				$_COOKIE['oc_username'], OC_Log::WARN);
-			// if you reach this point you have changed your password
-			// or you are an attacker
-			// we can not delete tokens here because users may reach
-			// this point multiple times after a password change
+		} catch (\OCP\Authentication\Exception $e) {
+			\OC_Util::displayLoginPage(array($e->getMessage()));
 		}
-
-		OC_User::unsetMagicInCookie();
-		return true;
 	}
-
-	/**
-	 * Tries to login a user using the formbased authentication
-	 * @return bool|void
-	 */
-	protected static function tryFormLogin() {
-		if (!isset($_POST["user"]) || !isset($_POST['password'])) {
-			return false;
-		}
-
-		OC_JSON::callCheck();
-		OC_App::loadApps();
-
-		//setup extra user backends
-		OC_User::setupBackends();
-
-		if (OC_User::login($_POST["user"], $_POST["password"])) {
-			// setting up the time zone
-			if (isset($_POST['timezone-offset'])) {
-				self::$server->getSession()->set('timezone', $_POST['timezone-offset']);
-			}
-
-			$userid = OC_User::getUser();
-			self::cleanupLoginTokens($userid);
-			if (!empty($_POST["remember_login"])) {
-				if (defined("DEBUG") && DEBUG) {
-					OC_Log::write('core', 'Setting remember login to cookie', OC_Log::DEBUG);
-				}
-				$token = OC_Util::generateRandomBytes(32);
-				OC_Preferences::setValue($userid, 'login_token', $token, time());
-				OC_User::setMagicInCookie($userid, $token);
-			} else {
-				OC_User::unsetMagicInCookie();
-			}
-			OC_Util::redirectToDefaultPage();
-			exit();
-		}
-		return true;
-	}
-
-	/**
-	 * Try to login a user using HTTP authentication.
-	 * @return bool
-	 */
-	protected static function tryBasicAuthLogin() {
-		if (!isset($_SERVER["PHP_AUTH_USER"])
-			|| !isset($_SERVER["PHP_AUTH_PW"])
-			|| (isset($_COOKIE['oc_ignore_php_auth_user']) && $_COOKIE['oc_ignore_php_auth_user'] === $_SERVER['PHP_AUTH_USER'])
-		) {
-			return false;
-		}
-
-		if (OC_User::login($_SERVER["PHP_AUTH_USER"], $_SERVER["PHP_AUTH_PW"])) {
-			//OC_Log::write('core',"Logged in with HTTP Authentication", OC_Log::DEBUG);
-			OC_User::unsetMagicInCookie();
-			$_SERVER['HTTP_REQUESTTOKEN'] = OC_Util::callRegister();
-		}
-		return true;
-	}
-
 }
 
 if (!function_exists('get_temp_dir')) {
 	/**
 	 * Get the temporary dir to store uploaded data
+	 *
 	 * @return null|string Path to the temporary directory or null
 	 */
 	function get_temp_dir() {

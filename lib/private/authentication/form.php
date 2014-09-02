@@ -46,7 +46,7 @@ class Form extends Base implements IProvider {
 			}
 			return IProvider::SUCCESS_REDIRECT;
 		} else {
-			throw new Exception();
+			throw new Exception('invalidpassword');
 		}
 	}
 }

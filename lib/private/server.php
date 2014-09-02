@@ -5,6 +5,8 @@ namespace OC;
 use OC\AppFramework\Http\Request;
 use OC\AppFramework\Db\Db;
 use OC\AppFramework\Utility\SimpleContainer;
+use OC\Authentication\Basic;
+use OC\Authentication\Form;
 use OC\Authentication\Manager;
 use OC\Cache\UserCache;
 use OC\Security\CertificateManager;
@@ -206,7 +208,13 @@ class Server extends SimpleContainer implements IServerContainer {
 			return new Db();
 		});
 		$this->registerService('AuthenticationManager', function ($c) {
-			return new Manager();
+			/**
+			 * @var Server $c
+			 */
+			$manager = new Manager();
+			$manager->registerProvider(new Basic($c->getSession(), $c->getUserSession(), $c->getConfig(), time()));
+			$manager->registerProvider(new Form($c->getSession(), $c->getUserSession(), $c->getConfig(), time()));
+			return $manager;
 		});
 	}
 
