@@ -40,4 +40,18 @@ class Manager implements IManager {
 		}
 		return false;
 	}
+
+	/**
+	 * Get the link for triggering the logout
+	 *
+	 * @return string with one or more HTML attributes
+	 */
+	public function getLogoutLink() {
+		foreach ($this->providers as $provider) {
+			if ($result = $provider->getLogoutLink()) {
+				return $result;
+			}
+		}
+		return 'href="' . link_to('', 'index.php') . '?logout=true&requesttoken=' . \OC_Util::callRegister() . '"';
+	}
 }

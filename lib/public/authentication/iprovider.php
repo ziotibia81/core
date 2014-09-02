@@ -16,4 +16,11 @@ interface IProvider {
 	 * @return bool
 	 */
 	public function tryAuth(&$server, $post, $cookie);
+
+	/**
+	 * Get the link for triggering the logout
+	 *
+	 * @return string | false with one or more HTML attributes or false if the default should be used
+	 */
+	public function getLogoutLink();
 }

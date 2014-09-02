@@ -57,4 +57,13 @@ class Base {
 			}
 		}
 	}
+
+	/**
+	 * Get the link for triggering the logout
+	 *
+	 * @return string with one or more HTML attributes.
+	 */
+	public function getLogoutLink() {
+		return false;
+	}
 }

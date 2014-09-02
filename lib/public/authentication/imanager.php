@@ -10,7 +10,7 @@ namespace OCP\Authentication;
 
 interface IManager {
 	/**
-	 * @param \OCP\IAuthProvider $provider
+	 * @param \OCP\Authentication\IProvider $provider
 	 * @return mixed
 	 */
 	public function registerProvider($provider);
@@ -24,4 +24,11 @@ interface IManager {
 	 * @return bool
 	 */
 	public function tryAuth($server, $post, $cookie);
+
+	/**
+	 * Get the link for triggering the logout
+	 *
+	 * @return string with one or more HTML attributes
+	 */
+	public function getLogoutLink();
 }
