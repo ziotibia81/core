@@ -843,21 +843,6 @@ class OC {
 	}
 
 	/**
-	 * Remove outdated and therefore invalid tokens for a user
-	 * @param string $user
-	 */
-	protected static function cleanupLoginTokens($user) {
-		$cutoff = time() - OC_Config::getValue('remember_login_cookie_lifetime', 60 * 60 * 24 * 15);
-		$tokens = OC_Preferences::getKeys($user, 'login_token');
-		foreach ($tokens as $token) {
-			$time = OC_Preferences::getValue($user, 'login_token', $token);
-			if ($time < $cutoff) {
-				OC_Preferences::deleteKey($user, 'login_token', $token);
-			}
-		}
-	}
-
-	/**
 	 * Try to login a user via HTTP authentication
 	 * @return bool|void
 	 */
