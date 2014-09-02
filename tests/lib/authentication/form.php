@@ -9,6 +9,8 @@
 namespace Test\Authentication;
 
 use OC\User\User;
+use OCP\Authentication\Exception;
+use OCP\Authentication\IProvider;
 
 class Form extends \PHPUnit_Framework_TestCase {
 	/**
@@ -41,7 +43,7 @@ class Form extends \PHPUnit_Framework_TestCase {
 	public function testNoAuthPost() {
 		$provider = new \OC\Authentication\Form($this->getSession(), $this->getUserSession(), $this->getConfig(), 5000);
 		$server = array();
-		$this->assertFalse($provider->tryAuth($server, array(), array()));
+		$this->assertEquals(IProvider::NOT_APPLICABLE, $provider->tryAuth($server, array(), array()));
 	}
 
 	public function testValidLogin() {
@@ -61,9 +63,12 @@ class Form extends \PHPUnit_Framework_TestCase {
 			->will($this->returnValue($user));
 
 		$server = array();
-		$this->assertTrue($provider->tryAuth($server, array('user' => 'foo', 'password' => 'bar'), array()));
+		$this->assertEquals(IProvider::SUCCESS_REDIRECT, $provider->tryAuth($server, array('user' => 'foo', 'password' => 'bar'), array()));
 	}
 
+	/**
+	 * @expectedException \OCP\Authentication\Exception
+	 */
 	public function testInValidLogin() {
 		$userSession = $this->getUserSession();
 		$provider = new \OC\Authentication\Form($this->getSession(), $userSession, $this->getConfig(), 5000);
@@ -75,7 +80,7 @@ class Form extends \PHPUnit_Framework_TestCase {
 			->method('getUser');
 
 		$server = array();
-		$this->assertFalse($provider->tryAuth($server, array('user' => 'foo', 'password' => 'baz'), array()));
+		$provider->tryAuth($server, array('user' => 'foo', 'password' => 'baz'), array());
 	}
 
 	public function testValidLoginRemembersTimeZone() {
@@ -98,7 +103,7 @@ class Form extends \PHPUnit_Framework_TestCase {
 			->with('timezone', 1);
 
 		$server = array();
-		$this->assertTrue($provider->tryAuth($server, array('user' => 'foo', 'password' => 'bar', 'timezone-offset' => 1), array()));
+		$provider->tryAuth($server, array('user' => 'foo', 'password' => 'bar', 'timezone-offset' => 1), array());
 	}
 
 	public function testInValidLoginNoRemembersTimeZone() {
@@ -113,7 +118,10 @@ class Form extends \PHPUnit_Framework_TestCase {
 			->method('set');
 
 		$server = array();
-		$this->assertFalse($provider->tryAuth($server, array('user' => 'foo', 'password' => 'bar', 'timezone-offset' => 1), array()));
+		try {
+			$provider->tryAuth($server, array('user' => 'foo', 'password' => 'bar', 'timezone-offset' => 1), array());
+		} catch (Exception $e) {
+		}
 	}
 
 	public function testValidLoginSetRemember() {
@@ -135,7 +143,7 @@ class Form extends \PHPUnit_Framework_TestCase {
 			->will($this->returnValue($user));
 
 		$server = array();
-		$this->assertTrue($provider->tryAuth($server, array('user' => 'foo', 'password' => 'bar', 'remember_login' => true), array()));
+		$provider->tryAuth($server, array('user' => 'foo', 'password' => 'bar', 'remember_login' => true), array());
 	}
 
 	public function testInValidLoginNoSetRemember() {
@@ -150,6 +158,9 @@ class Form extends \PHPUnit_Framework_TestCase {
 			->will($this->returnValue(false));
 
 		$server = array();
-		$this->assertFalse($provider->tryAuth($server, array('user' => 'foo', 'password' => 'bar', 'remember_login' => true), array()));
+		try {
+			$provider->tryAuth($server, array('user' => 'foo', 'password' => 'bar', 'remember_login' => true), array());
+		} catch (Exception $e) {
+		}
 	}
 }

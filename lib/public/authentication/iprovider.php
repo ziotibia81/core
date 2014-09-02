@@ -9,11 +9,16 @@
 namespace OCP\Authentication;
 
 interface IProvider {
+	const NOT_APPLICABLE = 0; //provider not applicable for current request
+	const SUCCESS_CONTINUE = 1; //authentication successful, continue processing request
+	const SUCCESS_REDIRECT = 2; //authentication successful, redirect to default page before continuing
+
 	/**
 	 * @param array $server the $_SERVER environment
 	 * @param array $post the $_POST data
 	 * @param array $cookie the $_COOKIE data
-	 * @return bool
+	 * @return int either \OCP\Authentication\IProvider::NOT_APPLICABLE, \OCP\Authentication\IProvider::SUCCESS_CONTINUE
+	 *         or \OCP\Authentication\IProvider::SUCCESS_REDIRECT
 	 */
 	public function tryAuth(&$server, $post, $cookie);
 

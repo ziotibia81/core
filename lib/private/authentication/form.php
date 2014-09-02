@@ -8,6 +8,7 @@
 
 namespace OC\Authentication;
 
+use OCP\Authentication\Exception;
 use OCP\Authentication\IProvider;
 
 /**
@@ -18,11 +19,14 @@ class Form extends Base implements IProvider {
 	 * @param array $server the $_SERVER environment
 	 * @param array $post the $_POST data
 	 * @param array $cookie the $_COOKIE data
-	 * @return bool
+	 * @return int either \OCP\Authentication\IProvider::NOT_APPLICABLE, \OCP\Authentication\IProvider::SUCCESS_CONTINUE
+	 *         or \OCP\Authentication\IProvider::SUCCESS_REDIRECT
+	 *
+	 * @throws \OCP\Authentication\Exception
 	 */
 	public function tryAuth(&$server, $post, $cookie) {
 		if (!isset($post['user']) || !isset($post['password'])) {
-			return false;
+			return IProvider::NOT_APPLICABLE;
 		}
 
 		if ($this->userSession->login($post['user'], $post['password'])) {
@@ -40,8 +44,9 @@ class Form extends Base implements IProvider {
 			} else {
 				$this->userSession->unsetMagicInCookie();
 			}
-			return true;
+			return IProvider::SUCCESS_REDIRECT;
+		} else {
+			throw new Exception();
 		}
-		return false;
 	}
 }

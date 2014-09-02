@@ -52,6 +52,6 @@ class Manager implements IManager {
 				return $result;
 			}
 		}
-		return 'href="' . link_to('', 'index.php') . '?logout=true&requesttoken=' . \OC_Util::callRegister() . '"';
+		return 'href="' . \OC_Helper::linkTo('', 'index.php') . '?logout=true&requesttoken=' . \OC_Util::callRegister() . '"';
 	}
 }

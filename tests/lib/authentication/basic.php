@@ -8,6 +8,9 @@
 
 namespace Test\Authentication;
 
+use OCP\Authentication\Exception;
+use OCP\Authentication\IProvider;
+
 class Basic extends \PHPUnit_Framework_TestCase {
 	/**
 	 * @return \OCP\IUserSession | \PHPUnit_Framework_MockObject_MockObject
@@ -39,7 +42,7 @@ class Basic extends \PHPUnit_Framework_TestCase {
 	public function testNoAuthHeaders() {
 		$provider = new \OC\Authentication\Basic($this->getSession(), $this->getUserSession(), $this->getConfig(), 5000);
 		$server = array();
-		$this->assertFalse($provider->tryAuth($server, array(), array()));
+		$this->assertEquals(IProvider::NOT_APPLICABLE, $provider->tryAuth($server, array(), array()));
 	}
 
 	public function testValidLogin() {
@@ -50,9 +53,12 @@ class Basic extends \PHPUnit_Framework_TestCase {
 			->with('foo', 'bar')
 			->will($this->returnValue(true));
 		$server = array('PHP_AUTH_USER' => 'foo', 'PHP_AUTH_PW' => 'bar');
-		$this->assertTrue($provider->tryAuth($server, array(), array()));
+		$this->assertEquals(IProvider::SUCCESS_CONTINUE, $provider->tryAuth($server, array(), array()));
 	}
 
+	/**
+	 * @expectedException \OCP\Authentication\Exception
+	 */
 	public function testInValidLogin() {
 		$userSession = $this->getUserSession();
 		$provider = new \OC\Authentication\Basic($this->getSession(), $userSession, $this->getConfig(), 5000);
@@ -61,7 +67,7 @@ class Basic extends \PHPUnit_Framework_TestCase {
 			->with('foo', 'baz')
 			->will($this->returnValue(false));
 		$server = array('PHP_AUTH_USER' => 'foo', 'PHP_AUTH_PW' => 'baz');
-		$this->assertFalse($provider->tryAuth($server, array(), array()));
+		$provider->tryAuth($server, array(), array());
 	}
 
 	public function testValidLoginSetsRequestToken() {
@@ -71,7 +77,7 @@ class Basic extends \PHPUnit_Framework_TestCase {
 			->method('login')
 			->will($this->returnValue(true));
 		$server = array('PHP_AUTH_USER' => 'foo', 'PHP_AUTH_PW' => 'bar');
-		$this->assertTrue($provider->tryAuth($server, array(), array()));
+		$provider->tryAuth($server, array(), array());
 		$this->assertArrayHasKey('HTTP_REQUESTTOKEN', $server);
 	}
 
@@ -82,7 +88,11 @@ class Basic extends \PHPUnit_Framework_TestCase {
 			->method('login')
 			->will($this->returnValue(false));
 		$server = array('PHP_AUTH_USER' => 'foo', 'PHP_AUTH_PW' => 'bar');
-		$this->assertFalse($provider->tryAuth($server, array(), array()));
+		try {
+			$provider->tryAuth($server, array(), array());
+		} catch (Exception $e) {
+
+		}
 		$this->assertArrayNotHasKey('HTTP_REQUESTTOKEN', $server);
 	}
 
@@ -95,7 +105,7 @@ class Basic extends \PHPUnit_Framework_TestCase {
 			->method('login')
 			->will($this->returnValue(true));
 		$server = array('PHP_AUTH_USER' => 'foo', 'PHP_AUTH_PW' => 'bar');
-		$this->assertTrue($provider->tryAuth($server, array(), array()));
+		$provider->tryAuth($server, array(), array());
 	}
 
 	public function testInvalidLoginNoUnsetAuthCookie() {
@@ -107,6 +117,10 @@ class Basic extends \PHPUnit_Framework_TestCase {
 			->method('login')
 			->will($this->returnValue(false));
 		$server = array('PHP_AUTH_USER' => 'foo', 'PHP_AUTH_PW' => 'bar');
-		$this->assertFalse($provider->tryAuth($server, array(), array()));
+		try {
+			$provider->tryAuth($server, array(), array());
+		} catch (Exception $e) {
+
+		}
 	}
 }
