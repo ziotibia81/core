@@ -431,7 +431,7 @@ var UserList = {
 				GroupList.addGroup(escapeHTML(term));
 				return {
 					id: term,
-					displayname: term
+					displayname: term + ' (' + t('settings', 'add group') + ')'
 				};
 			}
 		});
