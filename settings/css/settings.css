@@ -323,3 +323,7 @@ doesnotexist:-o-prefocus, .strengthify-wrapper {
 #postsetupchecks .hint, #postsetupchecks .setupwarning {
 	margin-top: 15px;
 }
+
+#usergrouplist {
+	padding-bottom: 40px;
+}
