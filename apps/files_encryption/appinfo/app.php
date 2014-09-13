@@ -9,6 +9,7 @@ OC::$CLASSPATH['OCA\Encryption\Proxy'] = 'files_encryption/lib/proxy.php';
 OC::$CLASSPATH['OCA\Encryption\Session'] = 'files_encryption/lib/session.php';
 OC::$CLASSPATH['OCA\Encryption\Capabilities'] = 'files_encryption/lib/capabilities.php';
 OC::$CLASSPATH['OCA\Encryption\Helper'] = 'files_encryption/lib/helper.php';
+OC::$CLASSPATH['OCA\Encryption\Command\Decrypt'] = 'files_encryption/command/decrypt.php';
 
 // Exceptions
 OC::$CLASSPATH['OCA\Encryption\Exceptions\MultiKeyEncryptException'] = 'files_encryption/lib/exceptions.php';
