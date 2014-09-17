@@ -100,7 +100,7 @@ if($source) {
 		exit();
 	}
 
-	if (!ini_get('allow_url_fopen')) {
+	if (!OC::$server->getIniWrapper()->getBool('allow_url_fopen')) {
 		$eventSource->send('error', array('message' => $l10n->t('Server is not allowed to open URLs, please check the server configuration')));
 		$eventSource->close();
 		exit();

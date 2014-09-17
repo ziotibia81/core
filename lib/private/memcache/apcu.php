@@ -12,7 +12,7 @@ class APCu extends APC {
 	static public function isAvailable() {
 		if (!extension_loaded('apcu')) {
 			return false;
-		} elseif (!ini_get('apc.enable_cli') && \OC::$CLI) {
+		} elseif (!\OC::$server->getIniWrapper()->getBool('apc.enable_cli') && \OC::$CLI) {
 			return false;
 		} else {
 			return true;

@@ -125,7 +125,7 @@ class OC_Files {
 			return ;
 		}
 		if ($zip) {
-			$executionTime = intval(ini_get('max_execution_time'));
+			$executionTime = intval(OC::$server->getIniWrapper()->getNumeric('max_execution_time'));
 			set_time_limit(0);
 			if ($get_type === GET_TYPE::ZIP_FILES) {
 				foreach ($files as $file) {

@@ -2,6 +2,7 @@
 
 namespace OC;
 
+use bantu\IniGetWrapper\IniGetWrapper;
 use OC\AppFramework\Http\Request;
 use OC\AppFramework\Db\Db;
 use OC\AppFramework\Utility\SimpleContainer;
@@ -72,7 +73,7 @@ class Server extends SimpleContainer implements IServerContainer {
 		$this->registerService('PreviewManager', function ($c) {
 			return new PreviewManager();
 		});
-		$this->registerService('TagMapper', function(Server $c) {
+		$this->registerService('TagMapper', function (Server $c) {
 			return new TagMapper($c->getDb());
 		});
 		$this->registerService('TagManager', function (Server $c) {
@@ -233,6 +234,11 @@ class Server extends SimpleContainer implements IServerContainer {
 			/** @var Server $c */
 			return new TempManager(get_temp_dir(), $c->getLogger());
 		});
+
+		$this->registerService('IniWrapper', function ($c) {
+			return new IniGetWrapper();
+		});
+
 	}
 
 	/**
@@ -603,4 +609,12 @@ class Server extends SimpleContainer implements IServerContainer {
 	function getTempManager() {
 		return $this->query('TempManager');
 	}
+
+	/**
+	 * @return IniGetWrapper
+	 */
+	public function getIniWrapper() {
+		return $this->query('IniWrapper');
+	}
+
 }
