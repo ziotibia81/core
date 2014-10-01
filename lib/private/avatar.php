@@ -55,7 +55,8 @@ class OC_Avatar implements \OCP\IAvatar {
 			$img = $data;
 			$data = $img->data();
 		} else {
-			$img = new OC_Image($data);
+			$img = new OC_Image();
+			$img->loadFromData($data);
 		}
 		$type = substr($img->mimeType(), -3);
 		if ($type === 'peg') {

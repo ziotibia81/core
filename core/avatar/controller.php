@@ -121,7 +121,8 @@ class Controller {
 			return;
 		}
 
-		$image = new \OC_Image($tmpavatar);
+		$image = new \OC_Image();
+		$image->loadFromData($tmpavatar);
 		\OC_Response::disableCaching();
 		\OC_Response::setLastModifiedHeader(time());
 		\OC_Response::setETagHeader(crc32($image->data()));
@@ -148,7 +149,8 @@ class Controller {
 			return;
 		}
 
-		$image = new \OC_Image($tmpavatar);
+		$image = new \OC_Image();
+		$image->loadFromData($tmpavatar);
 		$image->crop($crop['x'], $crop['y'], $crop['w'], $crop['h']);
 		try {
 			$avatar = new \OC_Avatar($user);
