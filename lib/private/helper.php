@@ -999,9 +999,13 @@ class OC_Helper {
 
 		// TODO: need a better way to get total space from storage
 		if ($storage->instanceOfStorage('\OC\Files\Storage\Wrapper\Quota')) {
+			/** @var \OC\Files\Storage\Wrapper\Quota $storage $quota */
 			$quota = $storage->getQuota();
+			// for the quota wrapper, passing the root info saves having to reload the info from cache
+			$free = $storage->free_space('', $rootInfo);
+		} else {
+			$free = $storage->free_space('');
 		}
-		$free = $storage->free_space('');
 		if ($free >= 0) {
 			$total = $free + $used;
 		} else {

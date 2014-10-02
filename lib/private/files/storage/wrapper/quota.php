@@ -38,10 +38,14 @@ class Quota extends Wrapper {
 
 	/**
 	 * @param string $path
+	 * @param \OCP\Files\FileInfo $data
+	 * @return int
 	 */
-	protected function getSize($path) {
-		$cache = $this->getCache();
-		$data = $cache->get($path);
+	protected function getSize($path, $data = null) {
+		if (is_null($data)) {
+			$cache = $this->getCache();
+			$data = $cache->get($path);
+		}
 		if (is_array($data) and isset($data['size'])) {
 			if (isset($data['unencrypted_size'])
 				&& $data['unencrypted_size'] > 0
@@ -58,13 +62,14 @@ class Quota extends Wrapper {
 	 * Get free space as limited by the quota
 	 *
 	 * @param string $path
+	 * @param \OCP\Files\FileInfo $data
 	 * @return int
 	 */
-	public function free_space($path) {
+	public function free_space($path, $data = null) {
 		if ($this->quota < 0) {
 			return $this->storage->free_space($path);
 		} else {
-			$used = $this->getSize($this->sizeRoot);
+			$used = $this->getSize($this->sizeRoot, $data);
 			if ($used < 0) {
 				return \OCP\Files\FileInfo::SPACE_NOT_COMPUTED;
 			} else {
