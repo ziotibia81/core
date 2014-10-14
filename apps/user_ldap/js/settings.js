@@ -749,6 +749,7 @@ var LdapWizard = {
 
 	saveProcesses: 0,
 	_save: function(object, value) {
+		$('#ldapSettings').block({ message: 'Saving settings..' });
 		$('#ldap .ldap_saving').removeClass('hidden');
 		LdapWizard.saveProcesses += 1;
 		param = 'cfgkey='+encodeURIComponent(object.id)+
@@ -762,6 +763,7 @@ var LdapWizard = {
 			function(result) {
 				LdapWizard.saveProcesses -= 1;
 				if(LdapWizard.saveProcesses === 0) {
+					$('#ldapSettings').unblock();
 					$('#ldap .ldap_saving').addClass('hidden');
 				}
 				if(result.status === 'success') {
