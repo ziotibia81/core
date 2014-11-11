@@ -10,9 +10,6 @@ use OC\Diagnostics\NullQueryLogger;
 use OC\Diagnostics\EventLogger;
 use OC\Diagnostics\QueryLogger;
 use OC\Security\CertificateManager;
-use OC\DB\ConnectionWrapper;
-use OC\Files\Node\Root;
-use OC\Files\View;
 use OC\Security\Crypto;
 use OC\Security\Hasher;
 use OC\Security\SecureRandom;
@@ -29,6 +26,7 @@ use OC\Tagging\TagMapper;
  * TODO: hookup all manager classes
  */
 class Server extends SimpleContainer implements IServerContainer {
+
 	function __construct() {
 		$this->registerService('ContactsManager', function ($c) {
 			return new ContactsManager();
@@ -81,15 +79,23 @@ class Server extends SimpleContainer implements IServerContainer {
 			$user = \OC_User::getUser();
 			return new TagManager($tagMapper, $user);
 		});
-		$this->registerService('RootFolder', function (Server $c) {
-			// TODO: get user and user manager from container as well
-			$user = \OC_User::getUser();
-			/** @var $c SimpleContainer */
+		$this->registerService('StorageManager', function ($c) {
+			/**
+			 * @var SimpleContainer $c
+			 * @var \OC\User\Manager $userManager
+			 * @var \OC\User\Session $userSession
+			 */
 			$userManager = $c->query('UserManager');
-			$user = $userManager->get($user);
-			$manager = \OC\Files\Filesystem::getMountManager();
-			$view = new View();
-			return new Root($manager, $view, $user);
+			$userSession = $c->query('UserSession');
+			return new StorageManager($userManager, $userSession);
+		});
+		$this->registerService('RootFolder', function ($c) {
+			/**
+			 * @var SimpleContainer $c
+			 * @var \OCP\IStorageManager $storageManager
+			 */
+			$storageManager = $c->query('StorageManager');
+			return $storageManager->getRootFolder();
 		});
 		$this->registerService('UserManager', function (Server $c) {
 			$config = $c->getConfig();
@@ -301,46 +307,11 @@ class Server extends SimpleContainer implements IServerContainer {
 	 * @return \OCP\Files\Folder
 	 */
 	function getUserFolder($userId = null) {
-		if ($userId === null) {
-			$user = $this->getUserSession()->getUser();
-			if (!$user) {
-				return null;
-			}
-			$userId = $user->getUID();
-		} else {
-			$user = $this->getUserManager()->get($userId);
-		}
-		$dir = '/' . $userId;
-		$root = $this->getRootFolder();
-		$folder = null;
-
-		if (!$root->nodeExists($dir)) {
-			$folder = $root->newFolder($dir);
-		} else {
-			$folder = $root->get($dir);
-		}
-
-		$dir = '/files';
-		if (!$folder->nodeExists($dir)) {
-			$folder = $folder->newFolder($dir);
-
-			if (\OCP\App::isEnabled('files_encryption')) {
-				// disable encryption proxy to prevent recursive calls
-				$proxyStatus = \OC_FileProxy::$enabled;
-				\OC_FileProxy::$enabled = false;
-			}
-
-			\OC_Util::copySkeleton($user, $folder);
-
-			if (\OCP\App::isEnabled('files_encryption')) {
-				// re-enable proxy - our work is done
-				\OC_FileProxy::$enabled = $proxyStatus;
-			}
-		} else {
-			$folder = $folder->get($dir);
-		}
-
-		return $folder;
+		/**
+		 * @var \OCP\IStorageManager $storageManager
+		 */
+		$storageManager = $this->query('StorageManager');
+		return $storageManager->getUserFolder($userId);
 	}
 
 	/**
@@ -349,15 +320,11 @@ class Server extends SimpleContainer implements IServerContainer {
 	 * @return \OCP\Files\Folder
 	 */
 	function getAppFolder() {
-		$dir = '/' . \OC_App::getCurrentApp();
-		$root = $this->getRootFolder();
-		$folder = null;
-		if (!$root->nodeExists($dir)) {
-			$folder = $root->newFolder($dir);
-		} else {
-			$folder = $root->get($dir);
-		}
-		return $folder;
+		/**
+		 * @var \OCP\IStorageManager $storageManager
+		 */
+		$storageManager = $this->query('StorageManager');
+		return $storageManager->getAppFolder();
 	}
 
 	/**
