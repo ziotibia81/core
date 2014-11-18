@@ -247,6 +247,11 @@ class Server extends SimpleContainer implements IServerContainer {
 			$directoryManager = $c->getAppDirectoryManager();
 			return new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
 		});
+		$this->registerService('AppLoader', function (Server $c) {
+			$appManager = $c->getAppManager();
+			$directoryManager = $c->getAppDirectoryManager();
+			return new \OC\App\Loader($appManager, $directoryManager);
+		});
 	}
 
 	/**
@@ -638,5 +643,14 @@ class Server extends SimpleContainer implements IServerContainer {
 	 */
 	function getAppManager() {
 		return $this->query('AppManager');
+	}
+
+	/**
+	 * Get the app manager
+	 *
+	 * @return \OCP\App\IAppLoader
+	 */
+	function getAppLoader() {
+		return $this->query('AppLoader');
 	}
 }
