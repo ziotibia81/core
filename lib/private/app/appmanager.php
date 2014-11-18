@@ -31,33 +31,56 @@ class AppManager implements IAppManager {
 	private $groupManager;
 
 	/**
+	 * @var \OC\App\DirectoryManager
+	 */
+	private $directoryManager;
+
+	/**
 	 * @var string[] $appId => $enabled
 	 */
-	private $installedAppsCache;
+	private $appsEnabledCache;
+
+	/**
+	 * @var string[] $appId => $version
+	 */
+	private $appsVersionsCache;
 
 	/**
 	 * @param \OCP\IUserSession $userSession
 	 * @param \OCP\IAppConfig $appConfig
 	 * @param \OCP\IGroupManager $groupManager
+	 * @param \OC\App\DirectoryManager $directoryManager
 	 */
-	public function __construct(IUserSession $userSession, IAppConfig $appConfig, IGroupManager $groupManager) {
+	public function __construct(IUserSession $userSession, IAppConfig $appConfig, IGroupManager $groupManager, DirectoryManager $directoryManager) {
 		$this->userSession = $userSession;
 		$this->appConfig = $appConfig;
 		$this->groupManager = $groupManager;
+		$this->directoryManager = $directoryManager;
 	}
 
 	/**
 	 * @return string[] $appId => $enabled
 	 */
-	private function getInstalledApps() {
-		if (!$this->installedAppsCache) {
+	private function getEnabledValues() {
+		if (!$this->appsEnabledCache) {
 			$values = $this->appConfig->getValues(false, 'enabled');
-			$this->installedAppsCache = array_filter($values, function ($value) {
+			$this->appsEnabledCache = array_filter($values, function ($value) {
 				return $value !== 'no';
 			});
-			ksort($this->installedAppsCache);
+			ksort($this->appsEnabledCache);
 		}
-		return $this->installedAppsCache;
+		return $this->appsEnabledCache;
+	}
+
+	/**
+	 * @return string[] $appId => $version
+	 */
+	private function getVersionValues() {
+		if (!$this->appsVersionsCache) {
+			$this->appsVersionsCache = $this->appConfig->getValues(false, 'installed_version');
+			ksort($this->appsVersionsCache);
+		}
+		return $this->appsVersionsCache;
 	}
 
 	/**
@@ -71,7 +94,7 @@ class AppManager implements IAppManager {
 		if (is_null($user)) {
 			$user = $this->userSession->getUser();
 		}
-		$installedApps = $this->getInstalledApps();
+		$installedApps = $this->getEnabledValues();
 		if (isset($installedApps[$appId])) {
 			$enabled = $installedApps[$appId];
 			if ($enabled === 'yes') {
@@ -100,7 +123,7 @@ class AppManager implements IAppManager {
 	 * @return bool
 	 */
 	public function isInstalled($appId) {
-		$installedApps = $this->getInstalledApps();
+		$installedApps = $this->getEnabledValues();
 		return isset($installedApps[$appId]);
 	}
 
@@ -134,5 +157,70 @@ class AppManager implements IAppManager {
 	 */
 	public function disableApp($appId) {
 		$this->appConfig->setValue($appId, 'enabled', 'no');
+	}
+
+	/**
+	 * List all apps enabled for any user
+	 *
+	 * @return string[]
+	 */
+	public function listInstalledApps() {
+		return array_keys($this->getEnabledValues());
+	}
+
+	/**
+	 * List all apps enabled for a specific user
+	 *
+	 * @param \OCP\IUser $user
+	 * @return string[]
+	 */
+	public function listAppsEnabledForUser($user = null) {
+		$apps = $this->listInstalledApps();
+		$manager = $this;
+		return array_filter($apps, function ($app) use ($manager, $user) {
+			$manager->isEnabledForUser($app, $user);
+		});
+	}
+
+	/**
+	 * Get the version of an app that's currently installed
+	 *
+	 * Note that this might be lower then the latest code version
+	 *
+	 * @param string $appId
+	 * @return string
+	 */
+	public function getInstalledVersion($appId) {
+		$version = $this->getVersionValues();
+		return isset($version[$appId]) ? $version[$appId] : '0.0.0';
+	}
+
+	/**
+	 * Get the version of an app as defined by the code
+	 *
+	 * Note that this might be newer than the installed version
+	 *
+	 * @param string $appId
+	 * @return string
+	 */
+	public function getAppVersion($appId) {
+		$directory = $this->directoryManager->getDirectoryForApp($appId);
+		if (!$directory) {
+			return '0.0.0';
+		}
+		$file = $directory->getPath() . '/' . $appId . '/appinfo/version';
+		return file_exists($file) ? file_get_contents($file) : '0.0.0';
+	}
+
+	/**
+	 * @param string $appId
+	 * @return \OCP\App\IInfo
+	 */
+	public function getAppInfo($appId) {
+		$appDir = $this->directoryManager->getDirectoryForApp($appId);
+		if (!$appDir) {
+			return null;
+		}
+		return new Info($appId, $appDir->getPath() . '/' . $appId, $this->getAppVersion($appId), $this->getInstalledVersion($appId));
 	}
 }

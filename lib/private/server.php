@@ -237,11 +237,15 @@ class Server extends SimpleContainer implements IServerContainer {
 			/** @var Server $c */
 			return new TempManager(get_temp_dir(), $c->getLogger());
 		});
+		$this->registerService('AppDirectoryManager', function (Server $c) {
+			return new \OC\App\DirectoryManager($this->getConfig());
+		});
 		$this->registerService('AppManager', function(Server $c) {
 			$userSession = $c->getUserSession();
 			$appConfig = $c->getAppConfig();
 			$groupManager = $c->getGroupManager();
-			return new \OC\App\AppManager($userSession, $appConfig, $groupManager);
+			$directoryManager = $c->getAppDirectoryManager();
+			return new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
 		});
 	}
 
@@ -621,6 +625,10 @@ class Server extends SimpleContainer implements IServerContainer {
 	 */
 	function getTempManager() {
 		return $this->query('TempManager');
+	}
+
+	function getAppDirectoryManager() {
+		return $this->query('AppDirectoryManager');
 	}
 
 	/**
