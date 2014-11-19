@@ -250,7 +250,8 @@ class Server extends SimpleContainer implements IServerContainer {
 		$this->registerService('AppLoader', function (Server $c) {
 			$appManager = $c->getAppManager();
 			$directoryManager = $c->getAppDirectoryManager();
-			return new \OC\App\Loader($appManager, $directoryManager);
+			$eventLogger = $c->getEventLogger();
+			return new \OC\App\Loader($appManager, $directoryManager, $eventLogger);
 		});
 	}
 

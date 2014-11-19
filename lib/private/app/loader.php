@@ -9,6 +9,7 @@
 
 namespace OC\App;
 
+use OC\Diagnostics\NullEventLogger;
 use OCP\App\IAppManager;
 use OCP\App\IInfo;
 use OCP\IUser;
@@ -26,13 +27,28 @@ class Loader implements IAppLoader {
 	private $appManager;
 
 	/**
+	 * @var \OCP\Diagnostics\IEventLogger
+	 */
+	private $eventLogger;
+
+	/**
 	 * @var string
 	 */
 	private $loadedApps = array();
 
-	function __construct(IAppManager $appManager, DirectoryManager $directoryManager) {
+	/**
+	 * @param \OCP\App\IAppManager $appManager
+	 * @param \OC\App\DirectoryManager $directoryManager
+	 * @param \OCP\Diagnostics\IEventLogger $eventLogger
+	 */
+	function __construct(IAppManager $appManager, DirectoryManager $directoryManager, $eventLogger = null) {
 		$this->appManager = $appManager;
 		$this->directoryManager = $directoryManager;
+		if (is_null($eventLogger)) {
+			$this->eventLogger = new NullEventLogger();
+		} else {
+			$this->eventLogger = $eventLogger;
+		}
 	}
 
 	/**
@@ -57,9 +73,11 @@ class Loader implements IAppLoader {
 		}
 		$appFile = $dir->getPath() . '/' . $appId . '/appinfo/app.php';
 		if (file_exists($appFile)) {
+			$this->eventLogger->start('load_app_' . $app, 'Load app: ' . $app);
 			ob_start();
 			require $appFile;
 			ob_end_clean();
+			$this->eventLogger->end('load_app_' . $app);
 		}
 	}
 
