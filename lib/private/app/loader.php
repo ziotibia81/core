@@ -57,7 +57,9 @@ class Loader implements IAppLoader {
 		}
 		$appFile = $dir->getPath() . '/' . $appId . '/appinfo/app.php';
 		if (file_exists($appFile)) {
+			ob_start();
 			require $appFile;
+			ob_end_clean();
 		}
 	}
 
