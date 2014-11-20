@@ -155,7 +155,7 @@ class AppManager implements IAppManager {
 		$apps = $this->listInstalledApps();
 		$manager = $this;
 		return array_filter($apps, function ($app) use ($manager, $user) {
-			$manager->isEnabledForUser($app, $user);
+			return $manager->isEnabledForUser($app, $user);
 		});
 	}
 }

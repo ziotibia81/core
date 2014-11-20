@@ -33,6 +33,13 @@ interface IInfo {
 	public function isType($type);
 
 	/**
+	 * Get all the types of the app
+	 *
+	 * @return string[]
+	 */
+	public function getTypes();
+
+	/**
 	 * Get the description of the app
 	 *
 	 * @return string
@@ -114,10 +121,22 @@ interface IInfo {
 	public function isShipped();
 
 	/**
+	 * @return string
+	 */
+	public function getOCSId();
+
+	/**
 	 * Check if the app is compatible with a specific version of ownCloud
 	 *
 	 * @param string $ocVersion
 	 * @return bool
 	 */
 	public function isCompatible($ocVersion);
+
+	/**
+	 * Get an array with all info about the app
+	 *
+	 * @return array
+	 */
+	public function toArray();
 }

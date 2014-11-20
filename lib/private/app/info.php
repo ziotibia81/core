@@ -11,7 +11,7 @@ namespace OC\App;
 
 use OCP\App\IInfo;
 
-class Info implements IInfo {
+class Info implements IInfo, \ArrayAccess {
 	private $appId;
 
 	private $appPath;
@@ -41,6 +41,8 @@ class Info implements IInfo {
 	private $requireMin = '0.0.0';
 
 	private $requireMax = '999.0.0';
+
+	private $ocsId;
 
 	public function __construct($appId, $appPath, $version, $installedVersion) {
 		$this->appId = $appId;
@@ -121,6 +123,9 @@ class Info implements IInfo {
 				case 'version':
 					$this->version = (string)$child;
 					break;
+				case 'ocsid':
+					$this->ocsId = (string)$child;
+					break;
 			}
 		}
 	}
@@ -145,6 +150,15 @@ class Info implements IInfo {
 	 */
 	public function isType($type) {
 		return array_search($type, $this->types) !== false;
+	}
+
+	/**
+	 * Get all the types of the app
+	 *
+	 * @return string[]
+	 */
+	public function getTypes() {
+		return $this->types;
 	}
 
 	/**
@@ -229,6 +243,13 @@ class Info implements IInfo {
 	}
 
 	/**
+	 * @return string
+	 */
+	public function getOCSId() {
+		return $this->ocsId;
+	}
+
+	/**
 	 * Check if the app is compatible with a specific version of ownCloud
 	 *
 	 * @param string $ocVersion
@@ -236,5 +257,41 @@ class Info implements IInfo {
 	 */
 	public function isCompatible($ocVersion) {
 		return version_compare($ocVersion, $this->requireMin, '<') and version_compare($ocVersion, $this->requireMax, '>');
+	}
+
+	public function offsetExists($offset) {
+		return isset($this->$offset);
+	}
+
+	public function offsetGet($offset) {
+		return isset($this->$offset) ? $this->$offset : null;
+	}
+
+	public function offsetSet($offset, $value) {
+		//noop
+	}
+
+	public function offsetUnset($offset) {
+		//noop
+	}
+
+	/**
+	 * Get an array with all info about the app
+	 *
+	 * @return array
+	 */
+	public function toArray() {
+		return array(
+			'id' => $this->id,
+			'name' => $this->name,
+			'description' => $this->description,
+			'types' => $this->types,
+			'documentation' => $this->documentation,
+			'licence' => $this->licence,
+			'author' => $this->author,
+			'public' => $this->public,
+			'remote' => $this->remote,
+			'version' => $this->version
+		);
 	}
 }
