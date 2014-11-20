@@ -55,23 +55,11 @@ class Manager extends \PHPUnit_Framework_TestCase {
 		return $config;
 	}
 
-	private function getDirectoryManager($dirs) {
-		$directoryManager = $this->getMockBuilder('\OC\App\DirectoryManager')
-			->disableOriginalConstructor()
-			->setMethods(array('getAppDirectories'))
-			->getMock();
-		$directoryManager->expects($this->any())
-			->method('getAppDirectories')
-			->will($this->returnValue($dirs));
-		return $directoryManager;
-	}
-
 	public function testEnableApp() {
 		$userSession = $this->getMock('\OCP\IUserSession');
 		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array());
 		$appConfig = $this->getAppConfig();
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
+		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager);
 		$manager->enableApp('test');
 		$this->assertEquals('yes', $appConfig->getValue('test', 'enabled', 'no'));
 	}
@@ -79,9 +67,8 @@ class Manager extends \PHPUnit_Framework_TestCase {
 	public function testDisableApp() {
 		$userSession = $this->getMock('\OCP\IUserSession');
 		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array());
 		$appConfig = $this->getAppConfig();
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
+		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager);
 		$manager->disableApp('test');
 		$this->assertEquals('no', $appConfig->getValue('test', 'enabled', 'no'));
 	}
@@ -93,9 +80,8 @@ class Manager extends \PHPUnit_Framework_TestCase {
 		);
 		$groupManager = $this->getMock('\OCP\IGroupManager');
 		$userSession = $this->getMock('\OCP\IUserSession');
-		$directoryManager = $this->getDirectoryManager(array());
 		$appConfig = $this->getAppConfig();
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
+		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager);
 		$manager->enableAppForGroups('test', $groups);
 		$this->assertEquals('["group1","group2"]', $appConfig->getValue('test', 'enabled', 'no'));
 	}
@@ -103,9 +89,8 @@ class Manager extends \PHPUnit_Framework_TestCase {
 	public function testIsInstalledEnabled() {
 		$userSession = $this->getMock('\OCP\IUserSession');
 		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array());
 		$appConfig = $this->getAppConfig();
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
+		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager);
 		$appConfig->setValue('test', 'enabled', 'yes');
 		$this->assertTrue($manager->isInstalled('test'));
 	}
@@ -113,9 +98,8 @@ class Manager extends \PHPUnit_Framework_TestCase {
 	public function testIsInstalledDisabled() {
 		$userSession = $this->getMock('\OCP\IUserSession');
 		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array());
 		$appConfig = $this->getAppConfig();
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
+		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager);
 		$appConfig->setValue('test', 'enabled', 'no');
 		$this->assertFalse($manager->isInstalled('test'));
 	}
@@ -123,9 +107,8 @@ class Manager extends \PHPUnit_Framework_TestCase {
 	public function testIsInstalledEnabledForGroups() {
 		$userSession = $this->getMock('\OCP\IUserSession');
 		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array());
 		$appConfig = $this->getAppConfig();
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
+		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager);
 		$appConfig->setValue('test', 'enabled', '["foo"]');
 		$this->assertTrue($manager->isInstalled('test'));
 	}
@@ -133,9 +116,8 @@ class Manager extends \PHPUnit_Framework_TestCase {
 	public function testIsEnabledForUserEnabled() {
 		$userSession = $this->getMock('\OCP\IUserSession');
 		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array());
 		$appConfig = $this->getAppConfig();
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
+		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager);
 		$appConfig->setValue('test', 'enabled', 'yes');
 		$user = new User('user1', null);
 		$this->assertTrue($manager->isEnabledForUser('test', $user));
@@ -144,9 +126,8 @@ class Manager extends \PHPUnit_Framework_TestCase {
 	public function testIsEnabledForUserDisabled() {
 		$userSession = $this->getMock('\OCP\IUserSession');
 		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array());
 		$appConfig = $this->getAppConfig();
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
+		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager);
 		$appConfig->setValue('test', 'enabled', 'no');
 		$user = new User('user1', null);
 		$this->assertFalse($manager->isEnabledForUser('test', $user));
@@ -155,7 +136,6 @@ class Manager extends \PHPUnit_Framework_TestCase {
 	public function testIsEnabledForUserEnabledForGroup() {
 		$userSession = $this->getMock('\OCP\IUserSession');
 		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array());
 		$user = new User('user1', null);
 
 		$groupManager->expects($this->once())
@@ -164,7 +144,7 @@ class Manager extends \PHPUnit_Framework_TestCase {
 			->will($this->returnValue(array('foo', 'bar')));
 
 		$appConfig = $this->getAppConfig();
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
+		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager);
 		$appConfig->setValue('test', 'enabled', '["foo"]');
 		$this->assertTrue($manager->isEnabledForUser('test', $user));
 	}
@@ -172,7 +152,6 @@ class Manager extends \PHPUnit_Framework_TestCase {
 	public function testIsEnabledForUserDisabledForGroup() {
 		$userSession = $this->getMock('\OCP\IUserSession');
 		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array());
 		$user = new User('user1', null);
 
 		$groupManager->expects($this->once())
@@ -181,7 +160,7 @@ class Manager extends \PHPUnit_Framework_TestCase {
 			->will($this->returnValue(array('bar')));
 
 		$appConfig = $this->getAppConfig();
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
+		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager);
 		$appConfig->setValue('test', 'enabled', '["foo"]');
 		$this->assertFalse($manager->isEnabledForUser('test', $user));
 	}
@@ -189,10 +168,9 @@ class Manager extends \PHPUnit_Framework_TestCase {
 	public function testIsEnabledForUserLoggedOut() {
 		$userSession = $this->getMock('\OCP\IUserSession');
 		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array());
 
 		$appConfig = $this->getAppConfig();
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
+		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager);
 		$appConfig->setValue('test', 'enabled', '["foo"]');
 		$this->assertFalse($manager->IsEnabledForUser('test'));
 	}
@@ -200,7 +178,6 @@ class Manager extends \PHPUnit_Framework_TestCase {
 	public function testIsEnabledForUserLoggedIn() {
 		$userSession = $this->getMock('\OCP\IUserSession');
 		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array());
 		$user = new User('user1', null);
 
 		$userSession->expects($this->once())
@@ -212,99 +189,8 @@ class Manager extends \PHPUnit_Framework_TestCase {
 			->will($this->returnValue(array('foo', 'bar')));
 
 		$appConfig = $this->getAppConfig();
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
+		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager);
 		$appConfig->setValue('test', 'enabled', '["foo"]');
 		$this->assertTrue($manager->isEnabledForUser('test'));
-	}
-
-	public function testGetInstalledVersion() {
-		$userSession = $this->getMock('\OCP\IUserSession');
-		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array());
-		$appConfig = $this->getAppConfig();
-
-		$appConfig->setValue('test', 'installed_version', '1.2.3');
-
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
-		$this->assertEquals('1.2.3', $manager->getInstalledVersion('test'));
-	}
-
-	public function testGetInstalledVersionNotInstalled() {
-		$userSession = $this->getMock('\OCP\IUserSession');
-		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array());
-		$appConfig = $this->getAppConfig();
-
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
-		$this->assertEquals('0.0.0', $manager->getInstalledVersion('test'));
-	}
-
-	public function testGetVersion() {
-		$path = \OC::$server->getTempManager()->getTemporaryFolder();
-		mkdir($path . '/test');
-		mkdir($path . '/test/appinfo');
-		file_put_contents($path . '/test/appinfo/app.php', '');
-		file_put_contents($path . '/test/appinfo/version', '1.2.3');
-		$dir = new Directory($path, '', false);
-
-		$userSession = $this->getMock('\OCP\IUserSession');
-		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array($dir));
-		$appConfig = $this->getAppConfig();
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
-		$this->assertEquals('1.2.3', $manager->getAppVersion('test'));
-	}
-
-	public function testGetVersionNoDirs() {
-		$userSession = $this->getMock('\OCP\IUserSession');
-		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array());
-		$appConfig = $this->getAppConfig();
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
-		$this->assertEquals('0.0.0', $manager->getAppVersion('test'));
-	}
-
-	public function testGetVersionNotInstalled() {
-		$path = \OC::$server->getTempManager()->getTemporaryFolder();
-		$dir = new Directory($path, '', false);
-
-		$userSession = $this->getMock('\OCP\IUserSession');
-		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array($dir));
-		$appConfig = $this->getAppConfig();
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
-		$this->assertEquals('0.0.0', $manager->getAppVersion('test'));
-	}
-
-	public function testGetAppInfo() {
-		$path = \OC::$server->getTempManager()->getTemporaryFolder();
-		mkdir($path . '/test');
-		mkdir($path . '/test/appinfo');
-		file_put_contents($path . '/test/appinfo/app.php', '');
-		file_put_contents($path . '/test/appinfo/info.xml', '<?xml version="1.0"?><info><id>files</id><name>Files</name></info>');
-		file_put_contents($path . '/test/appinfo/version', '1.2.3');
-		$dir = new Directory($path, '', false);
-
-		$userSession = $this->getMock('\OCP\IUserSession');
-		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array($dir));
-		$appConfig = $this->getAppConfig();
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
-		$info = $manager->getAppInfo('test');
-		$this->assertEquals('0.0.0', $info->getInstalledVersion());
-		$this->assertEquals('1.2.3', $info->getVersion());
-		$this->assertEquals('Files', $info->getName());
-	}
-
-	public function testGetAppInfoNotInstalled() {
-		$path = \OC::$server->getTempManager()->getTemporaryFolder();
-		$dir = new Directory($path, '', false);
-
-		$userSession = $this->getMock('\OCP\IUserSession');
-		$groupManager = $this->getMock('\OCP\IGroupManager');
-		$directoryManager = $this->getDirectoryManager(array($dir));
-		$appConfig = $this->getAppConfig();
-		$manager = new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
-		$this->assertNull($manager->getAppInfo('test'));
 	}
 }

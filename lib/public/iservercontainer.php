@@ -298,4 +298,18 @@ interface IServerContainer {
 	 * @return \OCP\App\IAppManager
 	 */
 	function getAppManager();
+
+	/**
+	 * Get the app info manager
+	 *
+	 * @return \OCP\App\IInfoManager
+	 */
+	function getAppInfoManager();
+
+	/**
+	 * Get the app manager
+	 *
+	 * @return \OCP\App\IAppLoader
+	 */
+	function getAppLoader();
 }

@@ -23,13 +23,9 @@ class Loader extends \PHPUnit_Framework_TestCase {
 		self::$loadedApps = array();
 	}
 
-	private function getAppManager($installedApps = array(), $appForUser = array(), $directoryManager = null) {
-		$userSession = $this->getMock('\OCP\IUserSession');
-		$appConfig = $this->getMock('\OCP\IAppConfig');
-		$groupManager = $this->getMock('\OCP\IGroupManager');
-
+	private function getAppManager($installedApps = array(), $appForUser = array()) {
 		$mock = $this->getMockBuilder('\OC\App\AppManager')
-			->setConstructorArgs(array($userSession, $appConfig, $groupManager, $directoryManager))
+			->disableOriginalConstructor()
 			->setMethods(array('listInstalledApps', 'listAppsEnabledForUser', 'getInstalledVersion'))
 			->getMock();
 		$mock->expects($this->any())
@@ -38,9 +34,6 @@ class Loader extends \PHPUnit_Framework_TestCase {
 		$mock->expects($this->any())
 			->method('listAppsEnabledForUser')
 			->will($this->returnValue($appForUser));
-		$mock->expects($this->any())
-			->method('getInstalledVersion')
-			->will($this->returnValue('1.2.3'));
 
 		return $mock;
 	}
@@ -53,6 +46,25 @@ class Loader extends \PHPUnit_Framework_TestCase {
 		$mock->expects($this->any())
 			->method('getAppDirectories')
 			->will($this->returnValue(array($dir)));
+		return $mock;
+	}
+
+	private function getInfoManager($directoryManager) {
+		$appConfig = $this->getMock('\OCP\IAppConfig');
+
+		$appConfig->expects($this->any())
+			->method('getValues')
+			->will($this->returnValue(array()));
+
+		$mock = $this->getMockBuilder('\OC\App\InfoManager')
+			->setMethods(array('getInstalledVersion'))
+			->setConstructorArgs(array($directoryManager, $appConfig))
+			->getMock();
+
+		$mock->expects($this->any())
+			->method('getInstalledVersion')
+			->will($this->returnValue('1.2.3'));
+
 		return $mock;
 	}
 
@@ -85,8 +97,9 @@ class Loader extends \PHPUnit_Framework_TestCase {
 		$dir = new Directory(\OC::$server->getTempManager()->getTemporaryFolder(), '', false);
 		$this->mockApp($dir, 'test');
 		$dirManager = $this->getDirectoryManager($dir);
-		$appManager = $this->getAppManager(array(), array(), $dirManager);
-		$loader = new \OC\App\Loader($appManager, $dirManager);
+		$appManager = $this->getAppManager();
+		$infoManager = $this->getInfoManager($dirManager);
+		$loader = new \OC\App\Loader($appManager, $dirManager, $infoManager);
 		$loader->loadApp('test');
 		$this->assertAppLoaded('test');
 	}
@@ -98,8 +111,9 @@ class Loader extends \PHPUnit_Framework_TestCase {
 		$dir = new Directory(\OC::$server->getTempManager()->getTemporaryFolder(), '', false);
 		$this->mockApp($dir, 'test', array(), '1.2.4');
 		$dirManager = $this->getDirectoryManager($dir);
-		$appManager = $this->getAppManager(array(), array(), $dirManager);
-		$loader = new \OC\App\Loader($appManager, $dirManager);
+		$appManager = $this->getAppManager();
+		$infoManager = $this->getInfoManager($dirManager);
+		$loader = new \OC\App\Loader($appManager, $dirManager, $infoManager);
 		$loader->loadApp('test');
 	}
 
@@ -109,8 +123,9 @@ class Loader extends \PHPUnit_Framework_TestCase {
 		$this->mockApp($dir, 'foo');
 		$this->mockApp($dir, 'bar');
 		$dirManager = $this->getDirectoryManager($dir);
-		$appManager = $this->getAppManager(array('test', 'foo'), array(), $dirManager);
-		$loader = new \OC\App\Loader($appManager, $dirManager);
+		$appManager = $this->getAppManager(array('test', 'foo'));
+		$infoManager = $this->getInfoManager($dirManager);
+		$loader = new \OC\App\Loader($appManager, $dirManager, $infoManager);
 		$loader->loadInstalledApps();
 		$this->assertAppLoaded('test');
 		$this->assertAppLoaded('foo');
@@ -123,8 +138,9 @@ class Loader extends \PHPUnit_Framework_TestCase {
 		$this->mockApp($dir, 'foo');
 		$this->mockApp($dir, 'bar');
 		$dirManager = $this->getDirectoryManager($dir);
-		$appManager = $this->getAppManager(array('test', 'foo'), array('test'), $dirManager);
-		$loader = new \OC\App\Loader($appManager, $dirManager);
+		$appManager = $this->getAppManager(array('test', 'foo'), array('test'));
+		$infoManager = $this->getInfoManager($dirManager);
+		$loader = new \OC\App\Loader($appManager, $dirManager, $infoManager);
 		$user = new User('foo', null);
 		$loader->loadAppsEnabledForUser($user);
 		$this->assertAppLoaded('test');
@@ -140,7 +156,8 @@ class Loader extends \PHPUnit_Framework_TestCase {
 		$this->mockApp($dir, 'asd', array('foo'));
 		$dirManager = $this->getDirectoryManager($dir);
 		$appManager = $this->getAppManager(array('test', 'foo', 'bar'), array('test'), $dirManager);
-		$loader = new \OC\App\Loader($appManager, $dirManager);
+		$infoManager = $this->getInfoManager($dirManager);
+		$loader = new \OC\App\Loader($appManager, $dirManager, $infoManager);
 		$loader->loadAppsWithType('foo');
 		$this->assertAppNotLoaded('test');
 		$this->assertAppLoaded('foo');

@@ -26,15 +26,21 @@ class Info implements IInfo {
 
 	private $types = array();
 
-	private $description;
+	private $description = '';
 
 	private $documentation = array();
 
-	private $name;
+	private $name = '';
 
-	private $licence;
+	private $licence = '';
 
-	private $author;
+	private $author = '';
+
+	private $shipped = false;
+
+	private $requireMin = '0.0.0';
+
+	private $requireMax = '999.0.0';
 
 	public function __construct($appId, $appPath, $version, $installedVersion) {
 		$this->appId = $appId;
@@ -99,6 +105,21 @@ class Info implements IInfo {
 					break;
 				case 'author':
 					$this->author = (string)$child;
+					break;
+				case 'shipped':
+					$this->shipped = (string)$child === 'true';
+					break;
+				case 'requiremin':
+					$this->requireMin = (string)$child;
+					break;
+				case 'requiremax':
+					$this->requireMax = (string)$child;
+					break;
+				case 'id':
+					$this->id = (string)$child;
+					break;
+				case 'version':
+					$this->version = (string)$child;
 					break;
 			}
 		}
@@ -196,5 +217,24 @@ class Info implements IInfo {
 	 */
 	public function needsUpdate() {
 		return version_compare($this->getVersion(), $this->getInstalledVersion(), '>');
+	}
+
+	/**
+	 * Check whether the app is a shipped app
+	 *
+	 * @return bool
+	 */
+	public function isShipped() {
+		return $this->shipped;
+	}
+
+	/**
+	 * Check if the app is compatible with a specific version of ownCloud
+	 *
+	 * @param string $ocVersion
+	 * @return bool
+	 */
+	public function isCompatible($ocVersion) {
+		return version_compare($ocVersion, $this->requireMin, '<') and version_compare($ocVersion, $this->requireMax, '>');
 	}
 }

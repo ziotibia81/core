@@ -105,4 +105,19 @@ interface IInfo {
 	 * @return bool
 	 */
 	public function needsUpdate();
+
+	/**
+	 * Check whether the app is a shipped app
+	 *
+	 * @return bool
+	 */
+	public function isShipped();
+
+	/**
+	 * Check if the app is compatible with a specific version of ownCloud
+	 *
+	 * @param string $ocVersion
+	 * @return bool
+	 */
+	public function isCompatible($ocVersion);
 }

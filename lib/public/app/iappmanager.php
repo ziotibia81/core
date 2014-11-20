@@ -63,30 +63,4 @@ interface IAppManager {
 	 * @return string[]
 	 */
 	public function listAppsEnabledForUser($user = null);
-
-	/**
-	 * Get the version of an app that's currently installed
-	 *
-	 * Note that this might be lower then the latest code version
-	 *
-	 * @param string $appId
-	 * @return string
-	 */
-	public function getInstalledVersion($appId);
-
-	/**
-	 * Get the version of an app as defined by the code
-	 *
-	 * Note that this might be newer than the installed version
-	 *
-	 * @param string $appId
-	 * @return string
-	 */
-	public function getAppVersion($appId);
-
-	/**
-	 * @param string $appId
-	 * @return \OCP\App\IInfo
-	 */
-	public function getAppInfo($appId);
 }

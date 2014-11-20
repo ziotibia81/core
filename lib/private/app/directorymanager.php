@@ -73,4 +73,22 @@ class DirectoryManager {
 		sort($apps);
 		return array_values($apps);
 	}
+
+	/**
+	 * Get the app directory for installing new apps
+	 *
+	 * @return \OC\App\Directory or null if there is no directory for installing apps in
+	 */
+	public function getInstallDirectory() {
+		if (!$this->config->getSystemValue('appstoreenabled', false)) {
+			return null;
+		}
+		$dirs = $this->getAppDirectories();
+		foreach ($dirs as $dir) {
+			if ($dir->isWritable()) {
+				return $dir;
+			}
+		}
+		return null;
+	}
 }

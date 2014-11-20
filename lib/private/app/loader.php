@@ -12,6 +12,7 @@ namespace OC\App;
 use OC\Diagnostics\NullEventLogger;
 use OCP\App\IAppManager;
 use OCP\App\IInfo;
+use OCP\App\IInfoManager;
 use OCP\IUser;
 use OCP\App\IAppLoader;
 
@@ -27,6 +28,11 @@ class Loader implements IAppLoader {
 	private $appManager;
 
 	/**
+	 * @var \OCP\App\IInfoManager
+	 */
+	private $infoManager;
+
+	/**
 	 * @var \OCP\Diagnostics\IEventLogger
 	 */
 	private $eventLogger;
@@ -39,11 +45,13 @@ class Loader implements IAppLoader {
 	/**
 	 * @param \OCP\App\IAppManager $appManager
 	 * @param \OC\App\DirectoryManager $directoryManager
+	 * @param \OCP\App\IInfoManager $infoManager
 	 * @param \OCP\Diagnostics\IEventLogger $eventLogger
 	 */
-	function __construct(IAppManager $appManager, DirectoryManager $directoryManager, $eventLogger = null) {
+	function __construct(IAppManager $appManager, DirectoryManager $directoryManager, IInfoManager $infoManager, $eventLogger = null) {
 		$this->appManager = $appManager;
 		$this->directoryManager = $directoryManager;
+		$this->infoManager = $infoManager;
 		if (is_null($eventLogger)) {
 			$this->eventLogger = new NullEventLogger();
 		} else {
@@ -61,8 +69,8 @@ class Loader implements IAppLoader {
 		if (array_search($appId, $this->loadedApps) !== false) {
 			return;
 		}
-		$installedVersion = $this->appManager->getInstalledVersion($appId);
-		$version = $this->appManager->getAppVersion($appId);
+		$installedVersion = $this->infoManager->getInstalledVersion($appId);
+		$version = $this->infoManager->getAppVersion($appId);
 		if (version_compare($version, $installedVersion, '>')) {
 			throw new \OC\NeedsUpdateException();
 		}
@@ -73,12 +81,21 @@ class Loader implements IAppLoader {
 		}
 		$appFile = $dir->getPath() . '/' . $appId . '/appinfo/app.php';
 		if (file_exists($appFile)) {
-			$this->eventLogger->start('load_app_' . $app, 'Load app: ' . $app);
-			ob_start();
-			require $appFile;
-			ob_end_clean();
-			$this->eventLogger->end('load_app_' . $app);
+			$this->eventLogger->start('load_app_' . $appId, 'Load app: ' . $appId);
+			$this->requireFile($appFile);
+			$this->eventLogger->end('load_app_' . $appId);
 		}
+	}
+
+	/**
+	 * Provide a clean scope for the include
+	 *
+	 * @param string $appFile
+	 */
+	private function requireFile($appFile){
+		ob_start();
+		require $appFile;
+		ob_end_clean();
 	}
 
 	/**
@@ -111,13 +128,10 @@ class Loader implements IAppLoader {
 	 */
 	public function loadAppsWithType($type) {
 		$allApps = $this->appManager->listInstalledApps();
-		$appInfos = array_map(array($this->appManager, 'getAppInfo'), $allApps);
-		$apps = array_filter($appInfos, function (IInfo $info) use ($type) {
-			return $info->isType($type);
+		$infoManager = $this->infoManager;
+		$appIds = array_filter($allApps, function ($appId) use ($infoManager, $type) {
+			return $infoManager->isType($appId, $type);
 		});
-		$appIds = array_map(function (IInfo $info) {
-			return $info->getId();
-		}, $apps);
 		$this->loadMultiple($appIds);
 	}
 }

@@ -73,7 +73,7 @@ class Server extends SimpleContainer implements IServerContainer {
 		$this->registerService('PreviewManager', function ($c) {
 			return new PreviewManager();
 		});
-		$this->registerService('TagMapper', function(Server $c) {
+		$this->registerService('TagMapper', function (Server $c) {
 			return new TagMapper($c->getDb());
 		});
 		$this->registerService('TagManager', function (Server $c) {
@@ -238,20 +238,25 @@ class Server extends SimpleContainer implements IServerContainer {
 			return new TempManager(get_temp_dir(), $c->getLogger());
 		});
 		$this->registerService('AppDirectoryManager', function (Server $c) {
-			return new \OC\App\DirectoryManager($this->getConfig());
+			return new \OC\App\DirectoryManager($c->getConfig());
 		});
-		$this->registerService('AppManager', function(Server $c) {
+		$this->registerService('AppInfoManager', function (Server $c) {
+			$directoryManager = $c->getAppDirectoryManager();
+			$appConfig = $this->getAppConfig();
+			return new \OC\App\InfoManager($directoryManager, $appConfig);
+		});
+		$this->registerService('AppManager', function (Server $c) {
 			$userSession = $c->getUserSession();
 			$appConfig = $c->getAppConfig();
 			$groupManager = $c->getGroupManager();
-			$directoryManager = $c->getAppDirectoryManager();
-			return new \OC\App\AppManager($userSession, $appConfig, $groupManager, $directoryManager);
+			return new \OC\App\AppManager($userSession, $appConfig, $groupManager);
 		});
 		$this->registerService('AppLoader', function (Server $c) {
 			$appManager = $c->getAppManager();
 			$directoryManager = $c->getAppDirectoryManager();
+			$infoManager = $c->getAppInfoManager();
 			$eventLogger = $c->getEventLogger();
-			return new \OC\App\Loader($appManager, $directoryManager, $eventLogger);
+			return new \OC\App\Loader($appManager, $directoryManager, $infoManager, $eventLogger);
 		});
 	}
 
@@ -633,6 +638,9 @@ class Server extends SimpleContainer implements IServerContainer {
 		return $this->query('TempManager');
 	}
 
+	/**
+	 * @return \OC\App\DirectoryManager
+	 */
 	function getAppDirectoryManager() {
 		return $this->query('AppDirectoryManager');
 	}
@@ -644,6 +652,15 @@ class Server extends SimpleContainer implements IServerContainer {
 	 */
 	function getAppManager() {
 		return $this->query('AppManager');
+	}
+
+	/**
+	 * Get the app info manager
+	 *
+	 * @return \OCP\App\IInfoManager
+	 */
+	function getAppInfoManager() {
+		return $this->query('AppInfoManager');
 	}
 
 	/**
