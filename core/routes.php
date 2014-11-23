@@ -14,10 +14,11 @@ $application->registerRoutes($this, array('routes' => array(
 		array('name' => 'lost#resetform', 'url' => '/lostpassword/reset/form/{token}/{userId}', 'verb' => 'GET'),
 		array('name' => 'lost#setPassword', 'url' => '/lostpassword/set/{token}/{userId}', 'verb' => 'POST'),
 		array('name' => 'user#getDisplayNames', 'url' => '/displaynames', 'verb' => 'POST'),
-	)
+		array('name' => 'auth#showLoginForm', 'url' => '/login', 'verb' => 'GET'),
+		array('name' => 'auth#tryLoginForm', 'url' => '/authenticate', 'verb' => 'POST'),
+		array('name' => 'auth#logout', 'url' => '/logout', 'verb' => 'GET')
+)
 ));
-
-// Post installation check
 
 /** @var $this OCP\Route\IRouter */
 // Core ajax actions
@@ -114,5 +115,10 @@ $this->create('files_sharing.sharecontroller.downloadShare', '/s/{token}/downloa
 
 // used for heartbeat
 $this->create('heartbeat', '/heartbeat')->action(function(){
+	// do nothing
+});
+
+// Index
+$this->create('index', '/')->action(function(){
 	// do nothing
 });

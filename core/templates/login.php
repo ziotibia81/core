@@ -1,11 +1,16 @@
-<?php /** @var $l OC_L10N */ ?>
-<?php script('core', 'jstz') ?>
+<?php
+	/** @var $l OC_L10N */
+	/** @var $_ array */
+	script('core', 'jstz');
+	script('core', 'visitortimezone');
+	script('core', 'lostpassword');
+?>
 
 <!--[if IE 8]><style>input[type="checkbox"]{padding:0;}</style><![endif]-->
-<form method="post" name="login">
+<form method="post" name="login" action="<?php p($_['authenticateRoute']) ?>">
 	<fieldset>
-	<?php if (!empty($_['redirect_url'])) {
-		print_unescaped('<input type="hidden" name="redirect_url" value="' . OC_Util::sanitizeHTML($_['redirect_url']) . '" />');
+	<?php if (!empty($_['redirectUrl'])) {
+		print_unescaped('<input type="hidden" name="redirectUrl" value="' . OC_Util::sanitizeHTML($_['redirectUrl']) . '" />');
 	} ?>
 		<?php if (isset($_['apacheauthfailed']) && ($_['apacheauthfailed'])): ?>
 			<div class="warning">
@@ -66,7 +71,3 @@
 	</fieldset>
 </form>
 <?php } ?>
-
-<?php
-OCP\Util::addscript('core', 'visitortimezone');
-OCP\Util::addScript('core', 'lostpassword');

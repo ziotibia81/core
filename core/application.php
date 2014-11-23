@@ -11,6 +11,8 @@
 namespace OC\Core;
 
 use OC\AppFramework\Utility\SimpleContainer;
+use OC\Core\Controller\AuthController;
+use OC\Core\Middleware\AuthMiddleware;
 use \OCP\AppFramework\App;
 use OC\Core\LostPassword\Controller\LostController;
 use OC\Core\User\UserController;
@@ -56,6 +58,27 @@ class Application extends App {
 				$c->query('Defaults')
 			);
 		});
+		$container->registerService('AuthController', function(SimpleContainer $c) {
+			return new AuthController(
+				$c->query('AppName'),
+				$c->query('Request'),
+				$c->query('Session'),
+				$c->query('UserSession'),
+				$c->query('Config'),
+				$c->query('SecureRandom'),
+				$c->query('URLGenerator')
+			);
+		});
+
+		/**
+		 * Middleware
+		 */
+		$container->registerService('AuthMiddleware', function(SimpleContainer $c){
+			return new AuthMiddleware($c->query('ControllerMethodReflector'), $this->getContainer()->getAppName(), \OC_User::isLoggedIn());
+		});
+
+		// executed in the order that it is registered
+		$container->registerMiddleware('AuthMiddleware');
 
 		/**
 		 * Core class wrappers
@@ -77,6 +100,12 @@ class Application extends App {
 		});
 		$container->registerService('SecureRandom', function(SimpleContainer $c) {
 			return $c->query('ServerContainer')->getSecureRandom();
+		});
+		$container->registerService('Session', function(SimpleContainer $c) {
+			return $c->query('ServerContainer')->getSession();
+		});
+		$container->registerService('UserSession', function(SimpleContainer $c) {
+			return $c->query('ServerContainer')->getUserSession();
 		});
 		$container->registerService('Defaults', function() {
 			return new \OC_Defaults;

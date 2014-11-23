@@ -62,4 +62,17 @@ interface IUserSession {
 	 * @return \OCP\IUser
 	 */
 	public function getUser();
+
+	/**
+	 * Set cookie value to use in next page load
+	 *
+	 * @param string $username username to be set
+	 * @param string $token
+	 */
+	public function setMagicInCookie($username, $token);
+
+	/**
+	 * Remove cookie for "remember username"
+	 */
+	public function unsetMagicInCookie();
 }

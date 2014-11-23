@@ -330,6 +330,7 @@ class OC_User {
 	 * Logs the current user out and kills all the session data
 	 *
 	 * Logout, destroys session
+	 * @deprecated Use \OC::$server->getUserSession->logout()
 	 */
 	public static function logout() {
 		self::getUserSession()->logout();
@@ -363,8 +364,8 @@ class OC_User {
 
 	/**
 	 * Supplies an attribute to the logout hyperlink. The default behaviour
-	 * is to return an href with '?logout=true' appended. However, it can
-	 * supply any attribute(s) which are valid for <a>.
+	 * is to return an href to the logout route with '?requesttoken=true' appended.
+	 * However, it can supply any attribute(s) which are valid for <a>.
 	 *
 	 * @return string with one or more HTML attributes.
 	 */
@@ -374,7 +375,7 @@ class OC_User {
 			return $backend->getLogoutAttribute();
 		}
 
-		return 'href="' . link_to('', 'index.php') . '?logout=true&requesttoken=' . OC_Util::callRegister() . '"';
+		return 'href="'.\OC::$server->getURLGenerator()->linkToRouteAbsolute('core.auth.logout', array('requesttoken' => \OC_Util::callRegister())).'"';
 	}
 
 	/**
@@ -620,16 +621,8 @@ class OC_User {
 	}
 
 	/**
-	 * Set cookie value to use in next page load
-	 * @param string $username username to be set
-	 * @param string $token
-	 */
-	public static function setMagicInCookie($username, $token) {
-		self::getUserSession()->setMagicInCookie($username, $token);
-	}
-
-	/**
 	 * Remove cookie for "remember username"
+	 * @deprecated Use \OC::$server->getUserSession()->unsetMagicInCookie();
 	 */
 	public static function unsetMagicInCookie() {
 		self::getUserSession()->unsetMagicInCookie();

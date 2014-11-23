@@ -786,32 +786,6 @@ class OC_Util {
 	}
 
 	/**
-	 * @param array $errors
-	 */
-	public static function displayLoginPage($errors = array()) {
-		$parameters = array();
-		foreach ($errors as $value) {
-			$parameters[$value] = true;
-		}
-		if (!empty($_REQUEST['user'])) {
-			$parameters["username"] = $_REQUEST['user'];
-			$parameters['user_autofocus'] = false;
-		} else {
-			$parameters["username"] = '';
-			$parameters['user_autofocus'] = true;
-		}
-		if (isset($_REQUEST['redirect_url'])) {
-			$redirectUrl = $_REQUEST['redirect_url'];
-			$parameters['redirect_url'] = urlencode($redirectUrl);
-		}
-
-		$parameters['alt_login'] = OC_App::getAlternativeLogIns();
-		$parameters['rememberLoginAllowed'] = self::rememberLoginAllowed();
-		OC_Template::printGuestPage("", "login", $parameters);
-	}
-
-
-	/**
 	 * Check if the app is enabled, redirects to home if not
 	 *
 	 * @param string $app
@@ -828,14 +802,19 @@ class OC_Util {
 	 * Check if the user is logged in, redirects to home if not. With
 	 * redirect URL parameter to the request URI.
 	 *
+	 * @deprecated Use the AppFramework annotations instead
 	 * @return void
 	 */
 	public static function checkLoggedIn() {
 		// Check if we are a user
 		if (!OC_User::isLoggedIn()) {
-			header('Location: ' . OC_Helper::linkToAbsolute('', 'index.php',
-					array('redirect_url' => OC_Request::requestUri())
-				));
+			$loginRoute = \OC::$server->getURLGenerator()->linkToRouteAbsolute(
+				'core.auth.showLoginForm',
+				array(
+					'redirectUrl' => \OC_Request::requestUri(),
+				)
+			);
+			header('Location: ' . $loginRoute);
 			exit();
 		}
 	}
@@ -843,6 +822,7 @@ class OC_Util {
 	/**
 	 * Check if the user is a admin, redirects to home if not
 	 *
+	 * @deprecated Use the AppFramework annotations instead
 	 * @return void
 	 */
 	public static function checkAdminUser() {
@@ -851,27 +831,6 @@ class OC_Util {
 			header('Location: ' . OC_Helper::linkToAbsolute('', 'index.php'));
 			exit();
 		}
-	}
-
-	/**
-	 * Check if it is allowed to remember login.
-	 *
-	 * @note Every app can set 'rememberlogin' to 'false' to disable the remember login feature
-	 *
-	 * @return bool
-	 */
-	public static function rememberLoginAllowed() {
-
-		$apps = OC_App::getEnabledApps();
-
-		foreach ($apps as $app) {
-			$appInfo = OC_App::getAppInfo($app);
-			if (isset($appInfo['rememberlogin']) && $appInfo['rememberlogin'] === 'false') {
-				return false;
-			}
-
-		}
-		return true;
 	}
 
 	/**
