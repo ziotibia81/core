@@ -43,3 +43,6 @@ Options -Indexes
     Header set Cache-Control "max-age=7200, public"
   </FilesMatch>
 </IfModule>
+
+ErrorDocument 403 /owncloud/core/templates/403.php
+ErrorDocument 404 /owncloud/core/templates/404.php

@@ -30,6 +30,10 @@ $template->assign('mail_smtpauthtype', $config->getSystemValue("mail_smtpauthtyp
 $template->assign('mail_smtpauth', $config->getSystemValue("mail_smtpauth", false));
 $template->assign('mail_smtpname', $config->getSystemValue("mail_smtpname", ''));
 $template->assign('mail_smtppassword', $config->getSystemValue("mail_smtppassword", ''));
+$template->assign('audit_url', $appConfig->getValue('core', 'audit_url', ''));
+$template->assign('audit_port', $appConfig->getValue('core', 'audit_port', ''));
+$template->assign('audit_user', $appConfig->getValue('core', 'audit_user', ''));
+$template->assign('audit_password', $appConfig->getValue('core', 'audit_password', ''));
 $template->assign('entries', $entries);
 $template->assign('entriesremain', $entriesRemaining);
 $template->assign('htaccessworking', $htAccessWorking);
@@ -111,6 +115,7 @@ $formsAndMore[] = array('anchor' => 'shareAPI', 'section-name' => $l->t('Sharing
 $formsAndMore[] = array('anchor' => 'security', 'section-name' => $l->t('Security'));
 $formsAndMore[] = array('anchor' => 'mail_general_settings', 'section-name' => $l->t('Email Server'));
 $formsAndMore[] = array('anchor' => 'log-section', 'section-name' => $l->t('Log'));
+$formsAndMore[] = array('anchor' => 'audit-reporting', 'section-name' => $l->t('Audit and Reporting'));
 
 $template->assign('forms', $formsAndMore);
 

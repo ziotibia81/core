@@ -149,6 +149,34 @@ $(document).ready(function(){
 		});
 	});
 
+	$('#saveAuditInfo').click(function(event){
+		var audit_url = $('#audit_url').val();
+		var audit_port = $('#audit_port').val();
+		var audit_user = $('#audit_user').val();
+		var audit_password = $('#audit_password').val();
+		var splunkInternalLoginURL = '/apps/audit/api/1.0/login';
+		
+		var jqxhr = $.post( 'index.php'.splunkInternalLoginURL, 
+				'{"host":"'+audit_url+'", "port":"'+audit_port+'","user":'+audit_user+'", password":"'+audit_password+'"}', 
+				function() {
+				  alert( "success" );
+				})
+		  .done(function() {
+		    alert( "second success" );
+		  })
+		  .fail(function() {
+		    alert( "error" );
+		  })
+		  .always(function() {
+		    alert( "finished" );
+		});
+
+		OC.AppConfig.setValue('core', 'audit_url', audit_url);
+		OC.AppConfig.setValue('core', 'audit_port', audit_port);
+		OC.AppConfig.setValue('core', 'audit_user', audit_user);
+		OC.AppConfig.setValue('core', 'audit_password', audit_password);
+	});
+
 	$('#shareapiExcludeGroups').change(function() {
 		$("#selectExcludedGroups").toggleClass('hidden', !this.checked);
 	});

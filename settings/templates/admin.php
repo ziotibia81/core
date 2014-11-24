@@ -17,6 +17,7 @@ script( 'core', 'multiselect' );
 vendor_script('select2/select2');
 vendor_style('select2/select2');
 script('core', 'setupchecks');
+vendor_script('splunk/client/splunk');
 
 $levels = array('Debug', 'Info', 'Warning', 'Error', 'Fatal');
 $levelLabels = array(
@@ -499,6 +500,22 @@ if ($_['suggestedOverwriteWebroot']) {
 	<?php endif; ?>
 
 </div>
+
+<div class="section" id="audit-reporting">
+    <h2><?php p($l->t('Admin Audit and Reporting Configuration'));?></h2>
+    <div>
+        <p><?php p($l->t('Audit and Reporting URL. An Audit server must be made available. ')); ?></p>
+        <input type="text" id="audit_url" name="audit_url" placeholder="<?php p($l->t('Audit Server URL')); ?>" value="<?php p($_['audit_url']);?>" />
+        <input type="text" id="audit_port" name="audit_port" placeholder="<?php p($l->t('Audit Server PORT')); ?>" value="<?php p($_['audit_port']);?>" />
+    </div>
+    <div>
+        <p><?php p($l->t('Audit Server Credentials. These fields are used to connect to the Audit Server.')); ?></p>
+        <input type="text" id="audit_user" name="audit_user" placeholder="<?php p($l->t('Username')); ?>" value="<?php p($_['audit_user']);?>" />
+        <input type="password" id="audit_password" name="audit_password" placeholder="<?php p($l->t('Password')); ?>" value="<?php p($_['audit_password']);?>"/>
+    </div>
+    <input type="submit" name="saveAuditInfo" id="saveAuditInfo" value="<?php p($l->t( 'Save Audit Credentials' )); ?>"/>
+</div>
+
 
 <div class="section">
 	<h2><?php p($l->t('Version'));?></h2>
