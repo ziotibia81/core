@@ -1197,13 +1197,7 @@ class Util {
 
 		// handle public access
 		if ($this->isPublic) {
-			$filename = $path;
-			$fileOwnerUid = $this->userId;
-
-			return array(
-				$fileOwnerUid,
-				$filename
-			);
+			return array($this->userId, $path);
 		} else {
 
 			// Check that UID is valid
