@@ -217,16 +217,22 @@ class User {
 	 * @param string $key
 	 * @param string $value
 	 */
-	private function store($key, $value) {
-		$this->config->setUserValue($this->uid, 'user_ldap', $key, $value);
+	private function store($key, $value, $app = 'user_ldap') {
+		$this->config->setUserValue($this->uid, $app, $key, $value);
 	}
 
 	/**
 	 * Stores the display name in the databae
 	 * @param string $displayName
+	 * @param string $displayName2
+	 * @returns string the effective display name
 	 */
-	public function storeDisplayName($displayName) {
+	public function storeDisplayName($displayName, $displayName2 = '') {
+		if(!empty($displayName2)) {
+			$displayName .= ' (' . $displayName2 . ')';
+		}
 		$this->store('displayName', $displayName);
+		return $displayName;
 	}
 
 	/**
@@ -235,6 +241,42 @@ class User {
 	 */
 	public function storeLDAPUserName($userName) {
 		$this->store('uid', $userName);
+	}
+
+	/**
+	 * Stores the quota in the Database
+	 * @param string $quota
+	 */
+	public function storeQuota($quota) {
+		$this->wasRefreshed('quota');
+		$quota = $this->determineQuota($quota);
+		$this->store('quota', $quota, 'files');
+	}
+
+	/**
+	 * Stores the email in the Database
+	 * @param string $email
+	 */
+	public function storeEmail($email) {
+		$this->wasRefreshed('email');
+		$this->store('email', $email, 'settings');
+	}
+
+	/**
+	 * returns the effective quota value
+	 * @param string|null $quota as retrieved from LDAP
+	 * @return string
+	 */
+	private function determineQuota($quota = null) {
+		if(!is_null($quota)) {
+			return $quota;
+		}
+		$quotaDefault = $this->connection->ldapQuotaDefault;
+		if(!empty($quotaDefault)) {
+			return $quotaDefault;
+		}
+		// will set to ownCloud default
+		return 'default';
 	}
 
 	/**
@@ -269,8 +311,7 @@ class User {
 				$email = $aEmail[0];
 			}
 			if(!is_null($email)) {
-				$this->config->setUserValue(
-					$this->uid, 'settings', 'email', $email);
+				$this->storeEmail($email);
 			}
 		}
 	}
@@ -298,7 +339,7 @@ class User {
 			}
 		}
 		if(!is_null($quota)) {
-			$this->config->setUserValue($this->uid, 'files', 'quota', $quota);
+			$this->storeQuota($quota);
 		}
 	}
 

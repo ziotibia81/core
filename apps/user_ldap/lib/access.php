@@ -500,6 +500,7 @@ class Access extends LDAPUtility implements user\IUserTools {
 	private function ldap2ownCloudNames($ldapObjects, $isUsers) {
 		if($isUsers) {
 			$nameAttribute = $this->connection->ldapUserDisplayName;
+			$sndAttribute  = $this->connection->ldapUserDisplayName2;
 		} else {
 			$nameAttribute = $this->connection->ldapGroupDisplayName;
 		}
@@ -513,8 +514,9 @@ class Access extends LDAPUtility implements user\IUserTools {
 				if($isUsers) {
 					//cache the user names so it does not need to be retrieved
 					//again later (e.g. sharing dialogue).
-					$this->cacheUserExists($ocName);
-					$this->cacheUserDisplayName($ocName, $nameByLDAP);
+					$sndName = isset($ldapObject[$sndAttribute])
+						? $ldapObject[$sndAttribute] : '';
+					$this->cacheUserDisplayName($ocName, $nameByLDAP, $sndName);
 				}
 			}
 			continue;
@@ -534,8 +536,11 @@ class Access extends LDAPUtility implements user\IUserTools {
 	 * caches the user display name
 	 * @param string $ocName the internal ownCloud username
 	 * @param string $displayName the display name
+	 * @param string $displayName2 the second display name
 	 */
-	public function cacheUserDisplayName($ocName, $displayName) {
+	public function cacheUserDisplayName($ocName, $displayName, $displayName2 = '') {
+		$user = $this->userManager->get($ocName);
+		$displayName = $user->storeDisplayName($displayName, $displayName2);
 		$cacheKeyTrunk = 'getDisplayName';
 		$this->connection->writeToCache($cacheKeyTrunk.$ocName, $displayName);
 	}
@@ -1224,7 +1229,7 @@ class Access extends LDAPUtility implements user\IUserTools {
 			return false;
 		}
 		$result=$testConnection->bind();
-		$this->connection->bind();
+		$this->ldap->unbind($this->connection->getConnectionResource());
 		return $result;
 	}
 
