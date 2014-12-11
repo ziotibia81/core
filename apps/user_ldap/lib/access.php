@@ -126,12 +126,8 @@ class Access extends LDAPUtility {
 	* @return null
 	*/
 	public function updateQuota($dn, $ocname = null) {
-		$quota = null;
-		$quotaDefault = $this->connection->ldapQuotaDefault;
 		$quotaAttribute = $this->connection->ldapQuotaAttribute;
-		if(!empty($quotaDefault)) {
-			$quota = $quotaDefault;
-		}
+		$quota = null;
 		if(!empty($quotaAttribute)) {
 			$aQuota = $this->readAttribute($dn, $quotaAttribute);
 
@@ -139,12 +135,36 @@ class Access extends LDAPUtility {
 				$quota = $aQuota[0];
 			}
 		}
-		if(!is_null($quota)) {
-			if(is_null($ocname)) {
-				$ocname = $this->dn2username($dn);
-			}
-			\OCP\Config::setUserValue($ocname, 'files', 'quota', $quota);
+		if(is_null($ocname)) {
+			$ocname = $this->dn2username($dn);
 		}
+		$this->storeQuota($ocname, $this->determineQuota($quota));
+	}
+
+	/**
+	 * returns the effective quota value
+	 * @param string|null $quota as retrieved from LDAP
+	 * @return string
+	 */
+	public function determineQuota($quota = null) {
+		if(!is_null($quota)) {
+			return $quota;
+		}
+		$quotaDefault = $this->connection->ldapQuotaDefault;
+		if(!empty($quotaDefault)) {
+			return $quotaDefault;
+		}
+		// will set to ownCloud default
+		return 'default';
+	}
+
+	/**
+	 * sets the user Quota as ownCloud preference
+	 * @param string $ocName the username as used in ownCloud
+	 * @param string $quota
+	 */
+	public function storeQuota($ocName, $quota) {
+		\OCP\Config::setUserValue($ocName, 'files', 'quota', $quota);
 	}
 
 	/**
@@ -166,9 +186,18 @@ class Access extends LDAPUtility {
 				if(is_null($ocname)) {
 					$ocname = $this->dn2username($dn);
 				}
-				\OCP\Config::setUserValue($ocname, 'settings', 'email', $email);
+				$this->storeEmail($ocname, $email);
 			}
 		}
+	}
+
+	/**
+	 * sets the user Quota as ownCloud preference
+	 * @param string $ocName the username as used in ownCloud
+	 * @param string $quota
+	 */
+	public function storeEmail($ocName, $email) {
+		\OCP\Config::setUserValue($ocName, 'settings', 'email', $email);
 	}
 
 	/**
@@ -1136,7 +1165,7 @@ class Access extends LDAPUtility {
 			return false;
 		}
 		$result=$testConnection->bind();
-		$this->connection->bind();
+		$this->ldap->unbind($this->connection->getConnectionResource());
 		return $result;
 	}
 

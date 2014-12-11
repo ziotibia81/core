@@ -124,6 +124,60 @@ class USER_LDAP extends BackendUtility implements \OCP\UserInterface {
 		return false;
 	}
 
+
+	/**
+	 * returns an array with a list of attributes to fetch per user. The
+	 * results can be passed to processAttributeValues()
+	 * @return string[]
+	 */
+	public function getAttributesToRead() {
+		$attrs = array('dn');
+		$possible = array(
+			$this->access->connection->ldapQuotaAttribute,
+			$this->access->connection->ldapEmailAttribute,
+			$this->access->connection->ldapUserDisplayName,
+			$this->access->connection->ldapUserDisplayName2,
+		);
+
+		foreach($possible as $attr) {
+			if(!is_null($attr)) {
+				$attrs[] = $attr;
+			}
+		}
+
+		return $attrs;
+	}
+
+	/**
+	 * processes results from LDAP for attributes as returned by getAttributesToRead()
+	 * @param string $ocName the username in ownCloud
+	 * @param array $ldapEntry the user entry as retrieved from LDAP
+	 */
+	public function processAttributeValues($ocName, $ldapEntry) {
+		//Quota
+		if(isset($ldapEntry[$this->connection->ldapQuotaAttribute])) {
+			$quota = $this->access->determineQuota(
+				$ldapEntry[$this->connection->ldapQuotaAttribute]);
+			$this->access->storeQuota($ocName, $quota);
+		}
+		//Email
+		if(isset($ldapEntry[$this->connection->ldapEmailAttribute])) {
+			$this->access->storeEmail(
+				$ocName, $ldapEntry[$this->connection->ldapEmailAttribute]);
+		}
+		//displayName
+		$dispName1 = $dispName2 = '';
+		if(isset($ldapEntry[$this->connection->ldapUserDisplayName])) {
+			$dispName1 = $ldapEntry[$this->connection->ldapUserDisplayName];
+		}
+		if(isset($ldapEntry[$this->connection->ldapUserDisplayName2])) {
+			$dispName2 = $ldapEntry[$this->connection->ldapUserDisplayName2];
+		}
+		if(!empty($dispName1) || !empty($dispName2)) {
+			$this->access->cacheUserDisplayName($ocName, $dispName1, $dispName2);
+		}
+	}
+
 	/**
 	 * @brief Check if the password is correct
 	 * @param $uid The username
@@ -138,11 +192,13 @@ class USER_LDAP extends BackendUtility implements \OCP\UserInterface {
 		//find out dn of the user name
 		$filter = \OCP\Util::mb_str_replace(
 			'%uid', $uid, $this->access->connection->ldapLoginFilter, 'UTF-8');
-		$ldap_users = $this->access->fetchListOfUsers($filter, 'dn');
-		if(count($ldap_users) < 1) {
+		$ldapResult = $this->access->fetchListOfUsers(
+			$filter, $this->getAttributesToRead(), 1);
+		if(count($ldapResult) < 1) {
 			return false;
 		}
-		$dn = $ldap_users[0];
+		$user = $ldapResult[0];
+		$dn = $user['dn'];
 
 		//do we have a username for him/her?
 		$ocname = $this->access->dn2username($dn);
@@ -152,6 +208,8 @@ class USER_LDAP extends BackendUtility implements \OCP\UserInterface {
 			if(!$this->access->areCredentialsValid($dn, $password)) {
 				return false;
 			}
+			$this->access->connection->writeToCache('userExists'.$ocname, true);
+			$this->processAttributeValues($ocname, $user);
 
 			\OCP\Config::setUserValue($ocname, 'user_ldap',
 									  'firstLoginAccomplished', 1);
