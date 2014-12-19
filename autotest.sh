@@ -45,6 +45,13 @@ if ! [ \( -w config -a ! -f config/config.php \) -o \( -f config/config.php -a -
 	exit 1
 fi
 
+if [ -f composer.json ]; then
+	composer install
+fi
+if [ -f .gitmodules ]; then
+	git submodule update --init
+fi
+
 if [ "$1" ]; then
 	FOUND=0
 	for DBCONFIG in $DBCONFIGS; do
