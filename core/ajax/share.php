@@ -152,6 +152,21 @@ if (isset($_POST['action']) && isset($_POST['itemType']) && isset($_POST['itemSo
 
 			$result = $mailNotification->sendLinkShareMail($to_address, $file, $link, $expiration);
 			if(empty($result)) {
+				// $file only contains the filename without the path.
+				// This means activities for files in subfolders do not work atm.
+				// We can only fix this, if we rework the method to rely on the
+				// share ID instead of link and file name via POST
+				$file = '/' . ltrim($file, '/');
+				\OC::$server->getActivityManager()->publishActivity(
+					'files_sharing',
+					\OCA\Files_Sharing\Activity::SUBJECT_SHARED_EMAIL, [$file, $to_address],
+					'', array(),
+					$file, '',
+					\OC::$server->getUserSession()->getUser()->getUID(),
+					\OCA\Files_Sharing\Activity::TYPE_SHARED,
+					\OCA\Files_Sharing\Activity::PRIORITY_MEDIUM
+				);
+
 				\OCP\JSON::success();
 			} else {
 				$l = \OC::$server->getL10N('core');

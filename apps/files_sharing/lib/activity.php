@@ -24,14 +24,16 @@ namespace OCA\Files_Sharing;
 
 class Activity implements \OCP\Activity\IExtension {
 
-	const TYPE_REMOTE_SHARE = 'remote_share';
 	const TYPE_PUBLIC_LINKS = 'public_links';
-	const SUBJECT_REMOTE_SHARE_RECEIVED = 'remote_share_received';
-	const SUBJECT_REMOTE_SHARE_ACCEPTED = 'remote_share_accepted';
-	const SUBJECT_REMOTE_SHARE_DECLINED = 'remote_share_declined';
-	const SUBJECT_REMOTE_SHARE_UNSHARED = 'remote_share_unshared';
+	const TYPE_REMOTE_SHARE = 'remote_share';
+	const TYPE_SHARED = 'shared';
 	const SUBJECT_PUBLIC_SHARED_FILE_DOWNLOADED = 'public_shared_file_downloaded';
 	const SUBJECT_PUBLIC_SHARED_FOLDER_DOWNLOADED = 'public_shared_folder_downloaded';
+	const SUBJECT_REMOTE_SHARE_ACCEPTED = 'remote_share_accepted';
+	const SUBJECT_REMOTE_SHARE_DECLINED = 'remote_share_declined';
+	const SUBJECT_REMOTE_SHARE_RECEIVED = 'remote_share_received';
+	const SUBJECT_REMOTE_SHARE_UNSHARED = 'remote_share_unshared';
+	const SUBJECT_SHARED_EMAIL = 'shared_with_email';
 
 	/**
 	 * The extension can return an array of additional notification types.
@@ -45,7 +47,7 @@ class Activity implements \OCP\Activity\IExtension {
 		return array(
 			self::TYPE_REMOTE_SHARE => $l->t('A file or folder was shared from <strong>another server</strong>'),
 			self::TYPE_PUBLIC_LINKS => $l->t('A public shared file or folder was <strong>downloaded</strong>'),
-			);
+		);
 	}
 
 	/**
@@ -92,7 +94,7 @@ class Activity implements \OCP\Activity\IExtension {
 		$l = \OC::$server->getL10N('files_sharing', $languageCode);
 
 		if (!$text) {
-			return '';
+			return false;
 		}
 
 		if ($app === 'files_sharing') {
@@ -109,8 +111,11 @@ class Activity implements \OCP\Activity\IExtension {
 					return $l->t('Public shared folder %1$s was downloaded', $params)->__toString();
 				case self::SUBJECT_PUBLIC_SHARED_FILE_DOWNLOADED:
 					return $l->t('Public shared file %1$s was downloaded', $params)->__toString();
+				case self::SUBJECT_SHARED_EMAIL:
+					return $l->t('You shared %1$s with %2$s', $params)->__toString();
 			}
 		}
+		return false;
 	}
 
 	/**
@@ -142,6 +147,11 @@ class Activity implements \OCP\Activity\IExtension {
 				case self::SUBJECT_PUBLIC_SHARED_FILE_DOWNLOADED:
 					return array(
 						0 => 'file',
+					);
+				case self::SUBJECT_SHARED_EMAIL:
+					return array(
+						0 => 'file',
+						1 => '',// 'email' is neither supported nor planned for now
 					);
 			}
 		}
