@@ -5,7 +5,7 @@ use Assetic\AssetWriter;
 use Assetic\Filter\CssImportFilter;
 use Assetic\Filter\CssMinFilter;
 use Assetic\Filter\CssRewriteFilter;
-use Assetic\Filter\JSMinFilter;
+use Assetic\Filter\JSMinPlusFilter;
 use OC\Assetic\SeparatorFilter; // waiting on upstream
 
 /**
@@ -169,10 +169,10 @@ class OC_TemplateLayout extends OC_Template {
 						new SeparatorFilter(';')
 					), $root, $file);
 				}
-				return new FileAsset($root . '/' . $file, array(
-					new JSMinFilter(),
+				return new FileAsset($root . '/' . $file, [
+					new JSMinPlusFilter(),
 					new SeparatorFilter(';')
-				), $root, $file);
+				], $root, $file);
 			}, $jsFiles);
 			$jsCollection = new AssetCollection($jsFiles);
 			$jsCollection->setTargetPath("assets/$jsHash.js");
