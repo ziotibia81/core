@@ -155,58 +155,71 @@ class OC_TemplateLayout extends OC_Template {
 	}
 
 	public function generateAssets() {
-		$assetDir = \OC::$server->getConfig()->getSystemValue('assetdirectory', \OC::$SERVERROOT);
-		$jsFiles = self::findJavascriptFiles(OC_Util::$scripts);
-		$jsHash = self::hashFileNames($jsFiles);
+		$memcache = \OC::$server->getMemCacheFactory()->create('assets');
+		$memcacheTime = 300; // 5 minutes
 
-		if (!file_exists("$assetDir/assets/$jsHash.js")) {
-			$jsFiles = array_map(function ($item) {
-				$root = $item[0];
-				$file = $item[2];
-				// no need to minifiy minified files
-				if (substr($file, -strlen('.min.js')) === '.min.js') {
+		if ($memcache->hasKey('hash:js')) {
+			$jsHash = $memcache->get('hash:js');
+		} else {
+			$assetDir = \OC::$server->getConfig()->getSystemValue('assetdirectory', \OC::$SERVERROOT);
+			$jsFiles = self::findJavascriptFiles(OC_Util::$scripts);
+			$jsHash = self::hashFileNames($jsFiles);
+
+			if (!file_exists("$assetDir/assets/$jsHash.js")) {
+				$jsFiles = array_map(function ($item) {
+					$root = $item[0];
+					$file = $item[2];
+					// no need to minifiy minified files
+					if (substr($file, -strlen('.min.js')) === '.min.js') {
+						return new FileAsset($root . '/' . $file, array(
+							new SeparatorFilter(';')
+						), $root, $file);
+					}
 					return new FileAsset($root . '/' . $file, array(
+						new JSMinFilter(),
 						new SeparatorFilter(';')
 					), $root, $file);
-				}
-				return new FileAsset($root . '/' . $file, array(
-					new JSMinFilter(),
-					new SeparatorFilter(';')
-				), $root, $file);
-			}, $jsFiles);
-			$jsCollection = new AssetCollection($jsFiles);
-			$jsCollection->setTargetPath("assets/$jsHash.js");
+				}, $jsFiles);
+				$jsCollection = new AssetCollection($jsFiles);
+				$jsCollection->setTargetPath("assets/$jsHash.js");
 
-			$writer = new AssetWriter($assetDir);
-			$writer->writeAsset($jsCollection);
+				$writer = new AssetWriter($assetDir);
+				$writer->writeAsset($jsCollection);
+			}
+			$memcache->set('hash:js', $jsHash, $memcacheTime);
 		}
 
-		$cssFiles = self::findStylesheetFiles(OC_Util::$styles);
-		$cssHash = self::hashFileNames($cssFiles);
+		if ($memcache->hasKey('hash:css')) {
+			$cssHash = $memcache->get('hash:css');
+		} else {
+			$cssFiles = self::findStylesheetFiles(OC_Util::$styles);
+			$cssHash = self::hashFileNames($cssFiles);
 
-		if (!file_exists("$assetDir/assets/$cssHash.css")) {
-			$cssFiles = array_map(function ($item) {
-				$root = $item[0];
-				$file = $item[2];
-				$assetPath = $root . '/' . $file;
-				$sourceRoot =  \OC::$SERVERROOT;
-				$sourcePath = substr($assetPath, strlen(\OC::$SERVERROOT));
-				return new FileAsset(
-					$assetPath,
-					array(
-						new CssRewriteFilter(),
-						new CssMinFilter(),
-						new CssImportFilter()
-					),
-					$sourceRoot,
-					$sourcePath
-				);
-			}, $cssFiles);
-			$cssCollection = new AssetCollection($cssFiles);
-			$cssCollection->setTargetPath("assets/$cssHash.css");
+			if (!file_exists("$assetDir/assets/$cssHash.css")) {
+				$cssFiles = array_map(function ($item) {
+					$root = $item[0];
+					$file = $item[2];
+					$assetPath = $root . '/' . $file;
+					$sourceRoot =  \OC::$SERVERROOT;
+					$sourcePath = substr($assetPath, strlen(\OC::$SERVERROOT));
+					return new FileAsset(
+						$assetPath,
+						array(
+							new CssRewriteFilter(),
+							new CssMinFilter(),
+							new CssImportFilter()
+						),
+						$sourceRoot,
+						$sourcePath
+					);
+				}, $cssFiles);
+				$cssCollection = new AssetCollection($cssFiles);
+				$cssCollection->setTargetPath("assets/$cssHash.css");
 
-			$writer = new AssetWriter($assetDir);
-			$writer->writeAsset($cssCollection);
+				$writer = new AssetWriter($assetDir);
+				$writer->writeAsset($cssCollection);
+			}
+			$memcache->set('hash:css', $cssHash, $memcacheTime);
 		}
 
 		$this->append('jsfiles', OC_Helper::linkTo('assets', "$jsHash.js"));
