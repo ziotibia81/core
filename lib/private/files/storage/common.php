@@ -487,6 +487,24 @@ abstract class Common implements Storage {
 	}
 
 	/**
+	 * Get availability of the storage
+	 *
+	 * @return array [ available, last_checked ]
+	 */
+	public function getAvailability() {
+		return $this->getStorageCache()->getAvailability();
+	}
+
+	/**
+	 * Set availability of the storage
+	 *
+	 * @param bool $isAvailable
+	 */
+	public function setAvailability($isAvailable) {
+		$this->getStorageCache()->setAvailability($isAvailable);
+	}
+
+	/**
 	 * @inheritdoc
 	 */
 	public function verifyPath($path, $fileName) {
@@ -546,7 +564,7 @@ abstract class Common implements Storage {
 			throw new InvalidCharacterInPathException();
 		}
 	}
-	
+
 	/**
 	 * @param array $options
 	 */
