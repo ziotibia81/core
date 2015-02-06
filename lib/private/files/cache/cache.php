@@ -151,7 +151,7 @@ class Cache {
 			$where = 'WHERE `fileid` = ?';
 			$params = array($file);
 		}
-		$sql = 'SELECT `fileid`, `storage`, `path`, `parent`, `name`, `mimetype`, `mimepart`, `size`, `mtime`,
+		$sql = 'SELECT `fileid`, `storage`, `path`, `path_hash`, `parent`, `name`, `mimetype`, `mimepart`, `size`, `mtime`,
 					   `storage_mtime`, `encrypted`, `etag`, `permissions`
 				FROM `*PREFIX*filecache` ' . $where;
 		$result = \OC_DB::executeAudited($sql, $params);
@@ -444,22 +444,16 @@ class Cache {
 		$newParentId = $this->getParentId($target);
 
 		if ($sourceData['mimetype'] === 'httpd/unix-directory') {
-			//find all child entries
-			$sql = 'SELECT `path`, `fileid` FROM `*PREFIX*filecache` WHERE `storage` = ? AND `path` LIKE ?';
-			$result = \OC_DB::executeAudited($sql, array($this->getNumericStorageId(), $source . '/%'));
-			$childEntries = $result->fetchAll();
+			//update all child entries
 			$sourceLength = strlen($source);
-			\OC_DB::beginTransaction();
-			$query = \OC_DB::prepare('UPDATE `*PREFIX*filecache` SET `path` = ?, `path_hash` = ? WHERE `fileid` = ?');
-
-			foreach ($childEntries as $child) {
-				$targetPath = $target . substr($child['path'], $sourceLength);
-				\OC_DB::executeAudited($query, array($targetPath, md5($targetPath), $child['fileid']));
-			}
-			\OC_DB::commit();
+			$query = \OC_DB::prepare('UPDATE `*PREFIX*filecache` SET
+				`path_hash` = MD5(CONCAT(?, SUBSTR(`path`, ?))),
+ 				`path`      =     CONCAT(?, SUBSTR(`path`, ?))
+ 				WHERE `storage` = ? AND `path` LIKE ?');
+			\OC_DB::executeAudited($query, [$target, $sourceLength + 1,$target, $sourceLength + 1, $this->getNumericStorageId(), $source . '/%']);
 		}
 
-		$sql = 'UPDATE `*PREFIX*filecache` SET `path` = ?, `path_hash` = ?, `name` = ?, `parent` =? WHERE `fileid` = ?';
+		$sql = 'UPDATE `*PREFIX*filecache` SET `path` = ?, `path_hash` = ?, `name` = ?, `parent` = ? WHERE `fileid` = ?';
 		\OC_DB::executeAudited($sql, array($target, md5($target), basename($target), $newParentId, $sourceId));
 	}
 
