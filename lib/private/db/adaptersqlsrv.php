@@ -32,6 +32,7 @@ class AdapterSQLSrv extends Adapter {
 		$statement = str_replace( 'LENGTH(', 'LEN(', $statement );
 		$statement = str_replace( 'SUBSTR(', 'SUBSTRING(', $statement );
 		$statement = str_ireplace( 'UNIX_TIMESTAMP()', 'DATEDIFF(second,{d \'1970-01-01\'},GETDATE())', $statement );
+		$statement = preg_replace('/MD5\(([^)]+)\)/i', 'CONVERT(NVARCHAR(32),HashBytes(\'MD5\', $1),2)', $statement);
 		return $statement;
 	}
 }
