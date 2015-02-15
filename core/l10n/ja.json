@@ -217,6 +217,7 @@
     "Start update" : "アップデートを開始",
     "To avoid timeouts with larger installations, you can instead run the following command from your installation directory:" : "大規模なサイトの場合、ブラウザーがタイムアウトする可能性があるため、インストールディレクトリで次のコマンドを実行しても構いません。",
     "This %s instance is currently being updated, which may take a while." : "このサーバー %s は現在更新中です。しばらくお待ちください。",
-    "This page will refresh itself when the %s instance is available again." : "この画面は、サーバー %s の再起動後に自動的に更新されます。"
+    "This page will refresh itself when the %s instance is available again." : "この画面は、サーバー %s の再起動後に自動的に更新されます。",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "特にデスクトップクライアントをファイル同期に使用する場合，SQLiteは非推奨です."
 },"pluralForm" :"nplurals=1; plural=0;"
 }

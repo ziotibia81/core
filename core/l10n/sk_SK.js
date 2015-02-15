@@ -217,6 +217,7 @@ OC.L10N.register(
     "Start update" : "Spustiť aktualizáciu",
     "To avoid timeouts with larger installations, you can instead run the following command from your installation directory:" : "Aby nedošlo k vypršaniu časového limitu vo väčších inštaláciách, môžete namiesto toho použiť nasledujúci príkaz z inštalačného priečinka:",
     "This %s instance is currently being updated, which may take a while." : "Tento %s inštancia sa v súčasnej dobe aktualizuje. Počkajte prosím.",
-    "This page will refresh itself when the %s instance is available again." : "Táto stránka sa obnoví sama hneď ako bude %s inštancia znovu dostupná."
+    "This page will refresh itself when the %s instance is available again." : "Táto stránka sa obnoví sama hneď ako bude %s inštancia znovu dostupná.",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "Najmä pri používaní klientských aplikácií na synchronizáciu s desktopom neodporúčame používať SQLite."
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

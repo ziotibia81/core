@@ -256,6 +256,7 @@
     "change full name" : "промени пълното име",
     "set new password" : "сложи нова парола",
     "change email address" : "Смени адреса на елетронната поща",
-    "Default" : "По подразбиране"
+    "Default" : "По подразбиране",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "Особено, когато използвате клиент за работен плот за синхронизация, използването на SQLite e непрепоръчително."
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }

@@ -264,6 +264,7 @@ OC.L10N.register(
     "change full name" : "tam adı değiştir",
     "set new password" : "yeni parola belirle",
     "change email address" : "e-posta adresini değiştir",
-    "Default" : "Öntanımlı"
+    "Default" : "Öntanımlı",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "Özellikle dosya eşitleme için masaüstü istemcisi kullanılırken SQLite kullanımı önerilmez."
 },
 "nplurals=2; plural=(n > 1);");

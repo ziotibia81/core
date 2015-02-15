@@ -265,6 +265,7 @@ OC.L10N.register(
     "change full name" : "změnit celé jméno",
     "set new password" : "nastavit nové heslo",
     "change email address" : "změnit emailovou adresu",
-    "Default" : "Výchozí"
+    "Default" : "Výchozí",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "Obzvláště při používání klientské aplikace pro synchronizaci s desktopem není SQLite doporučeno."
 },
 "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;");

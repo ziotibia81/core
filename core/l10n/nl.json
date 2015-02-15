@@ -219,6 +219,7 @@
     "Start update" : "Begin de update",
     "To avoid timeouts with larger installations, you can instead run the following command from your installation directory:" : "Om time-outs tijdens grotere installaties te voorkomen, kunt u in plaats hiervan de volgende opdracht geven vanaf uw installatiedirectory:",
     "This %s instance is currently being updated, which may take a while." : "Deze %s-installatie wordt momenteel geüpdatet. Dat kan enige tijd duren.",
-    "This page will refresh itself when the %s instance is available again." : "Deze pagina wordt ververst als de %s-installatie weer beschikbaar is."
+    "This page will refresh itself when the %s instance is available again." : "Deze pagina wordt ververst als de %s-installatie weer beschikbaar is.",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "Vooral wanneer de desktop client wordt gebruik voor bestandssynchronisatie wordt gebruik van sqlite afgeraden."
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }

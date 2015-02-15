@@ -265,6 +265,7 @@ OC.L10N.register(
     "change full name" : "Vollständigen Namen ändern",
     "set new password" : "Neues Passwort setzen",
     "change email address" : "E-Mail-Adresse ändern",
-    "Default" : "Standard"
+    "Default" : "Standard",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "Insbesondere bei der Nutzung des Desktop Clients zur Dateisynchronisierung wird vom Einsatz von SQLite abgeraten."
 },
 "nplurals=2; plural=(n != 1);");

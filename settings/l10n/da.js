@@ -262,6 +262,7 @@ OC.L10N.register(
     "change full name" : "ændre fulde navn",
     "set new password" : "skift kodeord",
     "change email address" : "skift e-mailadresse",
-    "Default" : "Standard"
+    "Default" : "Standard",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "Brug af SQLite frarådes især når skrivebordsklienten anvendes til filsynkronisering."
 },
 "nplurals=2; plural=(n != 1);");

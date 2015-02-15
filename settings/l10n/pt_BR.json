@@ -263,6 +263,7 @@
     "change full name" : "alterar nome completo",
     "set new password" : "definir nova senha",
     "change email address" : "Trocar o endereço de email",
-    "Default" : "Padrão"
+    "Default" : "Padrão",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "Especialmente quando se utiliza o cliente de desktop para sincronização de arquivos o uso de SQLite é desencorajado."
 },"pluralForm" :"nplurals=2; plural=(n > 1);"
 }

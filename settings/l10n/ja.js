@@ -262,6 +262,7 @@ OC.L10N.register(
     "change full name" : "名前を変更",
     "set new password" : "新しいパスワードを設定",
     "change email address" : "メールアドレスを変更",
-    "Default" : "デフォルト"
+    "Default" : "デフォルト",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "特にデスクトップクライアントをファイル同期に使用する場合，SQLiteは非推奨です．"
 },
 "nplurals=1; plural=0;");

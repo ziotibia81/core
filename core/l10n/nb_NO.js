@@ -213,6 +213,7 @@ OC.L10N.register(
     "Start update" : "Start oppdatering",
     "To avoid timeouts with larger installations, you can instead run the following command from your installation directory:" : "For å unngå tidsavbrudd ved store installasjoner, kan du i stedet kjøre følgende kommando fra installasjonsmappen:",
     "This %s instance is currently being updated, which may take a while." : "%s-instansen er under oppdatering, noe som kan ta litt tid.",
-    "This page will refresh itself when the %s instance is available again." : "Denne siden vil bli lastet på nytt når %s-instansen er tilgjengelig igjen."
+    "This page will refresh itself when the %s instance is available again." : "Denne siden vil bli lastet på nytt når %s-instansen er tilgjengelig igjen.",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "SQLite er spesielt frarådet om man bruker desktopklienten til filsynkronisering"
 },
 "nplurals=2; plural=(n != 1);");

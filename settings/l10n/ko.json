@@ -260,6 +260,7 @@
     "change full name" : "전체 이름 변경",
     "set new password" : "새 암호 설정",
     "change email address" : "이메일 주소 변경",
-    "Default" : "기본값"
+    "Default" : "기본값",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "특히 파일 동기화를 위해 데스크톱 클라이언트를 사용할 예정이면, SQLite를 사용하지 않는 것이 좋습니다."
 },"pluralForm" :"nplurals=1; plural=0;"
 }

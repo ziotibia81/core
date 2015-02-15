@@ -219,6 +219,7 @@
     "Start update" : "Käynnistä päivitys",
     "To avoid timeouts with larger installations, you can instead run the following command from your installation directory:" : "Välttääksesi aikakatkaisuja suurikokoisten asennusten kanssa, voit suorittaa vaihtoehtoisesti seuraavan komennon asennushakemistossa:",
     "This %s instance is currently being updated, which may take a while." : "Tätä %s-asennusta päivitetään parhaillaan, päivityksessä saattaa kestää hetki.",
-    "This page will refresh itself when the %s instance is available again." : "Tämä sivu päivittää itsensä, kun %s on jälleen käytettävissä."
+    "This page will refresh itself when the %s instance is available again." : "Tämä sivu päivittää itsensä, kun %s on jälleen käytettävissä.",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "Varsinkin työpöytäsovelluksen tiedostosynkronointia käyttäessä SQLiten käyttö ei ole suositeltavaa."
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }

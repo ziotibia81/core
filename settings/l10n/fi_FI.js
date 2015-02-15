@@ -257,6 +257,7 @@ OC.L10N.register(
     "change full name" : "muuta koko nimi",
     "set new password" : "aseta uusi salasana",
     "change email address" : "vaihda sähköpostiosoite",
-    "Default" : "Oletus"
+    "Default" : "Oletus",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "Varsinkin työpöytäsovelluksen tiedostosynkronointia käyttäessä SQLiten käyttö ei ole suositeltavaa."
 },
 "nplurals=2; plural=(n != 1);");

@@ -219,6 +219,7 @@
     "Start update" : "Avvia l'aggiornamento",
     "To avoid timeouts with larger installations, you can instead run the following command from your installation directory:" : "Per evitare timeout con installazioni di grandi dimensioni, puoi eseguire il comando che segue dalla cartella di installazione:",
     "This %s instance is currently being updated, which may take a while." : "Questa istanza di %s è in fase di aggiornamento, potrebbe richiedere del tempo.",
-    "This page will refresh itself when the %s instance is available again." : "Questa pagina si aggiornerà quando l'istanza di %s sarà nuovamente disponibile."
+    "This page will refresh itself when the %s instance is available again." : "Questa pagina si aggiornerà quando l'istanza di %s sarà nuovamente disponibile.",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "In particolar modo, quando si utilizza il client desktop per la sincronizzazione dei file, l'uso di SQLite è sconsigliato."
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }

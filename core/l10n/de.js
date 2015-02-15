@@ -221,6 +221,7 @@ OC.L10N.register(
     "Start update" : "Aktualisierung starten",
     "To avoid timeouts with larger installations, you can instead run the following command from your installation directory:" : "Zur Vermeidung von Zeitüberschreitungen bei größeren Installationen kannst Du stattdessen den folgenden Befehl in Deinem Installationsverzeichnis ausführen:",
     "This %s instance is currently being updated, which may take a while." : "Diese %s - Instanz wird gerade aktualisiert, was eine Weile dauert.",
-    "This page will refresh itself when the %s instance is available again." : "Diese Seite aktualisert sich automatisch, wenn die %s - Instanz wieder verfügbar ist."
+    "This page will refresh itself when the %s instance is available again." : "Diese Seite aktualisert sich automatisch, wenn die %s - Instanz wieder verfügbar ist.",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "Insbesondere bei Nutzung des Desktop Clients zur Dateisynchronisierung wird vom Einsatz von SQLite abgeraten."
 },
 "nplurals=2; plural=(n != 1);");

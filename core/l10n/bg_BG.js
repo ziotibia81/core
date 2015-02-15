@@ -217,6 +217,7 @@ OC.L10N.register(
     "Start update" : "Започни обновяването",
     "To avoid timeouts with larger installations, you can instead run the following command from your installation directory:" : "За да избегнеш таймаутове при по-големи инсталации, можеш да изпълниш следните команди в инсталанционната директория:",
     "This %s instance is currently being updated, which may take a while." : "В момента този %s се обновява, а това може да отнеме време.",
-    "This page will refresh itself when the %s instance is available again." : "Тази страница ще се опресни автоматично, когато %s е отново на линия."
+    "This page will refresh itself when the %s instance is available again." : "Тази страница ще се опресни автоматично, когато %s е отново на линия.",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "Особено, когато използвате клиент за работен плот за синхронизация, използването на SQLite e непрепоръчително."
 },
 "nplurals=2; plural=(n != 1);");

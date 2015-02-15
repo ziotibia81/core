@@ -259,6 +259,7 @@
     "change full name" : "endre fullt navn",
     "set new password" : "sett nytt passord",
     "change email address" : "endre e-postadresse",
-    "Default" : "Standard"
+    "Default" : "Standard",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "SQLite er spesielt frarådet om man bruker desktopklienten til filsynkronisering"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }

@@ -217,6 +217,7 @@ OC.L10N.register(
     "Start update" : "업데이트 시작",
     "To avoid timeouts with larger installations, you can instead run the following command from your installation directory:" : "큰 파일을 설치하는 경우 시간이 초과될 수 있으므로, 설치 디렉터리에서 다음 명령을 실행하셔도 됩니다:",
     "This %s instance is currently being updated, which may take a while." : "%s 인스턴스가 업데이트 중입니다. 시간이 걸릴 수도 있습니다.",
-    "This page will refresh itself when the %s instance is available again." : "%s 인스턴스를 다시 사용할 수 있으면 자동으로 새로 고칩니다."
+    "This page will refresh itself when the %s instance is available again." : "%s 인스턴스를 다시 사용할 수 있으면 자동으로 새로 고칩니다.",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "특히 파일 동기화를 위해 데스크톱 클라이언트를 사용할 예정일 때는, SQLite를 사용하지 않는 것이 좋습니다."
 },
 "nplurals=1; plural=0;");

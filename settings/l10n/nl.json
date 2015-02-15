@@ -263,6 +263,7 @@
     "change full name" : "wijzigen volledige naam",
     "set new password" : "Instellen nieuw wachtwoord",
     "change email address" : "wijzig e-mailadres",
-    "Default" : "Standaard"
+    "Default" : "Standaard",
+    "Especially when using the desktop client for file syncing the use of SQLite is discouraged." : "Vooral wanneer de desktop client wordt gebruik voor bestandssynchronisatie wordt gebruik van sqlite afgeraden."
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }
