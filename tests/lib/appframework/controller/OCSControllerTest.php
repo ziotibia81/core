@@ -127,7 +127,7 @@ class OCSControllerTest extends \Test\TestCase {
 			$this->getMock('\OCP\IConfig')
 		));
 		$expected = '{"status":"OK","statuscode":400,"message":"OK",' .
-		            '"totalitems":"","itemsperpage":"","data":{"test":"hi"}}';
+		            '"data":{"test":"hi"}}';
 		$params = [
 			'data' => [
 				'test' => 'hi'

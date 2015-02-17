@@ -31,7 +31,6 @@ use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\OCSResponse;
 use OCP\IRequest;
 
-
 /**
  * Base class to inherit your controllers from that are used for RESTful APIs
  */
@@ -70,6 +69,7 @@ abstract class OCSController extends ApiController {
 	 * Unwrap data and build ocs response
 	 * @param string $format json or xml
 	 * @param array|DataResponse $data the data which should be transformed
+	 * @return OCSResponse
 	 */
 	private function buildOCSResponse($format, $data) {
 		if ($data instanceof DataResponse) {
@@ -81,11 +81,6 @@ abstract class OCSController extends ApiController {
 			'statuscode' => 100,
 			'message' => 'OK',
 			'data' => [],
-			'tag' => '',
-			'tagattribute' => '',
-			'dimension' => 'dynamic',
-			'itemscount' => '',
-			'itemsperpage' => ''
 		];
 
 		foreach ($data as $key => $value) {
@@ -93,10 +88,11 @@ abstract class OCSController extends ApiController {
 		}
 
 		return new OCSResponse(
-			$format, $params['status'], $params['statuscode'],
-			$params['message'], $params['data'], $params['tag'],
-			$params['tagattribute'], $params['dimension'],
-			$params['itemscount'], $params['itemsperpage']
+			$format,
+			$params['status'],
+			$params['statuscode'],
+			$params['message'],
+			$params['data']
 		);
 	}
 
