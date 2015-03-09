@@ -259,7 +259,7 @@ class MDB2SchemaReader {
 			 */
 			switch ($child->getName()) {
 				case 'name':
-					$name = (string)$child;
+//					$name = (string)$child;
 					break;
 				case 'primary':
 					$primary = $this->asBool($child);
