@@ -22,6 +22,8 @@
 
 namespace OC\Files\Storage;
 
+use Icewind\Streams\IteratorDirectory;
+
 require_once __DIR__ . '/../3rdparty/Dropbox/autoload.php';
 
 class Dropbox extends \OC\Files\Storage\Common {
@@ -144,8 +146,7 @@ class Dropbox extends \OC\Files\Storage\Common {
 			foreach ($contents as $file) {
 				$files[] = basename($file['path']);
 			}
-			\OC\Files\Stream\Dir::register('dropbox'.$path, $files);
-			return opendir('fakedir://dropbox'.$path);
+			return IteratorDirectory::wrap($files);
 		}
 		return false;
 	}

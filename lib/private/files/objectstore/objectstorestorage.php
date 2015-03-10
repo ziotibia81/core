@@ -20,6 +20,7 @@
 
 namespace OC\Files\ObjectStore;
 
+use Icewind\Streams\IteratorDirectory;
 use OC\Files\Filesystem;
 use OCP\Files\ObjectStore\IObjectStore;
 
@@ -213,10 +214,8 @@ class ObjectStoreStorage extends \OC\Files\Storage\Common {
 				$files[] = $file['name'];
 			}
 
-			\OC\Files\Stream\Dir::register('objectstore' . $path . '/', $files);
-
-			return opendir('fakedir://objectstore' . $path . '/');
-		} catch (Exception $e) {
+			return IteratorDirectory::wrap($files);
+		} catch (\Exception $e) {
 			\OCP\Util::writeLog('objectstore', $e->getMessage(), \OCP\Util::ERROR);
 			return false;
 		}

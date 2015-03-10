@@ -8,6 +8,7 @@
 
 namespace OC\Files\Storage;
 
+use Icewind\Streams\IteratorDirectory;
 use OCP\Files\StorageInvalidException;
 use OCP\Files\StorageNotAvailableException;
 use Sabre\HTTP\ClientHttpException;
@@ -138,8 +139,7 @@ class DAV extends \OC\Files\Storage\Common {
 				$file = urldecode(basename($file));
 				$content[] = $file;
 			}
-			\OC\Files\Stream\Dir::register($id, $content);
-			return opendir('fakedir://' . $id);
+			return IteratorDirectory::wrap($content);
 		} catch (ClientHttpException $e) {
 			if ($e->getHttpStatus() === 404) {
 				return false;

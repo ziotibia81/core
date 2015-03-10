@@ -6,6 +6,7 @@
  * See the COPYING-README file.
  */
 namespace OC\Files\Storage;
+use Icewind\Streams\IteratorDirectory;
 
 /**
  * for local filestore, we only have to map the paths
@@ -93,8 +94,7 @@ class MappedLocal extends \OC\Files\Storage\Common {
 			}
 		}
 
-		\OC\Files\Stream\Dir::register('local-win32' . $path, $files);
-		return opendir('fakedir://local-win32' . $path);
+		return IteratorDirectory::wrap($files);
 	}
 
 	public function is_dir($path) {
