@@ -10,6 +10,9 @@ if ($request == "domain") {
 		$mail = explode(".", $mail[1]);
 		array_pop($mail);
 		$mail = implode(".", $mail);
+	} else {
+		http_response_code(422);
+		echo json_encode(array('error' => array('message' => 'Username not supported.')));
 	}
 	$base_domain = "achernar.uberspace.de/oc8ee";
 	$domain = "https://" . $mail . "." . $base_domain;
