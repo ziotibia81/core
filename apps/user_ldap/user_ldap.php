@@ -257,8 +257,9 @@ class USER_LDAP extends BackendUtility implements \OCP\UserInterface {
 		$pref = \OC::$server->getConfig();
 		if(strpos($this->access->connection->homeFolderNamingRule, 'attr:') === 0) {
 			$attr = substr($this->access->connection->homeFolderNamingRule, strlen('attr:'));
+			$username2dn = $this->access->username2dn($uid);
 			$homedir = $this->access->readAttribute(
-						$this->access->username2dn($uid), $attr);
+				$username2dn, $attr);
 			if($homedir && isset($homedir[0])) {
 				$path = $homedir[0];
 				//if attribute's value is an absolute path take this, otherwise append it to data dir
@@ -280,6 +281,7 @@ class USER_LDAP extends BackendUtility implements \OCP\UserInterface {
 				//TODO: if home directory changes, the old one needs to be removed.
 				return $homedir;
 			}
+			\OC::$server->getLogger()->warning("UID: $uid homedir: " . print_r($homedir, true) . " username2dn: " . $username2dn, array('app' => 'user_ldap'));
 		}
 
 		//false will apply default behaviour as defined and done by OC_User
