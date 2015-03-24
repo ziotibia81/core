@@ -14,7 +14,6 @@ use OCA\Encryption\Crypto\Crypt;
 use OCP\IConfig;
 use OCP\ILogger;
 use OCP\IUserManager;
-use OCP\IUserSession;
 use OCP\PreConditionNotMetException;
 
 class Migrator {

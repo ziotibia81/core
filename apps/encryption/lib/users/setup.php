@@ -44,7 +44,6 @@ class Setup extends \OCA\Encryption\Setup {
 	 * @return bool
 	 */
 	public function setupUser($uid, $password) {
-		$this->logger->debug('Encryption Library: User Account Is not ready for ' . $uid . ' encryption; configuration started');
 		return $this->setupServerSide($uid, $password);
 	}
 
@@ -56,7 +55,7 @@ class Setup extends \OCA\Encryption\Setup {
 	public function setupServerSide($uid, $password) {
 		// Check if user already has keys
 		if (!$this->keyManager->userHasKeys($uid)) {
-			return $this->keyManager->storeKeyPair($password,
+			return $this->keyManager->storeKeyPair($uid, $password,
 				$this->crypt->createKeyPair());
 		}
 		return true;

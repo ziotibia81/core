@@ -113,4 +113,14 @@ class Encryption extends Crypt implements IEncryptionModule {
   public function calculateUnencryptedSize($path) {
     // TODO: Implement calculateUnencryptedSize() method.
   }
+
+  /**
+   * get size of the unencrypted payload per block.
+   * ownCloud read/write files with a block size of 8192 byte
+   *
+   * @return integer
+   */
+  public function getUnencryptedBlockSize() {
+    // TODO: Implement getUnencryptedBlockSize() method.
+  }
 }

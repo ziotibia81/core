@@ -133,7 +133,7 @@ class UserHooks implements IHook {
 			return false;
 		}
 
-		$cache = $this->keyManager->init($params['password']);
+		$cache = $this->keyManager->init($params['uid'], $params['password']);
 
 		// Check if first-run file migration has already been performed
 		$ready = false;

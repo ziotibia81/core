@@ -62,11 +62,16 @@ class KeyManager {
 	/**
 	 * @var string
 	 */
-	private $publicKeyId = '.public';
+	private $publicKeyId = 'public';
 	/**
 	 * @var string
 	 */
-	private $privateKeyId = '.private';
+	private $privateKeyId = 'private';
+
+	/**
+	 * @var string
+	 */
+	private $shareKeyId = 'share';
 	/**
 	 * @var IConfig
 	 */
@@ -123,19 +128,20 @@ class KeyManager {
 	}
 
 	/**
-	 * @param $password
-	 * @param $keyPair
+	 * @param string $uid
+	 * @param string $password
+	 * @param string $keyPair
 	 * @return bool
 	 */
-	public function storeKeyPair($password, $keyPair) {
+	public function storeKeyPair($uid, $password, $keyPair) {
 		// Save Public Key
-		$this->setPublicKey($this->keyId, $keyPair['publicKey']);
+		$this->setPublicKey($uid, $keyPair['publicKey']);
 
 		$encryptedKey = $this->crypt->symmetricEncryptFileContent($keyPair['privateKey'],
 			$password);
 
 		if ($encryptedKey) {
-			$this->setPrivateKey($this->keyId, $encryptedKey);
+			$this->setPrivateKey($uid, $encryptedKey);
 			$this->config->setAppValue('encryption', 'recoveryAdminEnabled', 1);
 			return true;
 		}
@@ -168,9 +174,9 @@ class KeyManager {
 	 * @param string $passPhrase users password
 	 * @return ICache
 	 */
-	public function init($passPhrase) {
+	public function init($uid, $passPhrase) {
 		try {
-			$privateKey = $this->getPrivateKey($this->keyId);
+			$privateKey = $this->getPrivateKey($uid);
 			$privateKey = $this->crypt->decryptPrivateKey($privateKey,
 				$passPhrase);
 		} catch (PrivateKeyMissingException $e) {
@@ -216,10 +222,11 @@ class KeyManager {
 
 	/**
 	 * @param $path
+	 * @return mixed
 	 */
 	public function getShareKey($path) {
 		// fixme: fix implementation
-//		$this->getFileKey($path)
+		return $this->keyStorage->getFileKey($path, $this->shareKeyId);
 	}
 
 	/**
