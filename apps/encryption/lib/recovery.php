@@ -22,11 +22,11 @@
 namespace OCA\Encryption;
 
 
-use OC\Files\View;
 use OCA\Encryption\Crypto\Crypt;
 use OCP\Encryption\IKeyStorage;
 use OCP\IConfig;
 use OCP\IUser;
+use OCP\IUserSession;
 use OCP\Security\ISecureRandom;
 
 class Recovery {
@@ -58,20 +58,20 @@ class Recovery {
 	private $keyStorage;
 
 	/**
-	 * @param IUser $user
+	 * @param IUserSession $user
 	 * @param Crypt $crypt
 	 * @param ISecureRandom $random
 	 * @param KeyManager $keyManager
 	 * @param IConfig $config
 	 * @param IKeyStorage $keyStorage
 	 */
-	public function __construct(IUser $user,
+	public function __construct(IUserSession $user,
 								Crypt $crypt,
 								ISecureRandom $random,
 								KeyManager $keyManager,
 								IConfig $config,
 								IKeyStorage $keyStorage) {
-		$this->user = $user;
+		$this->user = $user && $user->isLoggedIn() ? $user->getUser() : false;
 		$this->crypt = $crypt;
 		$this->random = $random;
 		$this->keyManager = $keyManager;

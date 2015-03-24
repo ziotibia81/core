@@ -24,7 +24,7 @@ class Migrator {
 	 */
 	private $status = false;
 	/**
-	 * @var IUserManager
+	 * @var string
 	 */
 	private $user;
 	/**
@@ -59,14 +59,13 @@ class Migrator {
 	/**
 	 * Migrator constructor.
 	 *
-	 * @param IUserSession $userSession
 	 * @param IConfig $config
 	 * @param IUserManager $userManager
 	 * @param ILogger $log
 	 * @param Crypt $crypt
+	 * @internal param IUserSession $userSession
 	 */
-	public function __construct(IUserSession $userSession, IConfig $config, IUserManager $userManager, ILogger $log, Crypt $crypt) {
-		$this->user = $userSession && $userSession->isLoggedIn() ? $userSession->getUser() : false;
+	public function __construct(IConfig $config, IUserManager $userManager, ILogger $log, Crypt $crypt) {
 		$this->config = $config;
 		$this->userManager = $userManager;
 		$this->log = $log;
@@ -79,10 +78,16 @@ class Migrator {
 	 */
 	public function getStatus($userId) {
 		if ($this->userManager->userExists($userId)) {
-			$this->status = $this->config->getUserValue($userId, 'encryption', 'migrationStatus', false);
+			$this->status = $this->config->getUserValue($userId,
+				'encryption',
+				'migrationStatus',
+				false);
 
 			if (!$this->status) {
-				$this->config->setUserValue($userId, 'encryption', 'migrationStatus', self::$migrationOpen);
+				$this->config->setUserValue($userId,
+					'encryption',
+					'migrationStatus',
+					self::$migrationOpen);
 				$this->status = self::$migrationOpen;
 			}
 		}
@@ -94,13 +99,14 @@ class Migrator {
 	 * @return bool
 	 */
 	public function beginMigration() {
-		$status = $this->setMigrationStatus(self::$migrationInProgress, self::$migrationOpen);
+		$status = $this->setMigrationStatus(self::$migrationInProgress,
+			self::$migrationOpen);
 
 		if ($status) {
-			$this->log->info('Encryption Library Start migration to encrypt for ' . $this->user->getUID());
+			$this->log->info('Encryption Library Start migration to encrypt for ' . $this->user);
 			return $status;
 		}
-		$this->log->warning('Encryption Library Could not activate migration for ' . $this->user->getUID() . '. Probably another process already started the inital encryption');
+		$this->log->warning('Encryption Library Could not activate migration for ' . $this->user . '. Probably another process already started the inital encryption');
 		return $status;
 	}
 
@@ -111,13 +117,47 @@ class Migrator {
 	 */
 	private function setMigrationStatus($status, $preCondition = false) {
 		// Convert to string if preCondition is set
-		$preCondition = ($preCondition === false) ? false : (string)$preCondition;
+		$preCondition = ($preCondition === false) ? null : (string)$preCondition;
 
 		try {
-			$this->config->setUserValue($this->user->getUID(), 'encryption', 'migrationStatus', (string)$status, $preCondition);
+			$this->config->setUserValue($this->user,
+				'encryption',
+				'migrationStatus',
+				(string)$status,
+				$preCondition);
 			return true;
 		} catch (PreConditionNotMetException $e) {
 			return false;
 		}
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function finishMigration() {
+		$result = $this->setMigrationStatus(self::$migrationComplete);
+
+		if ($result) {
+			$this->log->info('Encryption library finish migration succcessfully for ' . $this->user);
+			return $result;
+		}
+
+		$this->log->warning('Encryption library could not deactivate migration mode for ' . $this->user);
+		return $result;
+
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function resetMigrationStatus() {
+		return $this->setMigrationStatus(self::$migrationOpen);
+	}
+
+	/**
+	 * @param $uid
+	 */
+	public function setUser($uid) {
+		$this->user = $uid;
 	}
 }

@@ -38,8 +38,10 @@ class KeyManagerTest extends TestCase {
 		$userMock->expects($this->once())
 			->method('getUID')
 			->will($this->returnValue('admin'));
+		$cacheMock = $this->getMock('OCP\ICacheManager');
+		$logMock = $this->getMock('OCP\ILogger');
 		$this->userId = 'admin';
-		$this->instance = new KeyManager($keyStorageMock, $cryptMock, $configMock, $userMock);
+		$this->instance = new KeyManager($keyStorageMock, $cryptMock, $configMock, $userMock, $cacheMock, $logMock);
 
 		$this->dummyKeys = ['public' => 'randomweakpublickeyhere',
 			'private' => 'randomweakprivatekeyhere'];

@@ -700,7 +700,7 @@ class Server extends SimpleContainer implements IServerContainer {
 	 *
 	 * @return \OCP\Security\ISecureRandom
 	 */
-	function getSecureRandom() {
+function getSecureRandom() {
 		return $this->query('SecureRandom');
 	}
 
