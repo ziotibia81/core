@@ -96,176 +96,6 @@ class Util {
 
 	/**
 	 * @param $dirPath
-	 * @return bool
-	 * @throws \Exception
-	 */
-	public function encryptAll($dirPath) {
-
-		$found = $this->findEncryptedFiles($dirPath);
-		$result = true;
-
-		if (App::isEnabled('files_versions')) {
-			\OC_App::disable('files_versions');
-		}
-
-		$encryptedFiles = [];
-
-		// Encrypt Unencrypted files
-		foreach ($found['plain'] as $plainFile) {
-			// get file info
-			$fileInfo = $this->filesystem->getFileInfo($plainFile['path']);
-
-			// Relative to data/<user>/file
-			$relPath = $plainFile['path'];
-
-			// Relative to /data
-			$rawPath = '/' . $this->user->getUID() . '/files/' . $plainFile['path'];
-
-			// Keep timestamp
-			$timestamp = $fileInfo['mtime'];
-
-			// Open plain file handle for binary reading
-			$plainHandle = $this->files->fopen($rawPath, 'rb');
-
-			// Open enc file handle for binary writing, with some filenames as original plain file
-			$encHandle = fopen('crypt://' . $rawPath . '.part', 'wb');
-
-			if (is_resource($encHandle) && is_resource($plainHandle)) {
-				// Move plain file to a temp location
-				$size = stream_copy_to_stream($plainHandle, $encHandle);
-
-				fclose($encHandle);
-				fclose($plainHandle);
-
-				$fakeRoot = $this->files->getRoot();
-				$this->files->chroot('/' . $this->user->getUID() . '/files');
-
-				$this->files->rename($relPath . '.part', $relPath);
-
-				// Set Timestamp
-				$this->files->touch($relPath, $timestamp);
-
-				$encSize = $this->files->filesize($relPath);
-
-				$this->files->chroot($fakeRoot);
-
-				// Add the file to the cache
-				$this->filesystem->putFileInfo($relPath,
-					[
-						'encrypted' => true,
-						'size' => $encSize,
-						'unencrypted_size' => $size,
-						'etag' => $fileInfo['etag']
-					]);
-
-				$encryptedFiles[] = $relPath;
-			} else {
-				$this->logger->critical('Encryption initial encryption could not encrypt ' . $rawPath);
-				$result = false;
-			}
-		}
-
-		if (!App::isEnabled('files_versions')) {
-			\OC_App::enable('files_versions');
-		}
-
-		return $result && $this->encryptVersions($encryptedFiles);
-	}
-
-	/**
-	 * @return bool
-	 * @throws \Exception
-	 */
-	public function decryptAll() {
-		$found = $this->findEncryptedFiles($dirPath);
-		$result = true;
-
-		if (App::isEnabled('files_versions')) {
-			\OC_App::disable('files_versions');
-		}
-
-		$decryptedFiles = [];
-
-		// Encrypt Unencrypted files
-		foreach ($found['encrypted'] as $plainFile) {
-			// get file info
-			$fileInfo = $this->filesystem->getFileInfo($plainFile['path']);
-
-			// Relative to data/<user>/file
-			$relPath = $plainFile['path'];
-
-			// Relative to /data
-			$rawPath = '/' . $this->user->getUID() . '/files/' . $plainFile['path'];
-
-			// Keep timestamp
-			$timestamp = $fileInfo['mtime'];
-
-			// Open plain file handle for binary reading
-			$plainHandle = $this->files->fopen($rawPath, 'rb');
-
-			// Open enc file handle for binary writing, with some filenames as original plain file
-			$encHandle = fopen('crypt://' . $rawPath . '.part', 'wb');
-
-
-			if ($encHandle === false) {
-				$this->logger->critical('Encryption library couldn\'t open ' . $rawPath . 'decryption failed');
-				$result = false;
-				continue;
-			}
-
-			// Open plain file handle for binary writing, with same filename as original plain file
-			$plainHandle = $this->files->fopen($rawPath . '.part', 'wb');
-			if ($plainHandle === false) {
-				$this->logger->critical('Encryption library couldn\'t open ' . $rawPath . 'decryption failed');
-				$result = false;
-				continue;
-			}
-
-			fclose($encHandle);
-			fclose($plainHandle);
-
-
-			$fakeRoot = $this->files->getRoot();
-			$this->files->chroot('/' . $this->user->getUID() . '/files');
-
-			$this->files->rename($relPath . '.part', $relPath);
-
-			// Set Timestamp
-			$this->files->touch($relPath, $timestamp);
-
-			$this->files->chroot($fakeRoot);
-
-			// Add the file to the cache
-			$this->filesystem->putFileInfo($relPath,
-				[
-					'encrypted' => false,
-					'size' => $size,
-					'unencrypted_size' => 0,
-					'etag' => $fileInfo['etag']
-				]);
-
-			$decryptedFiles[] = $relPath;
-
-			if (!App::isEnabled('files_versions')) {
-				\OC_App::enable('files_versions');
-			}
-
-			// If there are broken encrypted files than th complete decryption was a fail
-			if (!empty($found['broken'])) {
-				$result = false;
-			}
-
-			if ($result) {
-				$this->keyManager->backupAllKeys('decryptAll', false, false);
-				$this->keyManager->deleteAllKeys();
-			}
-
-		}
-		return $result;
-	}
-
-	/**
-	 * @param $dirPath
 	 * @param bool $found
 	 * @return array|bool
 	 */
@@ -351,8 +181,7 @@ class Util {
 	 * @param $path
 	 * @return bool
 	 */
-	private
-	function isPartialFilePath($path) {
+	private function isPartialFilePath($path) {
 		$extension = pathinfo($path, PATHINFO_EXTENSION);
 
 		if ($extension === 'part') {
@@ -365,8 +194,7 @@ class Util {
 	 * @param $filePath
 	 * @return bool|string
 	 */
-	private
-	function stripUserFilesPath($filePath) {
+	private function stripUserFilesPath($filePath) {
 		$split = $this->splitPath($filePath);
 
 		// It is not a file relative to data/user/files
@@ -384,8 +212,7 @@ class Util {
 	 * @param $filePath
 	 * @return array
 	 */
-	private
-	function splitPath($filePath) {
+	private function splitPath($filePath) {
 		$normalized = $this->filesystem->normalizePath($filePath);
 
 		return explode('/', $normalized);
@@ -395,8 +222,7 @@ class Util {
 	 * @param $filePath
 	 * @return bool
 	 */
-	private
-	function isEncryptedPath($filePath) {
+	private function isEncryptedPath($filePath) {
 		$data = '';
 
 		// We only need 24 bytes from the last chunck
@@ -428,52 +254,9 @@ class Util {
 	}
 
 	/**
-	 * @param $encryptedFiles
 	 * @return bool
 	 */
-	private
-	function encryptVersions($encryptedFiles) {
-		$successful = true;
-
-		if (App::isEnabled('files_versions')) {
-			foreach ($encryptedFiles as $filename) {
-				$versions = Storage::getVersions($this->user->getUID(),
-					$filename);
-				foreach ($versions as $version) {
-					$path = '/' . $this->user->getUID() . '/files_versions/' . $versions['path'] . '.v' . $version['version'];
-
-					$encHandle = fopen('crypt://' . $path . '.part', 'wb');
-
-					if ($encHandle === false) {
-						$this->logger->critical('Encryption Library couldn\'t open ' . $path . '.part, decryption failed');
-						$successful = false;
-						continue;
-					}
-
-					$plainHandle = $this->files->fopen($path, 'rb');
-					if ($plainHandle === false) {
-						$this->logger->critical('Encryption Library couldn\'t open ' . $path . '.part, decryption failed');
-						$successful = false;
-						continue;
-					}
-
-					stream_copy_to_stream($plainHandle, $encHandle);
-
-					fclose($encHandle);
-					fclose($plainHandle);
-
-					$this->files->rename($path . '.part', $path);
-				}
-			}
-		}
-		return $successful;
-	}
-
-	/**
-	 * @return bool
-	 */
-	public
-	function recoveryEnabledForUser() {
+	public function recoveryEnabledForUser() {
 		$recoveryMode = $this->config->getUserValue($this->user->getUID(),
 			'encryption',
 			'recoveryEnabled',
@@ -486,8 +269,7 @@ class Util {
 	 * @param $enabled
 	 * @return bool
 	 */
-	public
-	function setRecoveryForUser($enabled) {
+	public function setRecoveryForUser($enabled) {
 		$value = $enabled ? '1' : '0';
 
 		try {
@@ -504,8 +286,7 @@ class Util {
 	/**
 	 * @param $recoveryPassword
 	 */
-	public
-	function recoverUsersFiles($recoveryPassword) {
+	public function recoverUsersFiles($recoveryPassword) {
 		// todo: get system private key here
 //		$this->keyManager->get
 		$privateKey = $this->crypt->decryptPrivateKey($encryptedKey,
@@ -515,53 +296,10 @@ class Util {
 	}
 
 	/**
-	 * @param $encryptedFiles
-	 * @return bool
-	 */
-	private
-	function decryptVersions($encryptedFiles) {
-		$successful = true;
-
-		if (App::isEnabled('files_versions')) {
-			foreach ($encryptedFiles as $filename) {
-				$versions = Storage::getVersions($this->user->getUID(),
-					$filename);
-				foreach ($versions as $version) {
-					$path = '/' . $this->user->getUID() . '/files_versions/' . $versions['path'] . '.v' . $version['version'];
-
-					$encHandle = fopen('crypt://' . $path . '.part', 'wb');
-
-					if ($encHandle === false) {
-						$this->logger->critical('Encryption Library couldn\'t open ' . $path . '.part, decryption failed');
-						$successful = false;
-						continue;
-					}
-
-					$plainHandle = $this->files->fopen($path, 'rb');
-					if ($plainHandle === false) {
-						$this->logger->critical('Encryption Library couldn\'t open ' . $path . '.part, decryption failed');
-						$successful = false;
-						continue;
-					}
-
-					stream_copy_to_stream($plainHandle, $encHandle);
-
-					fclose($encHandle);
-					fclose($plainHandle);
-
-					$this->files->rename($path . '.part', $path);
-				}
-			}
-		}
-		return $successful;
-	}
-
-	/**
 	 * @param string $uid
 	 * @return bool
 	 */
-	public
-	function userHasFiles($uid) {
+	public function userHasFiles($uid) {
 		return $this->files->file_exists($uid . '/files');
 	}
 
@@ -569,10 +307,9 @@ class Util {
 	 * @param $path
 	 * @param $privateKey
 	 */
-	private
-	function recoverAllFiles($path, $privateKey) {
+	private function recoverAllFiles($path, $privateKey) {
 		// Todo relocate to storage
-		$dirContent = $this->files->getDirectoryContent();
+		$dirContent = $this->files->getDirectoryContent($path);
 
 		foreach ($dirContent as $item) {
 			// Get relative path from encryption/keyfiles
@@ -590,8 +327,7 @@ class Util {
 	 * @param $filePath
 	 * @param $privateKey
 	 */
-	private
-	function recoverFile($filePath, $privateKey) {
+	private function recoverFile($filePath, $privateKey) {
 		$sharingEnabled = Share::isEnabled();
 
 		// Find out who, if anyone, is sharing the file
@@ -600,7 +336,7 @@ class Util {
 				$this->user->getUID(),
 				true);
 			$userIds = $result['users'];
-			$userIds[] = $this->publicShareKeyId;
+			$userIds[] = 'public';
 		} else {
 			$userIds = [
 				$this->user->getUID(),
@@ -629,8 +365,7 @@ class Util {
 	 * @param $userIds
 	 * @return array
 	 */
-	private
-	function filterShareReadyUsers($userIds) {
+	private function filterShareReadyUsers($userIds) {
 		// This array will collect the filtered IDs
 		$readyIds = $unreadyIds = [];
 
@@ -654,14 +389,6 @@ class Util {
 			'ready' => $readyIds,
 			'unready' => $unreadyIds
 		];
-	}
-
-	private
-	function isUserReady($user) {
-		if ($user === $this->publicShareKeyId || $user === $this->recoveryKeyId) {
-			return true;
-		}
-		return $this->keyManager->ready();
 	}
 
 }

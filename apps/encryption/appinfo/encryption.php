@@ -25,9 +25,6 @@ use OC\Files\Filesystem;
 use OC\Files\View;
 use OCA\Encryption\Crypto\Crypt;
 use OCA\Encryption\HookManager;
-use OCA\Encryption\Hooks\AppHooks;
-use OCA\Encryption\Hooks\FileSystemHooks;
-use OCA\Encryption\Hooks\ShareHooks;
 use OCA\Encryption\Hooks\UserHooks;
 use OCA\Encryption\KeyManager;
 use OCA\Encryption\Migrator;
@@ -84,16 +81,7 @@ class Encryption extends \OCP\AppFramework\App {
 			$hookManager = new HookManager();
 
 			$hookManager->registerHook([
-				new UserHooks($container->query('KeyManager'),
-					$server->getLogger(),
-					$container->query('UserSetup'),
-					$container->query('Migrator'),
-					$server->getUserSession(),
-					new \OCP\Util(),
-					$container->query('Util')),
-//				new ShareHooks(),
-//				new FileSystemHooks(),
-//				new AppHooks()
+				new UserHooks($container->query('KeyManager'), $server->getLogger(), $container->query('UserSetup'), $server->getUserSession(), new \OCP\Util(), $container->query('Util')),
 			]);
 
 			$hookManager->fireHooks();
@@ -108,7 +96,7 @@ class Encryption extends \OCP\AppFramework\App {
 	 *
 	 */
 	public function registerEncryptionModule() {
-//		$this->encryptionManager->registerEncryptionModule(new \OCA\Encryption\Crypto\Encryption());
+		$this->encryptionManager->registerEncryptionModule(new \OCA\Encryption\Crypto\Encryption());
 	}
 
 	/**

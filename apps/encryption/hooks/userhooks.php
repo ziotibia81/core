@@ -25,7 +25,6 @@ namespace OCA\Encryption\Hooks;
 use OCP\Util as OCUtil;
 use OCA\Encryption\Hooks\Contracts\IHook;
 use OCA\Encryption\KeyManager;
-use OCA\Encryption\Migrator;
 use OCA\Encryption\Users\Setup;
 use OCP\App;
 use OCP\ILogger;
@@ -47,10 +46,6 @@ class UserHooks implements IHook {
 	 */
 	private $userSetup;
 	/**
-	 * @var Migrator
-	 */
-	private $migrator;
-	/**
 	 * @var IUserSession
 	 */
 	private $user;
@@ -65,20 +60,18 @@ class UserHooks implements IHook {
 	 * @param KeyManager $keyManager
 	 * @param ILogger $logger
 	 * @param Setup $userSetup
-	 * @param Migrator $migrator
 	 * @param IUserSession $user
 	 * @param OCUtil $ocUtil
 	 * @param Util $util
+	 * @internal param Migrator $migrator
 	 */
 	public function __construct(
-		KeyManager $keyManager, ILogger $logger, Setup $userSetup, Migrator $migrator, IUserSession $user, OCUtil $ocUtil, Util $util) {
+		KeyManager $keyManager, ILogger $logger, Setup $userSetup, IUserSession $user, OCUtil $ocUtil, Util $util) {
 
 		$this->keyManager = $keyManager;
 		$this->logger = $logger;
 		$this->userSetup = $userSetup;
-		$this->migrator = $migrator;
 		$this->user = $user;
-		$this->util = $ocUtil;
 		$this->util = $util;
 	}
 
@@ -133,46 +126,7 @@ class UserHooks implements IHook {
 			return false;
 		}
 
-		$cache = $this->keyManager->init($params['uid'], $params['password']);
-
-		// Check if first-run file migration has already been performed
-		$ready = false;
-		$this->migrator->setUser($params['uid']);
-		$migrationStatus = $this->migrator->getStatus($params['uid']);
-		if ($migrationStatus === Migrator::$migrationOpen && $cache !== false) {
-			$ready = $this->migrator->beginMigration();
-		} elseif ($migrationStatus === Migrator::$migrationInProgress) {
-			// refuse login as long as the initial encryption is running
-			sleep(5);
-			$this->user->logout();
-			return false;
-		}
-
-		$result = true;
-
-		// If migration not yet done
-		if ($ready) {
-
-			// Encrypt existing user files
-			try {
-				$result = $this->util->encryptAll('/' . $params['uid'] . '/' . 'files');
-			} catch (\Exception $ex) {
-				$this->logger->critical('Encryption library initial encryption failed! Error: ' . $ex->getMessage());
-				$result = false;
-			}
-
-			if ($result) {
-				$this->logger->info('Encryption Library Encryption of existing files belonging to "' . $params['uid'] . '" completed');
-				// Register successful migration in DB
-				$this->migrator->finishMigration();
-			} else {
-				$this->logger->critical('Encryption library initial encryption failed');
-				$this->migrator->resetMigrationStatus();
-				$this->user->logout();
-			}
-		}
-
-		return $result;
+		$this->keyManager->init($params['uid'], $params['password']);
 	}
 
 	/**

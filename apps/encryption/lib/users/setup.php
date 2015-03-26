@@ -39,8 +39,8 @@ class Setup extends \OCA\Encryption\Setup {
 	}
 
 	/**
-	 * @param $uid
-	 * @param $password
+	 * @param $uid userid
+	 * @param $password user password
 	 * @return bool
 	 */
 	public function setupUser($uid, $password) {
@@ -48,8 +48,8 @@ class Setup extends \OCA\Encryption\Setup {
 	}
 
 	/**
-	 * @param $uid
-	 * @param $password
+	 * @param $uid userid
+	 * @param $password user password
 	 * @return bool
 	 */
 	public function setupServerSide($uid, $password) {

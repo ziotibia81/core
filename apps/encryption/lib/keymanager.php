@@ -71,7 +71,12 @@ class KeyManager {
 	/**
 	 * @var string
 	 */
-	private $shareKeyId = 'share';
+	private $shareKeyId = 'sharekey';
+
+	/**
+	 * @var string
+	 */
+	private $fileKeyId = 'filekey';
 	/**
 	 * @var IConfig
 	 */
@@ -171,6 +176,7 @@ class KeyManager {
 	/**
 	 * Decrypt private key and store it
 	 *
+	 * @param string $uid userid
 	 * @param string $passPhrase users password
 	 * @return ICache
 	 */
@@ -209,15 +215,10 @@ class KeyManager {
 
 	/**
 	 * @param $path
-	 * @param string|bool $keyId
 	 * @return mixed
 	 */
-	public function getFileKey($path, $keyId = false) {
-		if (!$keyId) {
-			// If no key id is set default to users id
-			$keyId = $this->keyId;
-		}
-		return $this->keyStorage->getFileKey($path, $this->keyId);
+	public function getFileKey($path) {
+		return $this->keyStorage->getFileKey($path, $this->fileKeyId);
 	}
 
 	/**
@@ -225,8 +226,7 @@ class KeyManager {
 	 * @return mixed
 	 */
 	public function getShareKey($path) {
-		// fixme: fix implementation
-		return $this->keyStorage->getFileKey($path, $this->shareKeyId);
+		return $this->keyStorage->getFileKey($path, $this->keyId . $this->shareKeyId);
 	}
 
 	/**
@@ -276,6 +276,7 @@ class KeyManager {
 				// ...encryption was activated for the first time (no keys exists)
 				// ...the user doesn't have any files
 				if (($util->recoveryEnabledForUser() && $recoveryPassword)
+
 					|| !$this->userHasKeys($user)
 					|| !$util->userHasFiles($user)
 				) {

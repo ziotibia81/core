@@ -104,8 +104,11 @@ class KeyManagerTest extends TestCase {
 		$this->assertFalse($this->instance->userHasKeys($this->userId));
 	}
 
+	/**
+	 *
+	 */
 	public function testInit() {
-		var_dump($this->instance->init($this->userId, 'pass'));
+		$this->assertFalse($this->instance->init($this->userId, 'pass'));
 	}
 
 
