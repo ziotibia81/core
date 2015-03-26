@@ -217,6 +217,7 @@ class Trashbin {
 				'trashPath' => \OC\Files\Filesystem::normalizePath($filename . '.d' . $timestamp)));
 
 			$size += self::retainVersions($file_path, $filename, $timestamp);
+			$size += self::retainEncryptionKeys($file_path, $filename, $timestamp);
 
 			// if owner !== user we need to also add a copy to the owners trash
 			if ($user !== $owner) {
@@ -287,6 +288,51 @@ class Trashbin {
 	}
 
 	/**
+	 * Move encryption keys to trash so that they can be restored later
+	 *
+	 * @param string $file_path path to original file
+	 * @param string $filename of deleted file
+	 * @param integer $timestamp when the file was deleted
+	 *
+	 * @return int size of encryption keys
+	 */
+	private static function retainEncryptionKeys($file_path, $filename, $timestamp) {
+		$size = 0;
+
+		if (\OCP\App::isEnabled('files_encryption')) {
+
+			$user = \OCP\User::getUser();
+			$rootView = new \OC\Files\View('/');
+
+			list($owner, $ownerPath) = self::getUidAndFilename($file_path);
+
+			// file has been deleted in between
+			if (empty($ownerPath)) {
+				return 0;
+			}
+
+			$util = new \OCA\Files_Encryption\Util($rootView, $user);
+
+			$baseDir = '/files_encryption/';
+			if (!$util->isSystemWideMountPoint($ownerPath)) {
+				$baseDir = $owner . $baseDir;
+			}
+
+			$keyfiles = \OC\Files\Filesystem::normalizePath($baseDir . '/keys/' . $ownerPath);
+
+			if ($rootView->is_dir($keyfiles)) {
+				$size += self::calculateSize(new \OC\Files\View($keyfiles));
+				if ($owner !== $user) {
+					self::copy_recursive($keyfiles, $owner . '/files_trashbin/keys/' . basename($ownerPath) . '.d' . $timestamp, $rootView);
+				}
+				$rootView->rename($keyfiles, $user . '/files_trashbin/keys/' . $filename . '.d' . $timestamp);
+			}
+
+		}
+		return $size;
+	}
+
+	/**
 	 * restore files from trash bin
 	 *
 	 * @param string $file path to the deleted file
@@ -340,6 +386,7 @@ class Trashbin {
 				'trashPath' => \OC\Files\Filesystem::normalizePath($file)));
 
 			self::restoreVersions($view, $file, $filename, $uniqueFilename, $location, $timestamp);
+			self::restoreEncryptionKeys($view, $file, $filename, $uniqueFilename, $location, $timestamp);
 
 			if ($timestamp) {
 				$query = \OC_DB::prepare('DELETE FROM `*PREFIX*files_trash` WHERE `user`=? AND `id`=? AND `timestamp`=?');
@@ -409,6 +456,60 @@ class Trashbin {
 
 			// enable proxy
 			\OC_FileProxy::$enabled = $proxyStatus;
+		}
+	}
+
+	/**
+	 * restore encryption keys from trash bin
+	 *
+	 * @param \OC\Files\View $view
+	 * @param string $file complete path to file
+	 * @param string $filename name of file
+	 * @param string $uniqueFilename new file name to restore the file without overwriting existing files
+	 * @param string $location location of file
+	 * @param int $timestamp deletion time
+	 * @return bool
+	 */
+	private static function restoreEncryptionKeys(\OC\Files\View $view, $file, $filename, $uniqueFilename, $location, $timestamp) {
+
+		if (\OCP\App::isEnabled('files_encryption')) {
+			$user = \OCP\User::getUser();
+			$rootView = new \OC\Files\View('/');
+
+			$target = \OC\Files\Filesystem::normalizePath('/' . $location . '/' . $uniqueFilename);
+
+			list($owner, $ownerPath) = self::getUidAndFilename($target);
+
+			// file has been deleted in between
+			if (empty($ownerPath)) {
+				return false;
+			}
+
+			$util = new \OCA\Files_Encryption\Util($rootView, $user);
+
+			$baseDir = '/files_encryption/';
+			if (!$util->isSystemWideMountPoint($ownerPath)) {
+				$baseDir = $owner . $baseDir;
+			}
+
+			$source_location = dirname($file);
+
+			if ($view->is_dir('/files_trashbin/keys/' . $file)) {
+				if ($source_location != '.') {
+					$keyfile = \OC\Files\Filesystem::normalizePath($user . '/files_trashbin/keys/' . $source_location . '/' . $filename);
+				} else {
+					$keyfile = \OC\Files\Filesystem::normalizePath($user . '/files_trashbin/keys/' . $filename);
+				}
+			}
+
+			if ($timestamp) {
+				$keyfile .= '.d' . $timestamp;
+			}
+
+			if ($rootView->is_dir($keyfile)) {
+				$rootView->rename($keyfile, $baseDir . '/keys/' . $ownerPath);
+			}
+
 		}
 	}
 
