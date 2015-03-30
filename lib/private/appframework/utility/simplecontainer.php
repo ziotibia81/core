@@ -91,6 +91,9 @@ class SimpleContainer extends \Pimple\Container implements \OCP\IContainer {
 	 * @throws QueryException if the query could not be resolved
 	 */
 	public function query($name) {
+		if (strpos($name, 'IStorage') !== false) {
+			null;
+		}
 		if ($this->offsetExists($name)) {
 			return $this->offsetGet($name);
 		} else {

@@ -25,12 +25,12 @@ use OCP\AppFramework\App;
 (new App('encryption'))->registerRoutes($this, array('routes' => array(
 
 	[
-		'name' => 'recovery#adminRecovery',
+		'name' => 'Recovery#adminRecovery',
 		'url' => '/ajax/adminRecovery',
 		'verb' => 'POST'
 	],
 	[
-		'name' => 'recovery#userRecovery',
+		'name' => 'Recovery#userRecovery',
 		'url' => '/ajax/userRecovery',
 		'verb' => 'POST'
 	]
