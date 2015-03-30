@@ -706,7 +706,10 @@ class OC {
 			\OC\Files\Filesystem::addStorageWrapper('oc_encryption', function ($mountPoint, $storage) {
 				$parameters = array('storage' => $storage, 'mountPoint' => $mountPoint);
 				$manager = \OC::$server->getEncryptionManager();
-				$util = new \OC\Encryption\Util(new \OC\Files\View(), \OC::$server->getUserManager());
+				$util = new \OC\Encryption\Util(
+					new \OC\Files\View(),
+					\OC::$server->getUserManager(),
+					\OC::$server->getConfig());
 				$user = \OC::$server->getUserSession()->getUser();
 				$logger = \OC::$server->getLogger();
 				$uid = $user ? $user->getUID() : null;
@@ -726,7 +729,10 @@ class OC {
 			}
 			$updater = new \OC\Encryption\Update(
 				new \OC\Files\View(),
-				new \OC\Encryption\Util(new \OC\Files\View(), \OC::$server->getUserManager()),
+				new \OC\Encryption\Util(
+					new \OC\Files\View(),
+					\OC::$server->getUserManager(),
+					\OC::$server->getConfig()),
 				\OC\Files\Filesystem::getMountManager(),
 				\OC::$server->getEncryptionManager(),
 				$uid
