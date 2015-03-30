@@ -579,23 +579,29 @@ class Connection extends LDAPUtility {
 			$getConnectionResourceAttempt = false;
 			return false;
 		}
-		$getConnectionResourceAttempt = true;
-		$cr = $this->getConnectionResource();
-		$getConnectionResourceAttempt = false;
-		if(!$this->ldap->isResource($cr)) {
-			return false;
+
+		for($i = 0; $i<3; $i++) {
+
+			$getConnectionResourceAttempt = true;
+			$cr = $this->getConnectionResource();
+			$getConnectionResourceAttempt = false;
+			if(!$this->ldap->isResource($cr)) {
+				return false;
+			}
+
+			$ldapLogin = @$this->ldap->bind($cr,
+				$this->configuration->ldapAgentName,
+				$this->configuration->ldapAgentPassword);
+			if (!$ldapLogin && $i >= 2) {
+				\OCP\Util::writeLog('user_ldap',
+					'Bind failed: ' . $this->ldap->errno($cr) . ': ' . $this->ldap->error($cr),
+					\OCP\Util::ERROR);
+				$this->ldapConnectionRes = null;
+				return false;
+			} else {
+				return true;
+			}
 		}
-		$ldapLogin = @$this->ldap->bind($cr,
-										$this->configuration->ldapAgentName,
-										$this->configuration->ldapAgentPassword);
-		if(!$ldapLogin) {
-			\OCP\Util::writeLog('user_ldap',
-				'Bind failed: ' . $this->ldap->errno($cr) . ': ' . $this->ldap->error($cr),
-				\OCP\Util::ERROR);
-			$this->ldapConnectionRes = null;
-			return false;
-		}
-		return true;
 	}
 
 }
