@@ -203,4 +203,11 @@ interface IRequest {
 	 * @return string Server host
 	 */
 	public function getServerHost();
+
+	/**
+	 * Checks whether the request originates from jQuery
+	 * or if the Accept Header contains application json
+	 * @return boolean true if at least one of the headers is set, false otherwise
+	 */
+	public function isJSONRequest();
 }
