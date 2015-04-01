@@ -300,4 +300,18 @@ class OC_Request {
 		}
 		return false;
 	}
+
+	/**
+	 * Checks whether the request originates from jQuery
+	 * or if the Accept Header contains application json
+	 * @return boolean true if at least one of the headers is set, false otherwise
+	 */
+	static public function acceptsJSON() {
+		if (stristr($_SERVER['HTTP_X_REQUEST_WITH'], 'XMLHttpRequest')
+			|| stristr($_SERVER['HTTP_ACCEPT'],'application/json')
+		) {
+			return true;
+		}
+		return false;
+	}
 }

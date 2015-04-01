@@ -38,5 +38,7 @@ try {
 
 	//show the user a detailed error page
 	OC_Response::setStatus(OC_Response::STATUS_INTERNAL_SERVER_ERROR);
-	OC_Template::printExceptionErrorPage($ex);
+	if (!OC_Request::acceptsJSON()) {
+		OC_Template::printExceptionErrorPage($ex);
+	}
 }
