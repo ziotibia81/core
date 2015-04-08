@@ -1112,10 +1112,11 @@ class Share extends \OC\Share\Constants {
 	 * @param string $itemSource
 	 * @param string $date expiration date
 	 * @param int $shareTime timestamp from when the file was shared
+	 * @param int $id share id (optional, set it to set expiration for user or group shares)
 	 * @throws \Exception
 	 * @return boolean
 	 */
-	public static function setExpirationDate($itemType, $itemSource, $date, $shareTime = null) {
+	public static function setExpirationDate($itemType, $itemSource, $date, $shareTime = null, $id = null) {
 		$user = \OC_User::getUser();
 		$l = \OC::$server->getL10N('lib');
 
@@ -1131,16 +1132,24 @@ class Share extends \OC\Share\Constants {
 		} else {
 			$date = self::validateExpireDate($date, $shareTime, $itemType, $itemSource);
 		}
-		$query = \OC_DB::prepare('UPDATE `*PREFIX*share` SET `expiration` = ? WHERE `item_type` = ? AND `item_source` = ?  AND `uid_owner` = ? AND `share_type` = ?');
-		$query->bindValue(1, $date, 'datetime');
-		$query->bindValue(2, $itemType);
-		$query->bindValue(3, $itemSource);
-		$query->bindValue(4, $user);
-		$query->bindValue(5, \OCP\Share::SHARE_TYPE_LINK);
+		if (!is_null($id)) {
+			$query = \OC_DB::prepare('UPDATE `*PREFIX*share` SET `expiration` = ? WHERE `id` = ? AND `uid_owner` = ?');
+			$query->bindValue(1, $date, 'datetime');
+			$query->bindValue(2, $id);
+			$query->bindValue(3, $user);
+		} else {
+			$query = \OC_DB::prepare('UPDATE `*PREFIX*share` SET `expiration` = ? WHERE `item_type` = ? AND `item_source` = ?  AND `uid_owner` = ? AND `share_type` = ?');
+			$query->bindValue(1, $date, 'datetime');
+			$query->bindValue(2, $itemType);
+			$query->bindValue(3, $itemSource);
+			$query->bindValue(4, $user);
+			$query->bindValue(5, \OCP\Share::SHARE_TYPE_LINK);
+		}
 
 		$query->execute();
 
 		\OC_Hook::emit('OCP\Share', 'post_set_expiration_date', array(
+			'id' => $id,
 			'itemType' => $itemType,
 			'itemSource' => $itemSource,
 			'date' => $date,
