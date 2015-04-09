@@ -87,6 +87,7 @@ class Adapter {
 			$allEntries = $queryAll->fetchAll();
 
 			\OC::$server->getLogger()->error('nvhasaproblem');
+			\OC::$server->getLogger()->error('nvhasaproblem#pair#' . serialize($input['storage']) . '#' . serialize($input['path_hash']));
 			\OC::$server->getLogger()->error('nvhasaproblem#$return#' . serialize($return));
 			\OC::$server->getLogger()->error('nvhasaproblem#$queryConflict#' . serialize($conflictEntries));
 			\OC::$server->getLogger()->error('nvhasaproblem#$queryAll#' . serialize($allEntries));
