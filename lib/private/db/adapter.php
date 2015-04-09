@@ -58,20 +58,60 @@ class Adapter {
 			. implode('`,`', array_keys($input)) . '`) SELECT '
 			. str_repeat('?,', count($input)-1).'? ' // Is there a prettier alternative?
 			. 'FROM `' . $table . '` WHERE ';
+		$subquery = '';
+		$subqueryParams = [];
 
 		$inserts = array_values($input);
 		foreach($compare as $key) {
-			$query .= '`' . $key . '`';
+			$subquery .= '`' . $key . '`';
 			if (is_null($input[$key])) {
-				$query .= ' IS NULL AND ';
+				$subquery .= ' IS NULL AND ';
 			} else {
 				$inserts[] = $input[$key];
-				$query .= ' = ? AND ';
+				$subqueryParams[] = $input[$key];
+				$subquery .= ' = ? AND ';
 			}
 		}
-		$query = substr($query, 0, strlen($query) - 5);
+		$subquery = substr($subquery, 0, strlen($subquery) - 5);
+		$query .= $subquery;
 		$query .= ' HAVING COUNT(*) = 0';
 
-		return $this->conn->executeUpdate($query, $inserts);
+		$return = $this->conn->executeUpdate($query, $inserts);
+
+		if ($table === '*PREFIX*filecache') {
+			$sql = 'SELECT `storage`, `path_hash` FROM `' . $table . '` WHERE ' . $subquery;
+			$queryConflict = $this->conn->executeQuery($sql, $subqueryParams);
+			$conflictEntries = $queryConflict->fetchAll();
+			$sql = 'SELECT `storage`, `path_hash` FROM `' . $table . '`';
+			$queryAll = $this->conn->executeQuery($sql);
+			$allEntries = $queryAll->fetchAll();
+
+			\OC::$server->getLogger()->error('nvhasaproblem');
+			\OC::$server->getLogger()->error('nvhasaproblem#$return#' . serialize($return));
+			\OC::$server->getLogger()->error('nvhasaproblem#$queryConflict#' . serialize($conflictEntries));
+			\OC::$server->getLogger()->error('nvhasaproblem#$queryAll#' . serialize($allEntries));
+
+			if (empty($conflictEntries) && !$return) {
+				\OC::$server->getLogger()->error(self::debug_string_backtrace());
+			}
+		}
+
+		return $return;
+	}
+
+	function debug_string_backtrace() {
+		ob_start();
+		debug_print_backtrace();
+		$trace = ob_get_contents();
+		ob_end_clean();
+
+		// Remove first item from backtrace as it's this function which
+		// is redundant.
+		$trace = preg_replace ('/^#0\s+' . __FUNCTION__ . "[^\n]*\n/", '', $trace, 1);
+
+		// Renumber backtrace items.
+		$trace = preg_replace ('/^#(\d+)/me', '\'#\' . ($1 - 1)', $trace);
+
+		return $trace;
 	}
 }
