@@ -76,7 +76,17 @@ class Adapter {
 		$query .= $subquery;
 		$query .= ' HAVING COUNT(*) = 0';
 
-		$return = $this->conn->executeUpdate($query, $inserts);
+		try {
+			$return = $this->conn->executeUpdate($query, $inserts);
+		} catch ($e) {
+			\OC::$server->getLogger()->error($e);
+			$trace = array_map(function ($entry) {
+				unset($entry['object']);
+				unset($entry['args']);
+				return $entry;
+			}, debug_backtrace());
+			\OC::$server->getLogger()->error('backtrace#' . serialize($trace));
+		}
 
 		if ($table === '*PREFIX*filecache') {
 			$sql = 'SELECT `storage`, `path_hash` FROM `' . $table . '` WHERE ' . $subquery;
@@ -93,7 +103,12 @@ class Adapter {
 			\OC::$server->getLogger()->error('nvhasaproblem#$queryAll#' . serialize($allEntries));
 
 			if (empty($conflictEntries) && !$return) {
-				\OC::$server->getLogger()->error(self::debug_string_backtrace());
+				$trace = array_map(function ($entry) {
+					unset($entry['object']);
+					unset($entry['args']);
+					return $entry;
+				}, debug_backtrace());
+				\OC::$server->getLogger()->error('backtrace#' . serialize($trace));
 			}
 		}
 
