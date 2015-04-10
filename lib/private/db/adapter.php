@@ -78,7 +78,7 @@ class Adapter {
 
 		try {
 			$return = $this->conn->executeUpdate($query, $inserts);
-		} catch ($e) {
+		} catch (\Exception $e) {
 			\OC::$server->getLogger()->error($e);
 			$trace = array_map(function ($entry) {
 				unset($entry['object']);
@@ -86,30 +86,7 @@ class Adapter {
 				return $entry;
 			}, debug_backtrace());
 			\OC::$server->getLogger()->error('backtrace#' . serialize($trace));
-		}
-
-		if ($table === '*PREFIX*filecache') {
-			$sql = 'SELECT `storage`, `path_hash` FROM `' . $table . '` WHERE ' . $subquery;
-			$queryConflict = $this->conn->executeQuery($sql, $subqueryParams);
-			$conflictEntries = $queryConflict->fetchAll();
-			$sql = 'SELECT `storage`, `path_hash` FROM `' . $table . '`';
-			$queryAll = $this->conn->executeQuery($sql);
-			$allEntries = $queryAll->fetchAll();
-
-			\OC::$server->getLogger()->error('nvhasaproblem');
-			\OC::$server->getLogger()->error('nvhasaproblem#pair#' . serialize($input['storage']) . '#' . serialize($input['path_hash']));
-			\OC::$server->getLogger()->error('nvhasaproblem#$return#' . serialize($return));
-			\OC::$server->getLogger()->error('nvhasaproblem#$queryConflict#' . serialize($conflictEntries));
-			\OC::$server->getLogger()->error('nvhasaproblem#$queryAll#' . serialize($allEntries));
-
-			if (empty($conflictEntries) && !$return) {
-				$trace = array_map(function ($entry) {
-					unset($entry['object']);
-					unset($entry['args']);
-					return $entry;
-				}, debug_backtrace());
-				\OC::$server->getLogger()->error('backtrace#' . serialize($trace));
-			}
+			throw $e;
 		}
 
 		return $return;
