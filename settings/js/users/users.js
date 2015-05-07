@@ -738,14 +738,9 @@ $(document).ready(function () {
 					var mailAddress = $input.val();
 
 					if (mailAddress.length > 0) {
-						var $loading = $('<div>')
-							.addClass('loading-small')
-							.css('width', '16px')
-							.css('height', '16px')
-							.css('display', 'inline-block')
-							// edit icon isn't hidden but has opacity 0 -> move the loading indicator
-							.css('margin-left', '-19px');
-						$td.append($loading);
+						$td.find('.loading-small').css('display', 'inline-block');
+						$input.css('padding-right', '26px');
+						$input.attr('disabled', 'disabled');
 						$.ajax({
 							type: 'PUT',
 							url: OC.generateUrl('/settings/users/{id}/mailAddress', {id: uid}),
@@ -756,11 +751,14 @@ $(document).ready(function () {
 							// set data attriute to new value
 							// will in blur() be used to show the text instead of the input field
 							$tr.data('mailAddress', mailAddress);
+							$input.removeAttr('disabled');
 							$input.blur();
 						}).fail(function (result) {
 							OC.Notification.show(result.responseJSON.data.message);
+							$input.removeAttr('disabled')
+								.css('padding-right', '6px');
 						}).always(function(){
-							$td.find('.loading-small').remove();
+							$td.find('.loading-small').css('display', '');
 						});
 					}
 				}
