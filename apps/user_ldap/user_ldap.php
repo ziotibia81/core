@@ -155,23 +155,23 @@ class USER_LDAP extends BackendUtility implements \OCP\UserInterface {
 	 */
 	public function processAttributeValues($ocName, $ldapEntry) {
 		//Quota
-		if(isset($ldapEntry[$this->connection->ldapQuotaAttribute])) {
+		if(isset($ldapEntry[$this->access->connection->ldapQuotaAttribute])) {
 			$quota = $this->access->determineQuota(
-				$ldapEntry[$this->connection->ldapQuotaAttribute]);
+				$ldapEntry[$this->access->connection->ldapQuotaAttribute]);
 			$this->access->storeQuota($ocName, $quota);
 		}
 		//Email
-		if(isset($ldapEntry[$this->connection->ldapEmailAttribute])) {
+		if(isset($ldapEntry[$this->access->connection->ldapEmailAttribute])) {
 			$this->access->storeEmail(
-				$ocName, $ldapEntry[$this->connection->ldapEmailAttribute]);
+				$ocName, $ldapEntry[$this->access->connection->ldapEmailAttribute]);
 		}
 		//displayName
 		$dispName1 = $dispName2 = '';
-		if(isset($ldapEntry[$this->connection->ldapUserDisplayName])) {
-			$dispName1 = $ldapEntry[$this->connection->ldapUserDisplayName];
+		if(isset($ldapEntry[$this->access->connection->ldapUserDisplayName])) {
+			$dispName1 = $ldapEntry[$this->access->connection->ldapUserDisplayName];
 		}
-		if(isset($ldapEntry[$this->connection->ldapUserDisplayName2])) {
-			$dispName2 = $ldapEntry[$this->connection->ldapUserDisplayName2];
+		if(isset($ldapEntry[$this->access->connection->ldapUserDisplayName2])) {
+			$dispName2 = $ldapEntry[$this->access->connection->ldapUserDisplayName2];
 		}
 		if(!empty($dispName1) || !empty($dispName2)) {
 			$this->access->cacheUserDisplayName($ocName, $dispName1, $dispName2);
