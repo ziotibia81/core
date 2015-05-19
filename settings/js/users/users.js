@@ -748,13 +748,13 @@ $(document).ready(function () {
 								mailAddress: $(this).val()
 							}
 						}).success(function () {
-							// set data attriute to new value
+							// set data attribute to new value
 							// will in blur() be used to show the text instead of the input field
 							$tr.data('mailAddress', mailAddress);
 							$input.removeAttr('disabled');
 							$input.blur();
 						}).fail(function (result) {
-							OC.Notification.show(result.responseJSON.data.message);
+							OC.Notification.showTemporary(result.responseJSON.data.message);
 							$input.removeAttr('disabled')
 								.css('padding-right', '6px');
 						}).always(function(){
