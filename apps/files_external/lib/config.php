@@ -962,8 +962,12 @@ class OC_Mount_Config {
 
 		$class = $options['class'];
 		try {
-			/** @var \OC\Files\Storage\Storage $storage */
-			$storage = new $class($options['options']);
+			if($class instanceof OC\Files\Storage\Storage) {
+				/** @var \OC\Files\Storage\Storage $storage */
+				$storage = new $class($options['options']);
+			} else {
+				return false;
+			}
 			// TODO: introduce StorageConfigException
 		} catch (\Exception $e) {
 			// storage might not be fully configured yet (ex: Dropbox)
