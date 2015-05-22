@@ -81,8 +81,13 @@ interface IManager {
 
 	/**
 	 * Will return additional notification types as specified by other apps
+	 *
 	 * @param string $languageCode
-	 * @return array
+	 * @return array Array "stringID of the type" => "translated string description for the setting"
+	 * 				or Array "stringID of the type" => [
+	 * 					'desc' => "translated string description for the setting"
+	 * 					'methods' => [\OCP\Activity\IExtension::METHOD_*],
+	 * 				]
 	 * @since 8.0.0
 	 */
 	function getNotificationTypes($languageCode);
