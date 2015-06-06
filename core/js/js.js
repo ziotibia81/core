@@ -1084,6 +1084,12 @@ function initCore() {
 	 */
 	moment.locale(OC.getLocale());
 
+	$( document ).ajaxError(function( event, request, settings ) {
+		if (_.contains([302, 307, 401], request.status)) {
+			var app = $('#content').attr('class').substring(4);
+			OC.redirect(OC.generateUrl('apps/' + app));
+		}
+	});
 
 	/**
 	 * Calls the server periodically to ensure that session doesn't
