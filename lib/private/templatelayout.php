@@ -155,7 +155,11 @@ class OC_TemplateLayout extends OC_Template {
 				$web = $info[1];
 				$file = $info[2];
 
-				$this->append( 'cssfiles', $web.'/'.$file . '?v=' . self::$versionHash);
+			if (substr($file, -strlen('print.css')) === 'print.css') {
+					$this->append( 'printcssfiles', $web.'/'.$file . '?v=' . self::$versionHash);
+				} else {
+					$this->append( 'cssfiles', $web.'/'.$file . '?v=' . self::$versionHash);
+				}
 			}
 		}
 	}
@@ -222,10 +226,31 @@ class OC_TemplateLayout extends OC_Template {
 		}
 
 		$cssFiles = self::findStylesheetFiles(OC_Util::$styles);
-		$cssHash = self::hashFileNames($cssFiles);
 
-		if (!file_exists("$assetDir/assets/$cssHash.css")) {
-			$cssFiles = array_map(function ($item) {
+		// differentiate between screen stylesheets and printer stylesheets
+		$screenCssFiles = array_filter($cssFiles, function($cssFile){ return substr($cssFile, -strlen('print.css')) !== 'print.css'; });
+		$screenCssAsset = $this->generateCssAsset($screenCssFiles);
+
+		$printCssFiles = array_filter($cssFiles, function($cssFile){ return substr($cssFile, -strlen('print.css')) === 'print.css'; });
+		$printCssAsset = $this->generateCssAsset($printCssFiles);
+
+		$this->append('jsfiles', OC_Helper::linkTo('assets', "$jsHash.js"));
+		$this->append('cssfiles', $screenCssAsset);
+		$this->append('printcssfiles', $printCssAsset);
+	}
+
+	/**
+	 * generates a single css asset file from an array of css files if at least one of them has changed
+	 * otherwise it just returns the path to the old asset file
+	 * @param $files
+	 * @return string
+	 */
+	private function generateCssAsset($files) {
+		$assetDir = \OC::$server->getConfig()->getSystemValue('assetdirectory', \OC::$SERVERROOT);
+		$hash = self::hashFileNames($files);
+
+		if (!file_exists("$assetDir/assets/$hash.css")) {
+			$files = array_map(function ($item) {
 				$root = $item[0];
 				$file = $item[2];
 				$assetPath = $root . '/' . $file;
@@ -241,16 +266,17 @@ class OC_TemplateLayout extends OC_Template {
 					$sourceRoot,
 					$sourcePath
 				);
-			}, $cssFiles);
-			$cssCollection = new AssetCollection($cssFiles);
-			$cssCollection->setTargetPath("assets/$cssHash.css");
+			}, $files);
+
+			$cssCollection = new AssetCollection($files);
+			$cssCollection->setTargetPath("assets/$hash.css");
 
 			$writer = new AssetWriter($assetDir);
 			$writer->writeAsset($cssCollection);
+
+			return OC::$server->getURLGenerator()->linkTo('assets', "$hash.css");
 		}
 
-		$this->append('jsfiles', OC_Helper::linkTo('assets', "$jsHash.js"));
-		$this->append('cssfiles', OC_Helper::linkTo('assets', "$cssHash.css"));
 	}
 
 	/**
