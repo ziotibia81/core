@@ -24,6 +24,7 @@
 namespace OCP\Files;
 
 use OC\Hooks\Emitter;
+use OCP\IUser;
 
 /**
  * Interface IRootFolder
@@ -33,5 +34,13 @@ use OC\Hooks\Emitter;
  */
 interface IRootFolder extends Folder, Emitter {
 
+	/**
+	 * Returns a view to user's files folder
+	 *
+	 * @param IUser $user user
+	 * @return \OCP\Files\Folder
+	 * @since 8.1.0
+	 */
+	public function getUserFolder(IUser $user = null);
 }
 

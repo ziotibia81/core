@@ -524,34 +524,12 @@ class Server extends SimpleContainer implements IServerContainer {
 	 */
 	public function getUserFolder($userId = null) {
 		if ($userId === null) {
-			$user = $this->getUserSession()->getUser();
-			if (!$user) {
-				return null;
-			}
-			$userId = $user->getUID();
+			$user = null;
 		} else {
 			$user = $this->getUserManager()->get($userId);
 		}
-		\OC\Files\Filesystem::initMountPoints($userId);
-		$dir = '/' . $userId;
 		$root = $this->getRootFolder();
-		$folder = null;
-
-		if (!$root->nodeExists($dir)) {
-			$folder = $root->newFolder($dir);
-		} else {
-			$folder = $root->get($dir);
-		}
-
-		$dir = '/files';
-		if (!$folder->nodeExists($dir)) {
-			$folder = $folder->newFolder($dir);
-			\OC_Util::copySkeleton($user, $folder);
-		} else {
-			$folder = $folder->get($dir);
-		}
-
-		return $folder;
+		return $root->getUserFolder($user);
 	}
 
 	/**
