@@ -27,6 +27,8 @@
 
 namespace OCA\Files_Sharing\API;
 
+use OCP\Share\Exceptions\InvalidFederatedCloudIdException;
+
 class Local {
 
 	/**
@@ -294,6 +296,8 @@ class Local {
 					$shareWith,
 					$permissions
 					);
+		} catch (InvalidFederatedCloudIdException $e) {
+			return new \OC_OCS_Result(null, 400, $e->getHint());
 		} catch (\Exception $e) {
 			return new \OC_OCS_Result(null, 403, $e->getMessage());
 		}

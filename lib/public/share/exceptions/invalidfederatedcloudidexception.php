@@ -20,7 +20,7 @@
  */
 
 
-namespace OC\Share\Exceptions;
+namespace OCP\Share\Exceptions;
 
 
 use OC\HintException;

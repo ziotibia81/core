@@ -27,7 +27,7 @@
 
 namespace OC\Share;
 
-use OC\Share\Exceptions\InvalidFederatedCloudIdException;
+use OCP\Share\Exceptions\InvalidFederatedCloudIdException;
 
 class Helper extends \OC\Share\Constants {
 
@@ -248,7 +248,9 @@ class Helper extends \OC\Share\Constants {
 	 */
 	public static function splitUserRemote($id) {
 		if (strpos($id, '@') === false) {
-			throw new InvalidFederatedCloudIdException('invalid Federated Cloud ID');
+			$l = \OC::$server->getL10N('core');
+			$hint = $l->t('Invalid Federated Cloud ID');
+			throw new InvalidFederatedCloudIdException('Invalid Federated Cloud ID', $hint);
 		}
 
 		// Find the first character that is not allowed in user names
@@ -282,6 +284,8 @@ class Helper extends \OC\Share\Constants {
 			}
 		}
 
-		throw new InvalidFederatedCloudIdException('invalid Federated Cloud ID');
+		$l = \OC::$server->getL10N('core');
+		$hint = $l->t('Invalid Federated Cloud ID');
+		throw new InvalidFederatedCloudIdException('Invalid Fededrated Cloud ID', $hint);
 	}
 }

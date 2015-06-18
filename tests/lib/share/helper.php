@@ -116,7 +116,7 @@ class Test_Share_Helper extends \Test\TestCase {
 	 * @dataProvider dataTestSplitUserRemoteError
 	 *
 	 * @param string $id
-	 * @expectedException \OC\Share\Exceptions\InvalidFederatedCloudIdException
+	 * @expectedException \OCP\Share\Exceptions\InvalidFederatedCloudIdException
 	 */
 	public function testSplitUserRemoteError($id) {
 		\OC\Share\Helper::splitUserRemote($id);
