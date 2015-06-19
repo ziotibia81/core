@@ -11,6 +11,7 @@ use OC\Files\Cache\Watcher;
 use OC\Files\Storage\Common;
 use OC\Files\Mount\MountPoint;
 use OC\Files\Storage\Temporary;
+use OC\Files\Filesystem;
 use OCP\Lock\ILockingProvider;
 
 class TemporaryNoTouch extends \OC\Files\Storage\Temporary {
@@ -57,9 +58,9 @@ class View extends \Test\TestCase {
 
 		//login
 		\OC_User::createUser('test', 'test');
-		$this->user = \OC_User::getUser();
 
 		$this->loginAsUser('test');
+		$this->user = \OC_User::getUser();
 		// clear mounts but somehow keep the root storage
 		// that was initialized above...
 		\OC\Files\Filesystem::clearMounts();
@@ -657,7 +658,7 @@ class View extends \Test\TestCase {
 		}
 	}
 
-	public function xtestLongPath() {
+	public function testLongPath() {
 
 		$storage = new \OC\Files\Storage\Temporary(array());
 		\OC\Files\Filesystem::mount($storage, array(), '/');
@@ -1229,5 +1230,258 @@ class View extends \Test\TestCase {
 		$this->assertFalse($this->isFileLocked($view, '/test//sub', ILockingProvider::LOCK_SHARED));
 		$this->assertFalse($this->isFileLocked($view, '/test//sub', ILockingProvider::LOCK_EXCLUSIVE));
 
+	}
+
+	public function basicOperationProvider() {
+		return [
+			// --- write hook ----
+			[
+				'touch',
+				['touch-create.txt'],
+				'touch-create.txt',
+				'create',
+				ILockingProvider::LOCK_SHARED,
+				ILockingProvider::LOCK_EXCLUSIVE,
+				ILockingProvider::LOCK_SHARED,
+			],
+			[
+				'fopen',
+				['test-write.txt', 'w'],
+				'test-write.txt',
+				'write',
+				ILockingProvider::LOCK_SHARED,
+				ILockingProvider::LOCK_EXCLUSIVE,
+				null,
+				// exclusive lock stays until fclose
+				ILockingProvider::LOCK_EXCLUSIVE,
+			],
+			[
+				'mkdir',
+				['newdir'],
+				'newdir',
+				'write',
+				ILockingProvider::LOCK_SHARED,
+				ILockingProvider::LOCK_EXCLUSIVE,
+				ILockingProvider::LOCK_SHARED,
+			],
+			[
+				'file_put_contents',
+				['file_put_contents.txt', 'blah'],
+				'file_put_contents.txt',
+				'write',
+				ILockingProvider::LOCK_SHARED,
+				ILockingProvider::LOCK_EXCLUSIVE,
+				ILockingProvider::LOCK_SHARED,
+			],
+			[
+				'file_put_contents',
+				['file_put_contents.txt', fopen('php://temp', 'r+')],
+				'file_put_contents.txt',
+				'write',
+				ILockingProvider::LOCK_SHARED,
+				ILockingProvider::LOCK_EXCLUSIVE,
+				ILockingProvider::LOCK_SHARED,
+			],
+
+			// ---- delete hook ----
+			[
+				'rmdir',
+				['dir'],
+				'dir',
+				'delete',
+				ILockingProvider::LOCK_SHARED,
+				ILockingProvider::LOCK_EXCLUSIVE,
+				ILockingProvider::LOCK_SHARED,
+			],
+			[
+				'unlink',
+				['test.txt'],
+				'test.txt',
+				'delete',
+				ILockingProvider::LOCK_SHARED,
+				ILockingProvider::LOCK_EXCLUSIVE,
+				ILockingProvider::LOCK_SHARED,
+			],
+
+			// ---- read hook (no post hooks) ----
+			[
+				'file_get_contents',
+				['test.txt'],
+				'test.txt',
+				'read',
+				ILockingProvider::LOCK_SHARED,
+				ILockingProvider::LOCK_SHARED,
+				null,
+			],
+			[
+				'fopen',
+				['test.txt', 'r'],
+				'test.txt',
+				'read',
+				ILockingProvider::LOCK_SHARED,
+				ILockingProvider::LOCK_SHARED,
+				null,
+			],
+			[
+				'opendir',
+				['dir'],
+				'dir',
+				'read',
+				ILockingProvider::LOCK_SHARED,
+				ILockingProvider::LOCK_SHARED,
+				null,
+			],
+
+			// ---- no lock, touch hook ---
+			['touch', ['test.txt'], 'test.txt', 'touch', null, null, null],
+
+			// ---- no hooks, no locks ---
+			['is_dir', ['dir'], 'dir', null],
+			['is_file', ['dir'], 'dir', null],
+			['stat', ['dir'], 'dir', null],
+			['filetype', ['dir'], 'dir', null],
+			['filesize', ['dir'], 'dir', null],
+			['isCreatable', ['dir'], 'dir', null],
+			['isReadable', ['dir'], 'dir', null],
+			['isUpdatable', ['dir'], 'dir', null],
+			['isDeletable', ['dir'], 'dir', null],
+			['isSharable', ['dir'], 'dir', null],
+			['file_exists', ['dir'], 'dir', null],
+			['filemtime', ['dir'], 'dir', null],
+			// TODO: rename
+			// TODO: exception case, properly unlocks
+			// TODO: fclose case ?
+		];
+	}
+
+	/**
+	 * Test whether locks are set before and after the operation
+	 *
+	 * @dataProvider basicOperationProvider
+	 *
+	 * @param string $operation operation name on the view
+	 * @param array $operationArgs arguments for the operation
+	 * @param string $lockedPath path of the locked item to check
+	 * @param string $hookType hook type
+	 * @param int $expectedLockBefore expected lock during pre hooks
+	 * @param int $expectedLockduring expected lock during operation
+	 * @param int $expectedLockAfter expected lock during post hooks
+	 * @param int $expectedStrayLock expected lock after returning, should
+	 * be null (unlock) for most operations
+	 * @param callable $operationFunc operation function
+	 */
+	public function testBasicOperationLock(
+		$operation,
+		$operationArgs,
+		$lockedPath,
+		$hookType,
+		$expectedLockBefore = ILockingProvider::LOCK_SHARED,
+		$expectedLockDuring = ILockingProvider::LOCK_SHARED,
+		$expectedLockAfter = ILockingProvider::LOCK_SHARED,
+		$expectedStrayLock = null,
+		$operationFunc = null
+	) {
+		$storage = $this->getMockBuilder('\OC\Files\Storage\Temporary')
+			->disableOriginalConstructor()
+			->setMethods([$operation])
+			->getMock();
+
+		\OC\Files\Filesystem::mount($storage, array(), $this->user . '/');
+		$storage->mkdir('files');
+		$storage->mkdir('files/dir');
+		$storage->file_put_contents('files/test.txt', 'blah');
+
+		$view = new \OC\Files\View('/' . $this->user . '/files/');
+
+		$this->assertFalse(
+			$this->isFileLocked($view, $lockedPath, ILockingProvider::LOCK_SHARED),
+			'File unlocked before operation'
+		);
+		$this->assertFalse(
+			$this->isFileLocked($view, $lockedPath, ILockingProvider::LOCK_EXCLUSIVE),
+			'File unlocked before operation'
+		);
+
+		$lockTypePre = null;
+		$lockTypePost = null;
+
+		$eventHandler = $this->getMockBuilder('\stdclass')
+			->setMethods(['preCallback', 'postCallback'])
+			->getMock();
+
+		$eventHandler->expects($this->any())
+			->method('preCallback')
+			->will($this->returnCallback(
+				function() use ($view, $lockedPath, &$lockTypePre){
+					$lockTypePre = $this->getFileLockType($view, $lockedPath);
+				}
+			));
+		$eventHandler->expects($this->any())
+			->method('postCallback')
+			->will($this->returnCallback(
+				function() use ($view, $lockedPath, &$lockTypePost){
+					$lockTypePost = $this->getFileLockType($view, $lockedPath);
+				}
+			));
+
+		if ($hookType !== null) {
+			\OCP\Util::connectHook(
+				Filesystem::CLASSNAME,
+				$hookType,
+				$eventHandler,
+				'preCallback'
+			);
+			\OCP\Util::connectHook(
+				Filesystem::CLASSNAME,
+				'post_' . $hookType,
+				$eventHandler,
+				'postCallback'
+			);
+		}
+
+		$storage->expects($this->once())
+			->method($operation)
+			->will($this->returnCallback(
+				function() use ($view, $lockedPath, &$lockTypeDuring, $operationFunc){
+					$lockTypeDuring = $this->getFileLockType($view, $lockedPath);
+
+					if ($operationFunc !== null) {
+						return call_user_func($operationFunc);
+					}
+
+					return true;
+				}
+			));
+
+		// do operation
+		call_user_func_array(array($view, $operation), $operationArgs);
+
+		// TODO: expected lock during operation (mock it)
+		if ($hookType !== null) {
+			$this->assertEquals($expectedLockBefore, $lockTypePre, 'File locked properly during pre-hook');
+			$this->assertEquals($expectedLockAfter, $lockTypePost, 'File locked properly during post-hook');
+			$this->assertEquals($expectedLockDuring, $lockTypeDuring, 'File locked properly during operation');
+		} else {
+			$this->assertNull($lockTypeDuring, 'File not locked during operation');
+		}
+
+		$this->assertEquals($expectedStrayLock, $this->getFileLockType($view, $lockedPath));
+	}
+
+	/**
+	 * Returns the file lock type
+	 *
+	 * @param \OC\Files\View $view view
+	 * @param string $path path
+	 *
+	 * @return int lock type or null if file was not locked
+	 */
+	private function getFileLockType(\OC\Files\View $view, $path) {
+		if ($this->isFileLocked($view, $path, ILockingProvider::LOCK_EXCLUSIVE)) {
+			return ILockingProvider::LOCK_EXCLUSIVE;
+		} else if ($this->isFileLocked($view, $path, ILockingProvider::LOCK_SHARED)) {
+			return ILockingProvider::LOCK_SHARED;
+		}
+		return null;
 	}
 }
